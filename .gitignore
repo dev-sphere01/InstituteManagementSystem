@@ -5,39 +5,12 @@ node_modules/
 
 # Environment files
 .env
-.env.local
-.env.development
-.env.test
-.env.production
-/IMS_FRONTEND/.env
-/IMS_FRONTEND/.env.local
-/IMS_FRONTEND/.env.development# Dependencies
-node_modules/
-/IMS_FRONTEND/node_modules
-/IMS_BACKEND/node_modules
-
-# Environment files
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-/IMS_FRONTEND/.env
-/IMS_FRONTEND/.env.local
-/IMS_FRONTEND/.env.development
-/IMS_FRONTEND/.env.production
-/IMS_BACKEND/.env
-/IMS_BACKEND/.env.local
-/IMS_BACKEND/.env.development
-/IMS_BACKEND/.env.production
-/IMS_BACKEND/config/config.env    # Added this line
-
-# ... rest of the existing gitignore file ...
-/IMS_FRONTEND/.env.production
-/IMS_BACKEND/.env
-/IMS_BACKEND/.env.local
-/IMS_BACKEND/.env.development
-/IMS_BACKEND/.env.production
+.env.*
+*.env
+/IMS_FRONTEND/.env*
+/IMS_BACKEND/.env*
+/IMS_BACKEND/config/config.env
+/IMS_BACKEND/backend/config/config.env
 
 # IDE and Editor files
 .idea/
