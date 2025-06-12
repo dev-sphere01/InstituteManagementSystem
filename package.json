@@ -1,0 +1,29 @@
+{
+  "name": "institute-management-system",
+  "version": "1.0.0",
+  "description": "Full-stack Institute Management System with React frontend and Node.js backend",
+  "scripts": {
+    "dev": "concurrently --names \"api,ui\" --prefix-colors \"blue,green\" \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd IMS_BACKEND && npm run dev",
+    "frontend": "cd IMS_FRONTEND && npm run dev",
+    "start": "concurrently --names \"api,ui\" --prefix-colors \"blue,green\" \"npm run backend:start\" \"npm run frontend:start\"",
+    "backend:start": "cd IMS_BACKEND && npm start",
+    "frontend:start": "cd IMS_FRONTEND && npm run preview",
+    "install:all": "npm install && cd IMS_BACKEND && npm install && cd ../IMS_FRONTEND && npm install",
+    "build": "cd IMS_FRONTEND && npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "institute",
+    "management",
+    "system",
+    "react",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC"
+}
