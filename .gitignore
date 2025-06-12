@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+/IMS_FRONTEND/node_modules
+/IMS_BACKEND/node_modules
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+/IMS_FRONTEND/.env
+/IMS_FRONTEND/.env.local
+/IMS_FRONTEND/.env.development# Dependencies
+node_modules/
+/IMS_FRONTEND/node_modules
+/IMS_BACKEND/node_modules
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+/IMS_FRONTEND/.env
+/IMS_FRONTEND/.env.local
+/IMS_FRONTEND/.env.development
+/IMS_FRONTEND/.env.production
+/IMS_BACKEND/.env
+/IMS_BACKEND/.env.local
+/IMS_BACKEND/.env.development
+/IMS_BACKEND/.env.production
+/IMS_BACKEND/config/config.env    # Added this line
+
+# ... rest of the existing gitignore file ...
+/IMS_FRONTEND/.env.production
+/IMS_BACKEND/.env
+/IMS_BACKEND/.env.local
+/IMS_BACKEND/.env.development
+/IMS_BACKEND/.env.production
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build directories
+/IMS_FRONTEND/build/
+/IMS_FRONTEND/dist/
+/IMS_BACKEND/dist/
+/IMS_BACKEND/build/
+
+# Coverage directories
+/coverage
+/IMS_FRONTEND/coverage
+/IMS_BACKEND/coverage
+
+# Misc
+.DS_Store
+Thumbs.db
