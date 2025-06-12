@@ -1,0 +1,43 @@
+[
+  {
+    "ModuleDisplayName": "User Management",
+    "module": "user",
+    "actions": ["create", "read", "update", "delete", "export", "import"]
+  },
+  {
+    "ModuleDisplayName": "Role Management",
+    "module": "role",
+    "actions": ["create", "read", "update", "delete", "export"]
+  },
+
+  {
+    "ModuleDisplayName": "Dashboard",
+    "module": "dashboard",
+    "actions": ["read"]
+  },
+  {
+    "ModuleDisplayName": "Admin Panel",
+    "module": "admin",
+    "actions": ["read"]
+  },
+  {
+    "ModuleDisplayName": "Logs",
+    "module": "log",
+    "actions": ["read", "delete", "export"]
+  },
+  {
+    "ModuleDisplayName": "Settings",
+    "module": "settings",
+    "actions": ["read", "update"]
+  },
+  {
+    "ModuleDisplayName": "Reports",
+    "module": "reports",
+    "actions": ["read", "create", "export"]
+  },
+  {
+    "ModuleDisplayName": "Profile Management",
+    "module": "profile",
+    "actions": ["read", "update"]
+  }
+]

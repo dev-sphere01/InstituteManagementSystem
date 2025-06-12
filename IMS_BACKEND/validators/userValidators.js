@@ -1,0 +1,225 @@
+/**
+ * Validation schemas for user-related routes
+ */
+
+// User registration validation schema
+const registerSchema = {
+  body: {
+    name: {
+      required: true,
+      type: 'string',
+      maxLength: 100
+    },
+    email: {
+      required: true,
+      type: 'string',
+      isEmail: true
+    },
+    password: {
+      required: true,
+      type: 'string',
+      minLength: 8,
+      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      custom: (value) => {
+        if (!/[A-Z]/.test(value)) {
+          return 'Password must contain at least one uppercase letter';
+        }
+        if (!/[a-z]/.test(value)) {
+          return 'Password must contain at least one lowercase letter';
+        }
+        if (!/\d/.test(value)) {
+          return 'Password must contain at least one number';
+        }
+        if (!/[@$!%*?&]/.test(value)) {
+          return 'Password must contain at least one special character (@$!%*?&)';
+        }
+        return null;
+      }
+    },
+    role: {
+      type: 'string',
+      enum: ['student', 'user', 'admin', 'manager']
+      // Optional field - will always default to 'student' in service layer for self-registration
+    }
+  }
+};
+
+// User login validation schema
+const loginSchema = {
+  body: {
+    email: {
+      required: true,
+      type: 'string',
+      isEmail: true
+    },
+    password: {
+      required: true,
+      type: 'string'
+    }
+  }
+};
+
+// Forgot password validation schema
+const forgotPasswordSchema = {
+  body: {
+    email: {
+      required: true,
+      type: 'string',
+      isEmail: true
+    }
+  }
+};
+
+// Reset password validation schema
+const resetPasswordSchema = {
+  params: {
+    token: {
+      required: true,
+      type: 'string'
+    }
+  },
+  body: {
+    password: {
+      required: true,
+      type: 'string',
+      minLength: 8,
+      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+    },
+    confirmPassword: {
+      required: true,
+      type: 'string',
+      custom: (value, context) => {
+        // Simple equality check without relying on req object
+        if (context && context.body && value !== context.body.password) {
+          return 'Passwords do not match';
+        }
+        return null;
+      }
+    }
+  }
+};
+
+// Change password validation schema
+const changePasswordSchema = {
+  body: {
+    oldPassword: {
+      required: true,
+      type: 'string'
+    },
+    newPassword: {
+      required: true,
+      type: 'string',
+      minLength: 8,
+      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+    }
+  }
+};
+
+// Admin user creation validation schema (more flexible than public registration)
+const createUserAdminSchema = {
+  body: {
+    name: {
+      required: true,
+      type: 'string',
+      maxLength: 100
+    },
+    email: {
+      required: true,
+      type: 'string',
+      isEmail: true
+    },
+    password: {
+      required: true,
+      type: 'string',
+      minLength: 6  // Less strict for admin creation
+    },
+    role: {
+      type: 'string',  // Optional, accepts role name or ObjectId
+      custom: (value) => {
+        if (!value) return null; // Optional field
+
+        // Check if it's a valid ObjectId format (24 hex characters)
+        const objectIdPattern = /^[0-9a-fA-F]{24}$/;
+        if (objectIdPattern.test(value)) {
+          return null; // Valid ObjectId format
+        }
+
+        // Check if it's a valid role name
+        const validRoleNames = ['student', 'user', 'admin', 'manager'];
+        if (validRoleNames.includes(value)) {
+          return null; // Valid role name
+        }
+
+        return 'Role must be a valid ObjectId or one of: student, user, admin, manager';
+      }
+    },
+    isActive: {
+      type: 'boolean'
+    }
+  }
+};
+
+// Update user validation schema (admin only)
+const updateUserRoleSchema = {
+  params: {
+    id: {
+      required: true,
+      type: 'string'
+    }
+  },
+  body: {
+    name: {
+      type: 'string',
+      minLength: 2,
+      maxLength: 100
+    },
+    email: {
+      type: 'string',
+      isEmail: true
+    },
+    role: {
+      type: 'string',
+      custom: (value) => {
+        if (!value) return null; // Role is optional in updates
+
+        // Check if it's a valid ObjectId format (24 hex characters)
+        const objectIdPattern = /^[0-9a-fA-F]{24}$/;
+        if (objectIdPattern.test(value)) {
+          return null; // Valid ObjectId format
+        }
+
+        // Check if it's a valid role name
+        const validRoleNames = ['student', 'user', 'admin', 'manager'];
+        if (validRoleNames.includes(value)) {
+          return null; // Valid role name
+        }
+
+        return 'Role must be a valid ObjectId or one of: student, user, admin, manager';
+      }
+    },
+    isActive: {
+      type: 'boolean'
+    },
+    avatar: {
+      type: 'object',
+      properties: {
+        public_id: {
+          type: 'string'
+        },
+        url: {
+          type: 'string'
+        }
+      }
+    }
+  }
+};
+
+module.exports = {
+  registerSchema,
+  createUserAdminSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  changePasswordSchema,
+  updateUserRoleSchema
+};
