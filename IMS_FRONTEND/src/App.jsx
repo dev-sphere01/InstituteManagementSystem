@@ -12,6 +12,9 @@ import RoleBasedRoutes from './routes/RoleBasedRoutes'
 import Home from './pages/Home'
 import NotFound from './pages/NotFound'
 
+// Enquiry Pages
+import EnquiryForm from './pages/enquiry/EnquiryForm.jsx'
+
 // Auth Pages
 import Login from './pages/auth/Login.jsx'
 import Register from './pages/auth/Register.jsx'
@@ -72,6 +75,9 @@ function App() {
               <Route path="courses" element={<Courses />} />
               <Route path="batches" element={<Batch />} />
               <Route path="sessions" element={<Session />} />
+
+              {/* Enquiry Routes */}
+              <Route path="enquiry" element={<EnquiryForm />} />
             </Route>
 
             {/* 404 route */}
