@@ -84,7 +84,7 @@ export const User = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
               User Management
             </span>

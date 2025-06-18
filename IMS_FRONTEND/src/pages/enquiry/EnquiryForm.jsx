@@ -95,22 +95,24 @@ const EnquiryForm = () => {
 
   // Theme-based classes
   const cardClass = `rounded-lg shadow-md p-6 border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`;
-  const headerTitleClass = `text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`;
-  const headerSubtitleClass = `mt-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`;
+  const formTitleClass = `text-3xl font-bold  bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600`;
+  const formSubtitleClass = `mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`;
+  const sectionTitleClass = `text-base font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`;
   const labelClass = `block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`;
   const inputClass = `block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'}`;
   const errorClass = 'mt-1 text-sm text-red-500';
   const radioCheckClass = `h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded`;
   const buttonClass = `px-6 py-2 rounded-md font-semibold transition-colors duration-150 shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isDarkMode ? 'bg-blue-800 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`;
   const resetButtonClass = `px-4 py-2 border rounded-md font-medium transition-colors duration-150 shadow ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`;
+  const dividerClass = `my-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`;
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+    <div className="p-0">
       <div className={cardClass}>
-        {/* Header */}
+        {/* Form Title & Subtitle */}
         <div className="mb-6">
-          <h1 className={headerTitleClass}>Enquiry Form</h1>
-          <p className={headerSubtitleClass}>Please fill out the form below to submit your enquiry.</p>
+          <h2 className={formTitleClass}>Add Enquiry</h2>
+          <p className={formSubtitleClass}>Fill out the form to submit a new enquiry.</p>
         </div>
         {/* Success/Error Messages */}
         {success && (
@@ -126,8 +128,8 @@ const EnquiryForm = () => {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Registration Information */}
           <div>
-            <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Registration Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <h3 className={sectionTitleClass}>Registration Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6">
               <div>
                 <label className={labelClass}>Center Code</label>
                 <input type="text" name="centerCode" value={formData.centerCode} onChange={handleInputChange} className={inputClass} />
@@ -142,10 +144,11 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+          <hr className={dividerClass} />
           {/* Personal Information */}
           <div>
-            <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Personal Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className={sectionTitleClass}>Personal Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
               <div>
                 <label className={labelClass}>Full Name <span className="text-red-500">*</span></label>
                 <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className={inputClass} required />
@@ -174,7 +177,7 @@ const EnquiryForm = () => {
                   <option value="obc">OBC</option>
                 </select>
               </div>
-              <div className="flex items-center space-x-6 col-span-2 mt-2">
+              <div className="flex items-center space-x-6 col-span-1 sm:col-span-2 mt-2">
                 <label className="inline-flex items-center">
                   <input type="radio" name="isExServiceMan" checked={formData.isExServiceMan} onChange={handleInputChange} className={radioCheckClass} />
                   <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Ex-ServiceMan</span>
@@ -186,10 +189,11 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+          <hr className={dividerClass} />
           {/* Contact Information */}
           <div>
-            <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Contact Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className={sectionTitleClass}>Contact Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
               <div>
                 <label className={labelClass}>Current Educational Qualification</label>
                 <input type="text" name="qualification" value={formData.qualification} onChange={handleInputChange} className={inputClass} />
@@ -210,10 +214,11 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+          <hr className={dividerClass} />
           {/* Course Preferences */}
           <div>
-            <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Course Preferences</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className={sectionTitleClass}>Course Preferences</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
               <div>
                 <label className={labelClass}>Interested Course</label>
                 <select name="interestedCourse" value={formData.interestedCourse} onChange={handleInputChange} className={inputClass}>
@@ -245,10 +250,11 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+          <hr className={dividerClass} />
           {/* Schedule Preferences */}
           <div>
-            <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Schedule Preferences</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className={sectionTitleClass}>Schedule Preferences</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
               <div>
                 <label className={labelClass}>Preferred Batch Time</label>
                 <select name="preferredBatchTime" value={formData.preferredBatchTime} onChange={handleInputChange} className={inputClass}>
@@ -264,10 +270,11 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+          <hr className={dividerClass} />
           {/* Referral Information */}
           <div>
-            <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Referral Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className={sectionTitleClass}>Referral Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-6">
               <div>
                 <label className={labelClass}>Referral Source</label>
                 <div className="flex items-center space-x-6 mt-2">
@@ -295,10 +302,11 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+          <hr className={dividerClass} />
           {/* Goals & Requirements */}
           <div>
-            <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Goals & Requirements</h2>
-            <div className="grid grid-cols-1 gap-6">
+            <h3 className={sectionTitleClass}>Goals & Requirements</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
               <div>
                 <label className={labelClass}>What are your goals for taking this course?</label>
                 <select name="courseGoals" value={formData.courseGoals} onChange={handleInputChange} className={inputClass}>
@@ -326,7 +334,7 @@ const EnquiryForm = () => {
                   </label>
                 </div>
               </div>
-              <div>
+              <div className="sm:col-span-2">
                 <label className={labelClass}>Do you have access to a computer and the necessary software?</label>
                 <div className="flex items-center space-x-6 mt-2">
                   <label className="inline-flex items-center">
