@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useThemeStore } from '../../store';
+import { useNotification } from '../../services/NotificationService';
 
 const initialState = {
   // Registration Information
@@ -41,6 +42,8 @@ const initialState = {
   futureGoals: [],
   hasComputerAccess: '',
 };
+
+
 
 const boardOptions = [
   { value: 'cbse', label: 'CBSE' },
@@ -159,12 +162,13 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
 
 const EnquiryForm = () => {
   const { isDarkMode } = useThemeStore();
+  const notify = useNotification();
   const [formData, setFormData] = useState(initialState);
   const [validationErrors, setValidationErrors] = useState({});
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [eduType, setEduType] = useState('board'); // 'board' or 'university'
-
+  
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === 'checkbox' && name === 'futureGoals') {
@@ -212,7 +216,7 @@ const EnquiryForm = () => {
     setSuccess('');
     setError('');
     if (!validateForm()) return;
-    setSuccess('Enquiry submitted successfully!');
+    notify('Enquiry submitted successfully!', 'success');
     setFormData(initialState);
   };
 
