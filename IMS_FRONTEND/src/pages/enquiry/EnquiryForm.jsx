@@ -177,7 +177,8 @@ const EnquiryForm = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [eduType, setEduType] = useState('board'); // 'board' or 'university'
+  const [eduType, setEduType] = useState('board'); 
+  // 'board' or 'university'
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
