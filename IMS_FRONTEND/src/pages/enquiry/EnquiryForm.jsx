@@ -215,10 +215,10 @@ const EnquiryForm = () => {
 
   // For custom dropdowns
   const handleBoardChange = (val) => {
-    setFormData(prev => ({ ...prev, board: val }));
+    setFormData(prev => ({ ...prev, board: val, university: '' }));
   };
   const handleUniversityChange = (val) => {
-    setFormData(prev => ({ ...prev, university: val }));
+    setFormData(prev => ({ ...prev, university: val, board: '' }));
   };
   const handleSubjectsChange = (vals) => {
     setFormData(prev => ({ ...prev, subjects: vals }));
@@ -240,7 +240,7 @@ const EnquiryForm = () => {
     if (!validateForm()) return;
     notify('Enquiry submitted successfully!', 'success');
     setFormData(initialState);
-    console.log(formData)
+    console.log(formData);
   };
 
   //Custom css classes imported here
