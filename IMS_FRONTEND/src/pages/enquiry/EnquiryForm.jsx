@@ -5,6 +5,12 @@ import { useNotification } from '../../services/NotificationService';
 // Form section imports
 import Registration from './components/Registration';
 import Personal from './components/Personal';
+import Contact from './components/Contact';
+import Educational from './components/Educational';
+import CoursePref from './components/CoursePref';
+import { SchedulePref } from './components/SchedulePref';
+import Referral from './components/Referral';
+import GoalsAndReq from './components/GoalsAndReq';
 
 const initialState = {
   // Registration Information
@@ -258,12 +264,12 @@ const EnquiryForm = () => {
         <form onSubmit={handleSubmit} className="space-y-8">
 
           {/* Registration Information */}
-          <Registration 
-          formData={formData} 
-          sectionTitleClass={sectionTitleClass} 
-          labelClass={labelClass} 
-          handleInputChange={handleInputChange} 
-          inputClass={inputClass} />
+          <Registration
+            formData={formData}
+            sectionTitleClass={sectionTitleClass}
+            labelClass={labelClass}
+            handleInputChange={handleInputChange}
+            inputClass={inputClass} />
 
           <hr className={dividerClass} />
 
@@ -271,7 +277,7 @@ const EnquiryForm = () => {
           <Personal
             sectionTitleClas={sectionTitleClass}
             labelClass={labelClass}
-            formData={ formData}
+            formData={formData}
             errorClass={errorClass}
             inputClass={inputClass}
             handleInputChange={handleInputChange}
@@ -282,226 +288,84 @@ const EnquiryForm = () => {
           <hr className={dividerClass} />
 
           {/* Contact Information */}
-          <div>
-            <h3 className={sectionTitleClass}>Contact Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-              <div>
-                <label className={labelClass}>Contact Number <span className="text-red-500">*</span></label>
-                <input type="text" name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} className={inputClass} maxLength={10} placeholder="10 digit mobile (WhatsApp)" />
-                {validationErrors.contactNumber && <p className={errorClass}>{validationErrors.contactNumber}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>Alternate Contact Number</label>
-                <input type="text" name="altContactNumber" value={formData.altContactNumber} onChange={handleInputChange} className={inputClass} maxLength={10} placeholder="Alternate number" />
-              </div>
-              <div>
-                <label className={labelClass}>Email Address <span className="text-red-500">*</span></label>
-                <input type="email" name="email" value={formData.email} onChange={handleInputChange} className={inputClass} placeholder="example@email.com" />
-                {validationErrors.email && <p className={errorClass}>{validationErrors.email}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>Residential Address</label>
-                <input type="text" name="address" value={formData.address} onChange={handleInputChange} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Pin Code</label>
-                <input type="text" name="pinCode" value={formData.pinCode} onChange={handleInputChange} className={inputClass} maxLength={6} />
-              </div>
-            </div>
-          </div>
+          <Contact
+            sectionTitleClass={sectionTitleClass}
+            labelClass={labelClass}
+            formData={formData}
+            inputClass={inputClass}
+            handleInputChange={handleInputChange}
+            validationErrors={validationErrors}
+            errorClass={errorClass} />
 
           <hr className={dividerClass} />
 
           {/* Educational Information */}
-          <div>
-            <h3 className={sectionTitleClass}>Educational Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-              <div>
-                <label className={labelClass}>Current Educational Qualification</label>
-                <input type="text" name="qualification" value={formData.qualification} onChange={handleInputChange} className={inputClass} />
-              </div>
-              <div className="flex items-end gap-2">
-                <div className="flex rounded-md overflow-hidden border border-gray-300 dark:border-gray-600 h-11">
-                  <button type="button" className={toggleBtnClass(eduType === 'board')} onClick={() => setEduType('board')}>Board</button>
-                  <button type="button" className={toggleBtnClassRight(eduType === 'university')} onClick={() => setEduType('university')}>University</button>
-                </div>
-                <div className="flex-1 min-w-0">
-                  {eduType === 'board' ? (
-                    <SearchableDropdown
-                      options={boardOptions}
-                      value={formData.board}
-                      onChange={handleBoardChange}
-                      placeholder="Select Board"
-                    />
-                  ) : (
-                    <SearchableDropdown
-                      options={universityOptions}
-                      value={formData.university}
-                      onChange={handleUniversityChange}
-                      placeholder="Select University"
-                    />
-                  )}
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Year of Passing</label>
-                <input type="number" name="passingYear" value={formData.passingYear} onChange={handleInputChange} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Subjects Studied</label>
-                <SearchableDropdown
-                  options={subjectsList}
-                  value={formData.subjects}
-                  onChange={handleSubjectsChange}
-                  placeholder="Select Subjects"
-                  isMulti
-                />
-              </div>
-            </div>
-          </div>
+          <Educational
+            sectionTitleClass={sectionTitleClass}
+            labelClass={labelClass}
+            formData={formData}
+            inputClass={inputClass}
+            handleInputChange={handleInputChange}
+            toggleBtnClass={toggleBtnClass}
+            eduType={eduType}
+            toggleBtnClassRight={toggleBtnClassRight}
+            setEduType={setEduType}
+            SearchableDropdown={SearchableDropdown}
+            boardOptions={boardOptions}
+            handleBoardChange={handleBoardChange}
+            universityOptions={universityOptions}
+            handleUniversityChange={handleUniversityChange}
+            subjectsList={subjectsList}
+            handleSubjectsChange={handleSubjectsChange} />
 
           <hr className={dividerClass} />
 
           {/* Course Preferences */}
-          <div>
-            <h3 className={sectionTitleClass}>Course Preferences</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-              <div>
-                <label className={labelClass}>Interested Course</label>
-                <select name="interestedCourse" value={formData.interestedCourse} onChange={handleInputChange} className={inputClass}>
-                  <option value="">Select Course</option>
-                  {coursesList.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Preferred Mode of Learning</label>
-                <div className="flex items-center space-x-6 mt-2">
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="learningMode" value="online" checked={formData.learningMode === 'online'} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Online</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="learningMode" value="offline" checked={formData.learningMode === 'offline'} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Offline</span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Course Level</label>
-                <select name="courseLevel" value={formData.courseLevel} onChange={handleInputChange} className={inputClass}>
-                  <option value="">Select Level</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                </select>
-              </div>
-            </div>
-          </div>
+          <CoursePref
+            sectionTitleClass={sectionTitleClass}
+            labelClass={labelClass}
+            formData={formData}
+            handleInputChange={handleInputChange}
+            inputClass={inputClass}
+            coursesList={coursesList}
+            radioCheckClass={radioCheckClass}
+            isDarkMode={isDarkMode} />
 
           <hr className={dividerClass} />
 
           {/* Schedule Preferences */}
-          <div>
-            <h3 className={sectionTitleClass}>Schedule Preferences</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-              <div>
-                <label className={labelClass}>Preferred Batch Time</label>
-                <select name="preferredBatchTime" value={formData.preferredBatchTime} onChange={handleInputChange} className={inputClass}>
-                  <option value="">Select Batch Time</option>
-                  <option value="morning">Morning (9 AM - 12 PM)</option>
-                  <option value="afternoon">Afternoon (1 PM - 4 PM)</option>
-                  <option value="evening">Evening (5 PM - 8 PM)</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Important Note Related to Time</label>
-                <textarea name="timeNote" value={formData.timeNote} onChange={handleInputChange} rows={3} className={inputClass}></textarea>
-              </div>
-            </div>
-          </div>
+          <SchedulePref
+            sectionTitleClass={sectionTitleClass}
+            labelClass={labelClass}
+            formData={formData}
+            handleInputChange={handleInputChange}
+            inputClass={inputClass} />
 
           <hr className={dividerClass} />
 
           {/* Referral Information */}
-          <div>
-            <h3 className={sectionTitleClass}>Referral Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-6">
-              <div>
-                <label className={labelClass}>Referral Source</label>
-                <div className="flex items-center space-x-6 mt-2">
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="referralSource" value="friend" checked={formData.referralSource === 'friend'} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Friend</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="referralSource" value="institution" checked={formData.referralSource === 'institution'} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Institution</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="referralSource" value="other" checked={formData.referralSource === 'other'} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Other</span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Source Name</label>
-                <input type="text" name="sourceName" value={formData.sourceName} onChange={handleInputChange} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Referral Code</label>
-                <input type="text" name="referralCode" value={formData.referralCode} onChange={handleInputChange} className={inputClass} />
-              </div>
-            </div>
-          </div>
+          <Referral
+            sectionTitleClass={sectionTitleClass}
+            labelClass={labelClass}
+            formData={formData}
+            inputClass={inputClass}
+            handleInputChange={handleInputChange}
+            radioCheckClass={radioCheckClass}
+            isDarkMode={isDarkMode}
+          />
 
           <hr className={dividerClass} />
 
           {/* Goals & Requirements */}
-          <div>
-            <h3 className={sectionTitleClass}>Goals & Requirements</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-              <div>
-                <label className={labelClass}>What are your goals for taking this course?</label>
-                <select name="courseGoals" value={formData.courseGoals} onChange={handleInputChange} className={inputClass}>
-                  <option value="">Select Goal</option>
-                  <option value="career">Career Advancement</option>
-                  <option value="skill">Skill Development</option>
-                  <option value="personal">Personal Interest</option>
-                  <option value="academic">Academic Requirements</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Future Goals</label>
-                <div className="flex items-center space-x-6 mt-2">
-                  <label className="inline-flex items-center">
-                    <input type="checkbox" name="futureGoals" value="job" checked={formData.futureGoals.includes('job')} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Get a Job</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="checkbox" name="futureGoals" value="business" checked={formData.futureGoals.includes('business')} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Start a Business</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="checkbox" name="futureGoals" value="higher_education" checked={formData.futureGoals.includes('higher_education')} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Higher Education</span>
-                  </label>
-                </div>
-              </div>
-              <div className="sm:col-span-2">
-                <label className={labelClass}>Do you have access to a computer and the necessary software?</label>
-                <div className="flex items-center space-x-6 mt-2">
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="hasComputerAccess" value="yes" checked={formData.hasComputerAccess === 'yes'} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Yes</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="radio" name="hasComputerAccess" value="no" checked={formData.hasComputerAccess === 'no'} onChange={handleInputChange} className={radioCheckClass} />
-                    <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>No</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
+          <GoalsAndReq
+            sectionTitleClass={sectionTitleClass}
+            labelClass={labelClass}
+            formData={formData}
+            handleInputChange={handleInputChange}
+            inputClass={inputClass}
+            radioCheckClass={radioCheckClass}
+            isDarkMode={isDarkMode}
+          />
 
           {/* Submit Button */}
           <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
