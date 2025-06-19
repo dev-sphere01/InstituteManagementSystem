@@ -229,6 +229,7 @@ const EnquiryForm = () => {
     if (!validateForm()) return;
     notify('Enquiry submitted successfully!', 'success');
     setFormData(initialState);
+    console.log(formData)
   };
 
   //Custom css classes imported here
