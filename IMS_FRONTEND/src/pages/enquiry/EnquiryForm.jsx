@@ -95,11 +95,14 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
         setShow(false);
       }
     }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
   }, [show]);
 
   const handleSelect = (val) => {
+    // Prevent click event from bubbling to the document and closing the dropdown before selection
+    setShow(false);
+    setSearch('');
     if (isMulti) {
       if (value.includes(val)) {
         onChange(value.filter(v => v !== val));
@@ -108,7 +111,6 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
       }
     } else {
       onChange(val);
-      setShow(false);
     }
   };
 
@@ -125,14 +127,22 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
         style={{ minHeight: '42px' }}
         onClick={() => setShow(s => !s)}
       >
-        <input
-          className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder-gray-400"
-          style={{ minWidth: 0 }}
-          placeholder={placeholder}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          onClick={e => { e.stopPropagation(); setShow(true); }}
-        />
+        {/* Show selected value if not multi-select */}
+        {!isMulti && value && (
+          <span className="flex-1 truncate text-gray-900 dark:text-white">{options.find(o => o.value === value)?.label || ''}</span>
+        )}
+        {/* Show input for searching only if dropdown is open */}
+        {show && (
+          <input
+            className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder-gray-400"
+            style={{ minWidth: 0 }}
+            placeholder={placeholder}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onClick={e => { e.stopPropagation(); setShow(true); }}
+            autoFocus
+          />
+        )}
         <span className="ml-2 text-gray-400">▼</span>
       </div>
       {show && (
@@ -145,6 +155,7 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
               key={opt.value}
               className={`px-3 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 ${(isMulti ? value.includes(opt.value) : value === opt.value)
                 ? 'bg-blue-50 dark:bg-gray-800 font-semibold' : ''}`}
+              onMouseDown={e => e.preventDefault()}
               onClick={() => handleSelect(opt.value)}
             >
               {opt.label}
@@ -204,10 +215,10 @@ const EnquiryForm = () => {
 
   // For custom dropdowns
   const handleBoardChange = (val) => {
-    setFormData(prev => ({ ...prev, board: val, university: '' }));
+    setFormData(prev => ({ ...prev, board: val }));
   };
   const handleUniversityChange = (val) => {
-    setFormData(prev => ({ ...prev, university: val, board: '' }));
+    setFormData(prev => ({ ...prev, university: val }));
   };
   const handleSubjectsChange = (vals) => {
     setFormData(prev => ({ ...prev, subjects: vals }));
