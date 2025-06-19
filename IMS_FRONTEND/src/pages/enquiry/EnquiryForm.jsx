@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useThemeStore } from '../../store';
 import { useNotification } from '../../services/NotificationService';
 
+// Form section imports
+import Registration from './components/Registration';
+import Personal from './components/Personal';
+
 const initialState = {
   // Registration Information
   centerCode: '',
@@ -42,8 +46,6 @@ const initialState = {
   futureGoals: [],
   hasComputerAccess: '',
 };
-
-
 
 const boardOptions = [
   { value: 'cbse', label: 'CBSE' },
@@ -132,9 +134,8 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
           {filtered.map(opt => (
             <div
               key={opt.value}
-              className={`px-3 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 ${
-                (isMulti ? value.includes(opt.value) : value === opt.value)
-                  ? 'bg-blue-50 dark:bg-gray-800 font-semibold' : ''}`}
+              className={`px-3 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 ${(isMulti ? value.includes(opt.value) : value === opt.value)
+                ? 'bg-blue-50 dark:bg-gray-800 font-semibold' : ''}`}
               onClick={() => handleSelect(opt.value)}
             >
               {opt.label}
@@ -168,7 +169,7 @@ const EnquiryForm = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [eduType, setEduType] = useState('board'); // 'board' or 'university'
-  
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === 'checkbox' && name === 'futureGoals') {
@@ -255,70 +256,31 @@ const EnquiryForm = () => {
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-8">
+
           {/* Registration Information */}
-          <div>
-            <h3 className={sectionTitleClass}>Registration Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6">
-              <div>
-                <label className={labelClass}>Center Code</label>
-                <input type="text" name="centerCode" value={formData.centerCode} onChange={handleInputChange} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Employee ID</label>
-                <input type="text" name="employeeId" value={formData.employeeId} onChange={handleInputChange} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Other Info</label>
-                <input type="text" name="otherInfo" value={formData.otherInfo} onChange={handleInputChange} className={inputClass} />
-              </div>
-            </div>
-          </div>
+          <Registration 
+          formData={formData} 
+          sectionTitleClass={sectionTitleClass} 
+          labelClass={labelClass} 
+          handleInputChange={handleInputChange} 
+          inputClass={inputClass} />
+
           <hr className={dividerClass} />
+
           {/* Personal Information */}
-          <div>
-            <h3 className={sectionTitleClass}>Personal Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-              <div>
-                <label className={labelClass}>Full Name <span className="text-red-500">*</span></label>
-                <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className={inputClass} required />
-                {validationErrors.fullName && <p className={errorClass}>{validationErrors.fullName}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>Date of Birth</label>
-                <input type="date" name="dob" value={formData.dob} onChange={handleInputChange} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Gender</label>
-                <select name="gender" value={formData.gender} onChange={handleInputChange} className={inputClass}>
-                  <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Category</label>
-                <select name="category" value={formData.category} onChange={handleInputChange} className={inputClass}>
-                  <option value="">Select Category</option>
-                  <option value="general">General</option>
-                  <option value="st">ST</option>
-                  <option value="sc">SC</option>
-                  <option value="obc">OBC</option>
-                </select>
-              </div>
-              <div className="flex items-center space-x-6 col-span-1 sm:col-span-2 mt-2">
-                <label className="inline-flex items-center">
-                  <input type="radio" name="isExServiceMan" checked={formData.isExServiceMan} onChange={handleInputChange} className={radioCheckClass} />
-                  <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Ex-ServiceMan</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input type="radio" name="isSpeciallyAbled" checked={formData.isSpeciallyAbled} onChange={handleInputChange} className={radioCheckClass} />
-                  <span className={`ml-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Specially Abled</span>
-                </label>
-              </div>
-            </div>
-          </div>
+          <Personal
+            sectionTitleClas={sectionTitleClass}
+            labelClass={labelClass}
+            formData={ formData}
+            errorClass={errorClass}
+            inputClass={inputClass}
+            handleInputChange={handleInputChange}
+            validationErrors={validationErrors}
+            radioCheckClass={radioCheckClass}
+            isDarkMode={isDarkMode} />
+
           <hr className={dividerClass} />
+
           {/* Contact Information */}
           <div>
             <h3 className={sectionTitleClass}>Contact Information</h3>
@@ -347,7 +309,9 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+
           <hr className={dividerClass} />
+
           {/* Educational Information */}
           <div>
             <h3 className={sectionTitleClass}>Educational Information</h3>
@@ -395,7 +359,9 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+
           <hr className={dividerClass} />
+
           {/* Course Preferences */}
           <div>
             <h3 className={sectionTitleClass}>Course Preferences</h3>
@@ -431,7 +397,9 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+
           <hr className={dividerClass} />
+
           {/* Schedule Preferences */}
           <div>
             <h3 className={sectionTitleClass}>Schedule Preferences</h3>
@@ -451,7 +419,9 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+
           <hr className={dividerClass} />
+
           {/* Referral Information */}
           <div>
             <h3 className={sectionTitleClass}>Referral Information</h3>
@@ -483,7 +453,9 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+
           <hr className={dividerClass} />
+
           {/* Goals & Requirements */}
           <div>
             <h3 className={sectionTitleClass}>Goals & Requirements</h3>
@@ -530,6 +502,7 @@ const EnquiryForm = () => {
               </div>
             </div>
           </div>
+
           {/* Submit Button */}
           <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
             <button type="button" onClick={() => { setFormData(initialState); setValidationErrors({}); setSuccess(''); setError(''); }} className={resetButtonClass}>Reset</button>
