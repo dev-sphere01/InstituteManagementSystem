@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useThemeStore } from '../../store';
 import { useNotification } from '../../services/NotificationService';
+import API from '../../services/API';
 
 // Form section imports
 import Registration from './components/Registration';
@@ -188,7 +189,7 @@ const EnquiryForm = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [eduType, setEduType] = useState('board'); 
+  const [eduType, setEduType] = useState('board');
   // 'board' or 'university'
 
   const handleInputChange = (e) => {
@@ -232,15 +233,78 @@ const EnquiryForm = () => {
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
+  const toEnumOrUndefined = v => v === '' ? undefined : v;
 
-  const handleSubmit = (e) => {
+  // Map frontend values to backend enums
+  const genderMap = { male: 'Male', female: 'Female', other: 'Other' };
+  const categoryMap = { general: 'GEN', st: 'ST', sc: 'SC', obc: 'OBC', other: 'OTHER' };
+
+  // Sample ObjectIds for demo/testing
+  const SAMPLE_BOARD_ID = '60d21b4667d0d8992e610c85'; // Replace with a real ObjectId from your DB
+  const SAMPLE_SUBJECT_IDS = ['60d21b4967d0d8992e610c86', '60d21b4967d0d8992e610c87']; // Replace with real ObjectIds
+
+  // Transform flat formData to backend structure
+  const transformFormData = (formData) => ({
+    registrationInfo: {
+      centerCode: formData.centerCode,
+      employeeId: formData.employeeId,
+      otherInfo: formData.otherInfo,
+    },
+    personalInfo: {
+      fullName: formData.fullName,
+      dob: formData.dob,
+      gender: genderMap[formData.gender] || undefined,
+      category: categoryMap[formData.category] || undefined,
+      exServicemen: !!formData.isExServiceMan,
+      speciallyAbled: !!formData.isSpeciallyAbled,
+    },
+    contactInfo: {
+      contactNumber: formData.contactNumber,
+      alternateContactNumber: formData.altContactNumber,
+      email: formData.email,
+      address: formData.address,
+      pinCode: formData.pinCode,
+    },
+    educationInfo: {
+      qualification: formData.qualification,
+      boardId: formData.board ? SAMPLE_BOARD_ID : undefined,
+      universityId: formData.university || undefined,
+      yearOfPassing: formData.passingYear,
+      subjectIds: formData.subjects && formData.subjects.length > 0 ? SAMPLE_SUBJECT_IDS : [],
+    },
+    coursePreferences: {
+      interestedCourses: formData.interestedCourse ? [formData.interestedCourse] : [],
+      mode: toEnumOrUndefined(formData.learningMode), // Map if needed
+      courseLevel: toEnumOrUndefined(formData.courseLevel), // Map if needed
+    },
+    schedulePreferences: {
+      preferredBatchTime: formData.preferredBatchTime,
+    },
+    referralInfo: {
+      referralSource: toEnumOrUndefined(formData.referralSource), // Map if needed
+      sourceName: formData.sourceName,
+      referralCode: formData.referralCode,
+    },
+    goalsRequirements: {
+      courseGoal: formData.courseGoals,
+      futureGoals: formData.futureGoals,
+      hasComputerAccess: toEnumOrUndefined(formData.hasComputerAccess),
+    }
+  });
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccess('');
     setError('');
     if (!validateForm()) return;
-    notify('Enquiry submitted successfully!', 'success');
-    setFormData(initialState);
-    console.log(formData);
+    const payload = transformFormData(formData);
+    try {
+      await API.post('/enquiry', payload);
+      notify('Enquiry submitted successfully!', 'success');
+      setFormData(initialState);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Submission failed');
+    }
   };
 
   //Custom css classes imported here
