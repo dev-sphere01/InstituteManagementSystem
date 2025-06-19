@@ -25,5 +25,8 @@
     "mongodb"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express-validator": "^7.2.1"
+  }
 }
