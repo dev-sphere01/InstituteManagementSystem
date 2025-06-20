@@ -1,6 +1,6 @@
 import React from 'react'
 
-const Contact = ({sectionTitleClass,labelClass,formData,inputClass,handleInputChange,validationErrors,errorClass}) => {
+const Contact = ({ sectionTitleClass, labelClass, formData, inputClass, handleInputChange, validationErrors, errorClass }) => {
     return (
         <div>
             <h3 className={sectionTitleClass}>Contact Information</h3>
@@ -15,9 +15,10 @@ const Contact = ({sectionTitleClass,labelClass,formData,inputClass,handleInputCh
                     <input type="text" name="altContactNumber" value={formData.altContactNumber} onChange={handleInputChange} className={inputClass} maxLength={10} placeholder="Alternate number" />
                 </div>
                 <div>
-                    <label className={labelClass}>Email Address <span className="text-red-500">*</span></label>
+                    {/* <span className="text-red-500">*</span> */}
+                    <label className={labelClass}>Email Address </label>
                     <input type="email" name="email" value={formData.email} onChange={handleInputChange} className={inputClass} placeholder="example@email.com" />
-                    {validationErrors.email && <p className={errorClass}>{validationErrors.email}</p>}
+                    {/* {validationErrors.email && <p className={errorClass}>{validationErrors.email}</p>} */}
                 </div>
                 <div>
                     <label className={labelClass}>Residential Address</label>

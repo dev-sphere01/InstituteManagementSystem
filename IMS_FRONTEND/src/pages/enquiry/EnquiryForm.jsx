@@ -229,7 +229,7 @@ const EnquiryForm = () => {
     const errors = {};
     if (!formData.fullName.trim()) errors.fullName = 'Full Name is required';
     if (!formData.contactNumber.trim() || !/^\d{10}$/.test(formData.contactNumber)) errors.contactNumber = 'Valid 10-digit contact number is required';
-    if (!formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email)) errors.email = 'Valid email address is required';
+    // if (!formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email)) errors.email = 'Valid email address is required';
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
