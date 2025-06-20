@@ -9,7 +9,8 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const userDefinitions = require('./definitions/userDefinitions');
 const adminDefinitions = require('./definitions/adminDefinitions');
 const logDefinitions = require('./definitions/logDefinitions');
-const enquiryDefinations = require('./definitions/enquiryDefinations')
+const enquiryDefinations = require('./definitions/enquiryDefinations');
+const admissionDefinitions = require('./definitions/admissionDefinitions')
 
 // Import Swagger paths
 const rolePaths = require('./paths/rolePaths');
@@ -627,6 +628,42 @@ This API uses cookies for authentication. Follow these steps:
           required: ['status']
         },
 
+
+        Admission: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Admission ID'
+            },
+            studentId: {
+              type: 'string',
+              description: 'ID of the student'
+            },
+            courseId: {
+              type: 'string',
+              description: 'ID of the course'
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'approved', 'rejected'],
+              description: 'Admission status'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Date of admission creation'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Date of last update'
+            }
+          },
+          required: ['studentId', 'courseId', 'status']
+        }
+
+
       },
       tags: [
         {
@@ -653,6 +690,11 @@ This API uses cookies for authentication. Follow these steps:
           name: 'Enquiries',
           description: 'Product enquiry management endpoints',
         },
+        {
+          name: 'Admissions',
+          description: 'Student admissions and course enrollment endpoints'
+        }
+
       ],
     },
     paths: {
@@ -661,6 +703,7 @@ This API uses cookies for authentication. Follow these steps:
       ...enquiryDefinations.paths,
       ...adminDefinitions.paths,
       ...logDefinitions.paths,
+      ...admissionDefinitions.paths,
       ...rolePaths,
     }
   },
