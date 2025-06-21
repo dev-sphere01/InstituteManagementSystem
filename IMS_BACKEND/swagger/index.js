@@ -9,8 +9,9 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const userDefinitions = require('./definitions/userDefinitions');
 const adminDefinitions = require('./definitions/adminDefinitions');
 const logDefinitions = require('./definitions/logDefinitions');
-const enquiryDefinations = require('./definitions/enquiryDefinations');
-const admissionDefinitions = require('./definitions/admissionDefinitions')
+const enquiryDefinitions = require('./definitions/enquiryDefinitions');
+const admissionDefinitions = require('./definitions/admissionDefinitions');
+const auditDefinitions = require('./definitions/auditDefinitions');
 
 // Import Swagger paths
 const rolePaths = require('./paths/rolePaths');
@@ -628,42 +629,80 @@ This API uses cookies for authentication. Follow these steps:
           required: ['status']
         },
 
-
         Admission: {
           type: 'object',
           properties: {
-            _id: {
-              type: 'string',
-              description: 'Admission ID'
-            },
-            studentId: {
-              type: 'string',
-              description: 'ID of the student'
-            },
-            courseId: {
-              type: 'string',
-              description: 'ID of the course'
-            },
-            status: {
-              type: 'string',
-              enum: ['pending', 'approved', 'rejected'],
-              description: 'Admission status'
-            },
-            createdAt: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Date of admission creation'
-            },
-            updatedAt: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Date of last update'
-            }
-          },
-          required: ['studentId', 'courseId', 'status']
+            formNo: { type: 'string' },
+            centerCode: { type: 'string' },
+            employeeId: { type: 'string' },
+            otherInfo: { type: 'string' },
+            generatedRegNo: { type: 'string' },
+            fullName: { type: 'string' },
+            dob: { type: 'string', format: 'date' },
+            gender: { type: 'string' },
+            category: { type: 'string' },
+            aadharNo: { type: 'string' },
+            religion: { type: 'string' },
+            aadharPhoto: { type: 'string' },
+            candidatePhoto: { type: 'string' },
+            candidateSignature: { type: 'string' },
+            candidateLeftThumbImpression: { type: 'string' },
+            apaarId: { type: 'string' },
+            tenthMarksheet: { type: 'string' },
+            twelfthMarksheet: { type: 'string' },
+            exServicemen: { type: 'string' },
+            speciallyAbled: { type: 'string' },
+            speciallyAbledOther: { type: 'string' },
+            contactNumber: { type: 'string' },
+            alternateContactNumber: {type: 'string'},
+            emailAddress: { type: 'string' },
+            state: { type: 'string' },
+            district: { type: 'string' },
+            address: { type: 'string' },
+            pinCode: { type: 'string' },
+            fathersName: { type: 'string' },
+            fathersOccupation: {type: 'string'},
+            fathersJobRole: { type: 'string' },
+            departmentOrCompany: { type: 'string' },
+            mothersName: { type: 'string' },
+            guardianName: { type: 'string' },
+            guardianRelation: { type: 'string' },
+            guardianContactNumber: { type: 'string' },
+            highestEducationalQualification: { type: 'string' },
+            boardOrUniversity: { type: 'string' },
+            yearOfPassing: { type: 'string' },
+            subjectsStudied: { type: 'string' },
+            courseApplied: { type: 'string' },
+            preferredModeOfLearning: { type: 'string' },
+            tShirt: { type: 'boolean' },
+            itTools: { type: 'boolean' },
+            webDesigning: { type: 'boolean' },
+            tally: { type: 'boolean' },
+            gfxDtp: { type: 'boolean' },
+            python: { type: 'boolean' },
+            iot: { type: 'boolean' },
+            referralSource: { type: 'string' },
+            referralSourceOther: { type: 'string' },
+            referalName: { type: 'string' },
+            computerAccess: { type: 'string' },
+            computerAccessOther: { type: 'string' },
+            status: { type: 'string' },
+            regNo: { type: 'string' },
+            month: { type: 'string' },
+            january: { type: 'number' },
+            february: { type: 'number' },
+            march: { type: 'number' },
+            april: { type: 'number' },
+            may: { type: 'number' },
+            june: { type: 'number' },
+            july: { type: 'number' },
+            august: { type: 'number' },
+            september: { type: 'number' },
+            october: { type: 'number' },
+            november: { type: 'number' },
+            december: { type: 'number' }
+          }
         }
-
-
       },
       tags: [
         {
@@ -693,17 +732,21 @@ This API uses cookies for authentication. Follow these steps:
         {
           name: 'Admissions',
           description: 'Student admissions and course enrollment endpoints'
+        },
+        {
+          name: 'Audit',
+          description: 'Endpoints for viewing audit logs'
         }
-
       ],
     },
     paths: {
       // Combine paths from all modules
       ...userDefinitions.paths,
-      ...enquiryDefinations.paths,
+      ...enquiryDefinitions.paths,
       ...adminDefinitions.paths,
       ...logDefinitions.paths,
       ...admissionDefinitions.paths,
+      ...auditDefinitions.paths,
       ...rolePaths,
     }
   },
