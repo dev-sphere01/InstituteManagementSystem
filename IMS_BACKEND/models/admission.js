@@ -52,7 +52,7 @@ const admissionDetailsSchema = new mongoose.Schema({
   courseApplied: { type: String, required: true },
   preferredModeOfLearning: { type: String, required: true },
 
-  // Course Options
+  // Features Options
   tShirt: { type: Boolean, default: false },
   itTools: { type: Boolean, default: false },
   webDesigning: { type: Boolean, default: false },
@@ -69,7 +69,6 @@ const admissionDetailsSchema = new mongoose.Schema({
   // Computer Access
   computerAccess: { type: String },
   computerAccessOther: { type: String },
-
 
   // Status and Registration
   status: { type: String, default: 'Pending' },

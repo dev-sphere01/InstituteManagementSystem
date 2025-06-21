@@ -10,6 +10,7 @@ const PrimarySideBar = () => {
   // Main navigation items
   const mainNavItems = [
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
+    { path: '/dashboard/admission', icon: 'document-add', label: 'Admission' },
     { path: '/dashboard/reports', icon: 'document', label: 'Reports' },
     { path: '/dashboard/settings', icon: 'settings', label: 'Settings' },
     { path: '/dashboard/enquiry', icon: 'settings', label: 'Enquiry' },
@@ -65,6 +66,12 @@ const PrimarySideBar = () => {
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+      case 'document-add':
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         );
       case 'users':
@@ -189,24 +196,15 @@ const PrimarySideBar = () => {
                   <Link
                     to={item.path}
                     className={`flex items-center p-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
-                    title={item.label}
                   >
                     <span className="inline-flex">{renderIcon(item.icon)}</span>
+                    <span className="ml-3 hidden">{item.label}</span>
                   </Link>
                 </li>
               ))
             )}
           </ul>
         </nav>
-
-        {/* Sidebar footer - only shown when main footer is hidden */}
-        {!isFooterVisible && (
-          <div className="p-4 border-t border-gray-800">
-            <div className={`text-sm text-gray-400 ${isPrimarySidebarOpen ? 'block' : 'hidden'}`}>
-              <p>© {new Date().getFullYear()} Your Company</p>
-            </div>
-          </div>
-        )}
       </div>
     </aside>
   );

@@ -38,6 +38,7 @@ import Session from './pages/masters/session/Session.jsx'
 
 // Student Pages
 import Student from './pages/student/Student.jsx'
+import Admission from './pages/admission/Admission.jsx'
 
 
 function App() {
@@ -80,6 +81,9 @@ function App() {
 
                 {/* Enquiry Routes */}
                 <Route path="enquiry" element={<EnquiryForm />} />
+
+                {/* Admission Routes */}
+                <Route path="admission" element={<Admission />} />
               </Route>
 
               {/* 404 route */}
