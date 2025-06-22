@@ -4,7 +4,7 @@ import BasicInfo from './components/BasicInfo'
 import Contact from './components/Contact'
 import Document from './components/Documents'
 import Review from './components/Review'
-import Educational from './components/Educational'
+import Education from './components/Education'
 
 const Admission = () => {
   return (
@@ -14,7 +14,7 @@ const Admission = () => {
     <BasicInfo/>
     <Contact/>
     <Document/>
-    <Educational/>
+    <Education/>
     <Review/>
     </>
   )
