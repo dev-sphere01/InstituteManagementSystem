@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useEnquiryStore from '../../../../store/useEnquiryStore';
 
 const EnquiryTable = () => {
@@ -17,6 +18,7 @@ const EnquiryTable = () => {
     totalPages,
     total
   } = useEnquiryStore();
+  const navigate = useNavigate();
 
   // Debounce fetch to avoid race conditions
   const debounceRef = useRef();
@@ -35,6 +37,9 @@ const EnquiryTable = () => {
 
   // Helper to show fallback for missing/empty
   const show = (val) => (val && val.length !== 0 ? val : '-');
+
+  // Calculate serial number for current page
+  const getSerial = (idx) => (page - 1) * limit + idx + 1;
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
@@ -69,6 +74,7 @@ const EnquiryTable = () => {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">#</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contact</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Course</th>
@@ -79,11 +85,12 @@ const EnquiryTable = () => {
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {safeEnquiries.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-8 text-gray-400">No enquiries found.</td>
+                  <td colSpan={5} className="text-center py-8 text-gray-400">No enquiries found.</td>
                 </tr>
               ) : (
-                safeEnquiries.map(enq => (
-                  <tr key={enq._id}>
+                safeEnquiries.map((enq, idx) => (
+                  <tr key={enq._id} className="cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700" onClick={() => navigate(`/dashboard/enquiry/details/${enq._id}`, { state: { enquiry: enq } })}>
+                    <td className="px-4 py-2">{getSerial(idx)}</td>
                     <td className="px-4 py-2">{show(enq.personalInfo?.fullName)}</td>
                     <td className="px-4 py-2">{show(enq.contactInfo?.contactNumber)}</td>
                     <td className="px-4 py-2">{show((enq.coursePreferences?.interestedCourses && enq.coursePreferences.interestedCourses.length > 0) ? enq.coursePreferences.interestedCourses.join(', ') : '')}</td>

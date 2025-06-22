@@ -16,6 +16,7 @@ import NotFound from './pages/NotFound'
 // Enquiry Pages
 import EnquiryForm from './pages/enquiry/addEnquiry/EnquiryForm.jsx'
 import ViewEnquiry from './pages/enquiry/viewEnquiry/ViewEnquiry.jsx'
+import EnquiryDetails from './pages/enquiry/viewEnquiry/components/EnquiryDetails.jsx'
 
 // Auth Pages
 import Login from './pages/auth/Login.jsx'
@@ -83,6 +84,7 @@ function App() {
                 {/* Enquiry Routes */}
                 <Route path="enquiry/create" element={<EnquiryForm />} />
                 <Route path="enquiry/view" element={<ViewEnquiry />} />
+                <Route path="enquiry/details/:id" element={<EnquiryDetails />} />
 
                 {/* Admission Routes */}
                 <Route path="admission" element={<Admission />} />
