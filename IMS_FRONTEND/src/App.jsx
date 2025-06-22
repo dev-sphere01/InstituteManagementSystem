@@ -14,7 +14,7 @@ import Home from './pages/Home'
 import NotFound from './pages/NotFound'
 
 // Enquiry Pages
-import EnquiryForm from './pages/enquiry/EnquiryForm.jsx'
+import EnquiryForm from './pages/enquiry/addEnquiry/EnquiryForm.jsx'
 
 // Auth Pages
 import Login from './pages/auth/Login.jsx'
@@ -38,7 +38,7 @@ import Session from './pages/masters/session/Session.jsx'
 
 // Student Pages
 import Student from './pages/student/Student.jsx'
-import Admission from './pages/admission/Admission.jsx'
+import Admission from './pages/admission/createAdmissions/Admission.jsx'
 
 
 function App() {

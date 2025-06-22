@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useThemeStore } from '../../store';
-import { useNotification } from '../../services/NotificationService';
-import API from '../../services/API';
+import { useThemeStore } from '../../../store';
+import { useNotification } from '../../../services/NotificationService';
+import API from '../../../services/API';
 
 // Form section imports
 import Registration from './components/Registration';
