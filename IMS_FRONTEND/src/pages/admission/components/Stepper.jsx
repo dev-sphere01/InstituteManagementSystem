@@ -2,47 +2,49 @@ import React from 'react';
 import { useThemeStore } from '../../../store';
 
 const Stepper = ({ currentStep, steps }) => {
-  const { isDarkMode } = useThemeStore();
+  const { isDarkMode, colors } = useThemeStore();
+  const accent = isDarkMode ? '#A78BFA' : '#8B5CF6'; // theme accent purple
+  const base = isDarkMode ? '#374151' : '#E5E7EB'; // gray for inactive
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => (
-          <React.Fragment key={index}>
-            <div className="flex items-center">
+    <div className="flex items-center justify-between w-full">
+      {steps.map((label, idx) => {
+        const stepNum = idx + 1;
+        const isCompleted = stepNum < currentStep;
+        const isActive = stepNum === currentStep;
+        return (
+          <div key={label} className="flex-1 flex items-center min-w-0">
+            {/* Step Circle */}
+            <div className="flex flex-col items-center min-w-0">
               <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full font-bold ${
-                  index + 1 <= currentStep 
-                    ? (isDarkMode ? 'bg-purple-600 text-white' : 'bg-purple-600 text-white') 
-                    : (isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600')
-                }`}
+                className={`flex items-center justify-center rounded-full border-2 transition-colors duration-200 shadow-sm ${isCompleted ? '' : isActive ? 'ring-2 ring-purple-400' : ''}`}
+                style={{
+                  width: 32,
+                  height: 32,
+                  background: isCompleted ? accent : isActive ? '#fff' : base,
+                  borderColor: isCompleted || isActive ? accent : base,
+                  color: isCompleted ? '#fff' : isActive ? accent : base,
+                  fontWeight: 700,
+                  fontSize: 18,
+                }}
               >
-                {index + 1}
+                {isCompleted ? (
+                  <svg className="w-5 h-5" fill="none" stroke="#fff" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <span>{stepNum}</span>
+                )}
               </div>
-              <div className="ml-4">
-                <div
-                  className={`text-sm font-medium ${
-                    index + 1 <= currentStep 
-                      ? (isDarkMode ? 'text-purple-400' : 'text-purple-600') 
-                      : (isDarkMode ? 'text-gray-500' : 'text-gray-500')
-                  }`}
-                >
-                  {step}
-                </div>
-              </div>
+              <span className={`mt-2 text-xs font-semibold truncate text-center ${isActive ? 'text-purple-500' : isCompleted ? 'text-purple-400' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{label}</span>
             </div>
-            {index < steps.length - 1 && (
-              <div
-                className={`flex-auto border-t-2 transition-all duration-500 ease-in-out ${
-                  index + 1 < currentStep 
-                    ? (isDarkMode ? 'border-purple-500' : 'border-purple-600') 
-                    : (isDarkMode ? 'border-gray-700' : 'border-gray-300')
-                }`}
-              ></div>
+            {/* Connector */}
+            {idx !== steps.length - 1 && (
+              <div style={{ height: 2, background: isCompleted ? accent : base }} className="flex-1 mx-1 rounded-full"></div>
             )}
-          </React.Fragment>
-        ))}
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

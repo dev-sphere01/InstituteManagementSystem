@@ -43,16 +43,18 @@ const Admission = () => {
   };
 
   return (
-    <div className={`container mx-auto p-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-        <h1 className={titleClass}>Admission Form</h1>
-        <div className="max-w-4xl mx-auto">
-            <Stepper currentStep={step} steps={steps} />
-            <div className="mt-8">
-                {renderStep()}
-            </div>
+    <div className={`min-h-screen flex flex-col items-center justify-start ${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-gray-50 text-gray-800'}`}>
+      <div className="w-full flex flex-col items-center pt-10 pb-6 bg-transparent">
+        <h1 className="text-3xl font-extrabold mb-2 text-purple-500 text-center tracking-tight">Admission Form</h1>
+        <div className="w-full max-w-3xl">
+          <Stepper currentStep={step} steps={steps} />
         </div>
+      </div>
+      <div className={`w-full max-w-4xl mx-auto p-6 rounded-xl shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}> 
+        {renderStep()}
+      </div>
     </div>
-  ); 
+  );
 };
 
 export default Admission;
