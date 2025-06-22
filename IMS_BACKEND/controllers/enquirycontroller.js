@@ -10,11 +10,58 @@ exports.createEnquiry = async (req, res, next) => {
   }
 };
 
-// Get All Enquiries
+// Get All Enquiries with search, filters, pagination
 exports.getAllEnquiries = async (req, res, next) => {
   try {
-    const enquiries = await Enquiry.find();
-    res.status(200).json({ success: true, data: enquiries });
+    const {
+      search = '',
+      course = '',
+      dateFrom = '',
+      dateTo = '',
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = req.query;
+
+    const query = {};
+    // Search by name or contact
+    if (search) {
+      query.$or = [
+        { 'personalInfo.fullName': { $regex: search, $options: 'i' } },
+        { 'contactInfo.contactNumber': { $regex: search, $options: 'i' } },
+      ];
+    }
+    // Filter by course
+    if (course) {
+      query['coursePreferences.interestedCourses'] = course;
+    }
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      query.createdAt = {};
+      if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
+      if (dateTo) query.createdAt.$lte = new Date(dateTo);
+    }
+
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+
+    const [enquiries, total] = await Promise.all([
+      Enquiry.find(query)
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Enquiry.countDocuments(query),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: enquiries,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     next(error);
   }

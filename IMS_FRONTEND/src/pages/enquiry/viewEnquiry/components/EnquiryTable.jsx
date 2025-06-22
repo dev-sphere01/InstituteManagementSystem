@@ -2,15 +2,30 @@ import React, { useEffect } from 'react';
 import useEnquiryStore from '../../../../store/useEnquiryStore';
 
 const EnquiryTable = () => {
-  const { enquiries, loading, error, fetchEnquiries, filters, setFilters } = useEnquiryStore();
+  const {
+    enquiries,
+    loading,
+    error,
+    fetchEnquiries,
+    filters,
+    setFilters,
+    page,
+    setPage,
+    limit,
+    setLimit,
+    totalPages,
+    total
+  } = useEnquiryStore();
 
   useEffect(() => {
     fetchEnquiries();
     // eslint-disable-next-line
-  }, [filters]);
+  }, [filters, page, limit]);
 
-  // Ensure enquiries is always an array
   const safeEnquiries = Array.isArray(enquiries) ? enquiries : [];
+
+  // Helper to show fallback for missing/empty
+  const show = (val) => (val && val.length !== 0 ? val : '-');
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
@@ -29,6 +44,7 @@ const EnquiryTable = () => {
       ) : error ? (
         <div className="text-center text-red-500 py-8">{error}</div>
       ) : (
+        <>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
@@ -48,16 +64,48 @@ const EnquiryTable = () => {
               ) : (
                 safeEnquiries.map(enq => (
                   <tr key={enq._id}>
-                    <td className="px-4 py-2">{enq.personalInfo?.fullName}</td>
-                    <td className="px-4 py-2">{enq.contactInfo?.contactNumber}</td>
-                    <td className="px-4 py-2">{enq.coursePreferences?.interestedCourses?.join(', ')}</td>
-                    <td className="px-4 py-2">{new Date(enq.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-2">{show(enq.personalInfo?.fullName)}</td>
+                    <td className="px-4 py-2">{show(enq.contactInfo?.contactNumber)}</td>
+                    <td className="px-4 py-2">{show((enq.coursePreferences?.interestedCourses && enq.coursePreferences.interestedCourses.length > 0) ? enq.coursePreferences.interestedCourses.join(', ') : '')}</td>
+                    <td className="px-4 py-2">{enq.createdAt ? new Date(enq.createdAt).toLocaleDateString() : '-'}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+        {/* Pagination Controls */}
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            Showing page {page} of {totalPages} ({total} enquiries)
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 rounded border bg-gray-100 dark:bg-gray-700 disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+              className="px-3 py-1 rounded border bg-gray-100 dark:bg-gray-700 disabled:opacity-50"
+            >
+              Next
+            </button>
+            <select
+              value={limit}
+              onChange={e => setLimit(Number(e.target.value))}
+              className="ml-2 px-2 py-1 rounded border bg-gray-100 dark:bg-gray-700"
+            >
+              {[10, 20, 50, 100].map(opt => (
+                <option key={opt} value={opt}>{opt} / page</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        </>
       )}
     </div>
   );
