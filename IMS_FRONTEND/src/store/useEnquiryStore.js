@@ -21,20 +21,32 @@ const useEnquiryStore = create(
     setPage: (page) => set({ page }),
     setLimit: (limit) => set({ limit }),
     fetchEnquiries: async (params = {}) => {
+      console.log('fetchEnquiries called');
       set({ loading: true, error: null });
       try {
         const { filters, page, limit } = get();
-        // Remove empty filters so backend returns all data if no filter is set
         const cleanFilters = Object.fromEntries(
-          Object.entries(filters).filter(([_, v]) => v && v !== '')
+          Object.entries(filters).filter(([_, v]) => v !== undefined && v !== null && v !== '')
         );
-        const res = await API.get('/enquiry', {
-          params: { ...cleanFilters, page, limit, ...params },
-        });
+        const requestParams = { ...cleanFilters, page, limit, ...params };
+        console.log('API GET /enquiry params:', requestParams);
+        const res = await API.get('/enquiry', { params: requestParams });
+        console.log('Full API response:', res.data);
+        // Defensive: ensure enquiries is always an array
+        let enquiriesArr = [];
+        if (Array.isArray(res.data?.data)) {
+          enquiriesArr = res.data.data;
+        } else if (Array.isArray(res.data)) {
+          enquiriesArr = res.data;
+          console.warn('API response missing .data, using root array:', res.data);
+        } else {
+          console.error('API response does not contain an array of enquiries:', res.data);
+        }
+        console.log('Setting enquiries to:', enquiriesArr);
         set({
-          enquiries: res.data.data,
-          total: res.data.total,
-          totalPages: res.data.totalPages,
+          enquiries: enquiriesArr,
+          total: res.data.total || 0,
+          totalPages: res.data.totalPages || 1,
           loading: false,
         });
       } catch (error) {

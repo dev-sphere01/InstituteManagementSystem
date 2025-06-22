@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import useEnquiryStore from '../../../../store/useEnquiryStore';
 
 const EnquiryTable = () => {
+  const storeInstance = useEnquiryStore;
   const {
     enquiries,
     loading,
@@ -17,12 +18,20 @@ const EnquiryTable = () => {
     total
   } = useEnquiryStore();
 
+  // Debounce fetch to avoid race conditions
+  const debounceRef = useRef();
   useEffect(() => {
-    fetchEnquiries();
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchEnquiries();
+    }, 200);
+    return () => clearTimeout(debounceRef.current);
     // eslint-disable-next-line
-  }, [filters, page, limit]);
+  }, [filters.search, page, limit]);
 
   const safeEnquiries = Array.isArray(enquiries) ? enquiries : [];
+  console.log('Table rendering enquiries:', safeEnquiries);
+  console.log('Zustand store instance:', storeInstance);
 
   // Helper to show fallback for missing/empty
   const show = (val) => (val && val.length !== 0 ? val : '-');
@@ -37,6 +46,17 @@ const EnquiryTable = () => {
           onChange={e => setFilters({ search: e.target.value })}
           className="border px-3 py-2 rounded w-64 dark:bg-gray-700 dark:text-white"
         />
+        <button
+          onClick={() => {
+            fetchEnquiries();
+            setTimeout(() => {
+              console.log('Manual refresh, enquiries:', useEnquiryStore.getState().enquiries);
+            }, 500);
+          }}
+          className="ml-2 px-3 py-2 bg-blue-500 text-white rounded"
+        >
+          Refresh
+        </button>
         {/* Add more filters here as needed */}
       </div>
       {loading ? (
