@@ -12,6 +12,7 @@ const PrimarySideBar = () => {
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
     { path: '/dashboard/reports', icon: 'document', label: 'Reports' },
     { path: '/dashboard/settings', icon: 'settings', label: 'Settings' },
+    { path: '/dashboard/enquiry', icon: 'settings', label: 'Enquiry' },
   ];
 
   // Masters navigation items

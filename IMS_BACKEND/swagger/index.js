@@ -9,6 +9,8 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const userDefinitions = require('./definitions/userDefinitions');
 const adminDefinitions = require('./definitions/adminDefinitions');
 const logDefinitions = require('./definitions/logDefinitions');
+const enquiryDefinations = require('./definitions/enquiryDefinations');
+const admissionDefinitions = require('./definitions/admissionDefinitions')
 
 // Import Swagger paths
 const rolePaths = require('./paths/rolePaths');
@@ -525,6 +527,141 @@ This API uses cookies for authentication. Follow these steps:
           required: ['_id', 'name', 'email', 'role', 'isActive']
         },
 
+        // Enquiry schemas
+        Enquiry: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Enquiry ID',
+            },
+            userId: {
+              type: 'string',
+              description: 'ID of the user who made the enquiry',
+            },
+            productId: {
+              type: 'string',
+              description: 'ID of the product related to the enquiry',
+            },
+            message: {
+              type: 'string',
+              description: 'Enquiry message',
+            },
+            status: {
+              type: 'string',
+              enum: ['open', 'in_progress', 'closed'],
+              description: 'Status of the enquiry',
+              default: 'open'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Enquiry creation date',
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Enquiry last update date',
+            }
+          },
+          required: ['_id', 'userId', 'productId', 'message', 'status']
+        },
+
+        EnquiryResponse: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Enquiry ID',
+              example: '507f1f77bcf86cd799439011'
+            },
+            userId: {
+              type: 'string',
+              description: 'ID of the user who made the enquiry',
+              example: '507f1f77bcf86cd799439012'
+            },
+            productId: {
+              type: 'string',
+              description: 'ID of the product related to the enquiry',
+              example: '507f1f77bcf86cd799439013'
+            },
+            message: {
+              type: 'string',
+              description: 'Enquiry message',
+              example: 'I am interested in this product. Can you provide more details?'
+            },
+            status: {
+              type: 'string',
+              enum: ['open', 'in_progress', 'closed'],
+              description: 'Status of the enquiry',
+              example: 'open'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Enquiry creation date',
+              example: '2024-01-01T00:00:00.000Z'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Enquiry last update date',
+              example: '2024-01-01T00:00:00.000Z'
+            }
+          },
+          required: ['_id', 'userId', 'productId', 'message', 'status']
+        },
+
+        EnquiryUpdate: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['open', 'in_progress', 'closed'],
+              description: 'Status of the enquiry',
+            },
+            message: {
+              type: 'string',
+              description: 'Updated enquiry message',
+            },
+          },
+          required: ['status']
+        },
+
+
+        Admission: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string',
+              description: 'Admission ID'
+            },
+            studentId: {
+              type: 'string',
+              description: 'ID of the student'
+            },
+            courseId: {
+              type: 'string',
+              description: 'ID of the course'
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'approved', 'rejected'],
+              description: 'Admission status'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Date of admission creation'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Date of last update'
+            }
+          },
+          required: ['studentId', 'courseId', 'status']
+        }
 
 
       },
@@ -549,13 +686,24 @@ This API uses cookies for authentication. Follow these steps:
           name: 'Logs',
           description: 'System and audit logs endpoints',
         },
+        {
+          name: 'Enquiries',
+          description: 'Product enquiry management endpoints',
+        },
+        {
+          name: 'Admissions',
+          description: 'Student admissions and course enrollment endpoints'
+        }
+
       ],
     },
     paths: {
       // Combine paths from all modules
       ...userDefinitions.paths,
+      ...enquiryDefinations.paths,
       ...adminDefinitions.paths,
       ...logDefinitions.paths,
+      ...admissionDefinitions.paths,
       ...rolePaths,
     }
   },
