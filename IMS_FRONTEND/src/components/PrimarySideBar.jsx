@@ -6,14 +6,15 @@ const PrimarySideBar = () => {
   const { isPrimarySidebarOpen, isFooterVisible } = useSidebarStore();
   const location = useLocation();
   const [isMastersOpen, setIsMastersOpen] = useState(false);
+  const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
-  // Main navigation items
+  // Main navigation items (remove flat Enquiry)
   const mainNavItems = [
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
     { path: '/dashboard/admission', icon: 'document-add', label: 'Admission' },
     { path: '/dashboard/reports', icon: 'document', label: 'Reports' },
     { path: '/dashboard/settings', icon: 'settings', label: 'Settings' },
-    { path: '/dashboard/enquiry', icon: 'settings', label: 'Enquiry' },
+    // Removed Enquiry from here
   ];
 
   // Masters navigation items
@@ -23,6 +24,12 @@ const PrimarySideBar = () => {
     { path: '/dashboard/courses', icon: 'book', label: 'Courses' },
     { path: '/dashboard/batches', icon: 'collection', label: 'Batches' },
     { path: '/dashboard/sessions', icon: 'calendar', label: 'Sessions' },
+  ];
+
+  // Enquiry navigation items
+  const enquiryNavItems = [
+    { path: '/dashboard/enquiry/create', icon: 'document-add', label: 'New' },
+    { path: '/dashboard/enquiry/view', icon: 'document', label: 'All' },
   ];
 
   // Function to check if a path is active
@@ -40,10 +47,22 @@ const PrimarySideBar = () => {
     return mastersNavItems.some(item => isActive(item.path));
   };
 
+  // Function to check if any enquiry route is active
+  const isEnquiryActive = () => {
+    return enquiryNavItems.some(item => isActive(item.path));
+  };
+
   // Auto-expand masters if any masters route is active
   React.useEffect(() => {
     if (isMastersActive()) {
       setIsMastersOpen(true);
+    }
+  }, [location.pathname]);
+
+  // Auto-expand enquiry if any enquiry route is active
+  React.useEffect(() => {
+    if (isEnquiryActive()) {
+      setIsEnquiryOpen(true);
     }
   }, [location.pathname]);
 
@@ -155,6 +174,53 @@ const PrimarySideBar = () => {
                 </Link>
               </li>
             ))}
+
+            {/* Enquiry section */}
+            {isPrimarySidebarOpen ? (
+              <li>
+                <button
+                  onClick={() => setIsEnquiryOpen(!isEnquiryOpen)}
+                  className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${isEnquiryActive() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                >
+                  <div className="flex items-center">
+                    <span className="inline-flex">{renderIcon('folder')}</span>
+                    <span className="ml-3">Enquiry</span>
+                  </div>
+                  <span className={`transition-transform duration-200 ${isEnquiryOpen ? 'rotate-180' : ''}`}>
+                    {renderIcon('chevron')}
+                  </span>
+                </button>
+                {/* Enquiry submenu for expanded sidebar */}
+                {isEnquiryOpen && (
+                  <ul className="mt-2 space-y-1">
+                    {enquiryNavItems.map((item) => (
+                      <li key={item.path}>
+                        <Link
+                          to={item.path}
+                          className={`flex items-center p-2 pl-8 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                        >
+                          <span className="inline-flex">{renderIcon(item.icon)}</span>
+                          <span className="ml-3">{item.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ) : (
+              /* Enquiry items as individual icons when sidebar is collapsed */
+              enquiryNavItems.map((item) => (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center p-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                  >
+                    <span className="inline-flex">{renderIcon(item.icon)}</span>
+                    <span className="ml-3 hidden">{item.label}</span>
+                  </Link>
+                </li>
+              ))
+            )}
 
             {/* Masters section */}
             {isPrimarySidebarOpen ? (

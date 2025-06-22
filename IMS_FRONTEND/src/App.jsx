@@ -15,6 +15,7 @@ import NotFound from './pages/NotFound'
 
 // Enquiry Pages
 import EnquiryForm from './pages/enquiry/addEnquiry/EnquiryForm.jsx'
+import ViewEnquiry from './pages/enquiry/viewEnquiry/ViewEnquiry.jsx'
 
 // Auth Pages
 import Login from './pages/auth/Login.jsx'
@@ -80,7 +81,8 @@ function App() {
                 <Route path="sessions" element={<Session />} />
 
                 {/* Enquiry Routes */}
-                <Route path="enquiry" element={<EnquiryForm />} />
+                <Route path="enquiry/create" element={<EnquiryForm />} />
+                <Route path="enquiry/view" element={<ViewEnquiry />} />
 
                 {/* Admission Routes */}
                 <Route path="admission" element={<Admission />} />
