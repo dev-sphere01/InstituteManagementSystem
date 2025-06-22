@@ -52,7 +52,7 @@ const Admission = () => {
             </div>
         </div>
     </div>
-  );
+  ); 
 };
 
 export default Admission;
