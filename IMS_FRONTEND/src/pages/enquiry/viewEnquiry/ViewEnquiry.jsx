@@ -3,7 +3,7 @@ import EnquiryTable from './components/EnquiryTable'
 
 const ViewEnquiry = () => {
   return (
-    <div>This component will be used to show all the enquires in a table.
+    <div>
         <EnquiryTable/>
     </div>
   )
