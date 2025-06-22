@@ -39,7 +39,9 @@ const Role = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
             Role Management
+            </span>
           </h1>
           <p className={`mt-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Manage system roles and permissions
