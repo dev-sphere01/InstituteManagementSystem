@@ -242,6 +242,12 @@ const EnquiryForm = () => {
   // Sample ObjectIds for demo/testing
   const SAMPLE_BOARD_ID = '60d21b4667d0d8992e610c85'; // Replace with a real ObjectId from your DB
   const SAMPLE_SUBJECT_IDS = ['60d21b4967d0d8992e610c86', '60d21b4967d0d8992e610c87']; // Replace with real ObjectIds
+  // Sample university ObjectIds for demo/testing
+  const UNIVERSITY_ID_MAP = {
+    delhi: '665f2b1e2c8b4e3a2c1d4e5f',
+    mumbai: '665f2b1e2c8b4e3a2c1d4e60',
+    bangalore: '665f2b1e2c8b4e3a2c1d4e61',
+  };
 
   // Transform flat formData to backend structure
   const transformFormData = (formData) => ({
@@ -268,7 +274,7 @@ const EnquiryForm = () => {
     educationInfo: {
       qualification: formData.qualification,
       boardId: formData.board ? SAMPLE_BOARD_ID : undefined,
-      universityId: formData.university || undefined,
+      universityId: formData.university ? UNIVERSITY_ID_MAP[formData.university] : undefined,
       yearOfPassing: formData.passingYear,
       subjectIds: formData.subjects && formData.subjects.length > 0 ? SAMPLE_SUBJECT_IDS : [],
     },
