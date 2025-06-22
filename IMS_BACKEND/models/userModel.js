@@ -53,6 +53,40 @@ const userSchema = new mongoose.Schema({
         type: Date
     },
 
+    // Last activity timestamp (for tracking active users)
+    lastActivity: {
+        type: Date,
+        default: Date.now,
+        index: true
+    },
+
+    // Online status
+    isOnline: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
+
+    // Current session information
+    currentSession: {
+        sessionId: String,
+        ipAddress: String,
+        userAgent: String,
+        loginTime: Date,
+        lastActivity: Date
+    },
+
+    // Session history (keep last 10 sessions)
+    sessionHistory: [{
+        sessionId: String,
+        ipAddress: String,
+        userAgent: String,
+        loginTime: Date,
+        logoutTime: Date,
+        duration: Number, // in minutes
+        _id: false
+    }],
+
     // Login attempts tracking
     loginAttempts: {
         type: Number,
@@ -159,6 +193,119 @@ userSchema.methods.resetLoginAttempts = function() {
         $unset: { loginAttempts: 1, lockUntil: 1 },
         $set: { lastLogin: new Date() }
     });
+};
+
+// Start a new session
+userSchema.methods.startSession = function(sessionData) {
+    const sessionId = require('crypto').randomBytes(32).toString('hex');
+    const now = new Date();
+
+    // Add current session to history if it exists
+    if (this.currentSession && this.currentSession.sessionId) {
+        const sessionDuration = Math.floor((now - this.currentSession.loginTime) / (1000 * 60)); // in minutes
+
+        this.sessionHistory.unshift({
+            sessionId: this.currentSession.sessionId,
+            ipAddress: this.currentSession.ipAddress,
+            userAgent: this.currentSession.userAgent,
+            loginTime: this.currentSession.loginTime,
+            logoutTime: now,
+            duration: sessionDuration
+        });
+
+        // Keep only last 10 sessions
+        if (this.sessionHistory.length > 10) {
+            this.sessionHistory = this.sessionHistory.slice(0, 10);
+        }
+    }
+
+    // Set new current session
+    this.currentSession = {
+        sessionId: sessionId,
+        ipAddress: sessionData.ipAddress,
+        userAgent: sessionData.userAgent,
+        loginTime: now,
+        lastActivity: now
+    };
+
+    this.isOnline = true;
+    this.lastActivity = now;
+    this.lastLogin = now;
+
+    return this.save();
+};
+
+// Update user activity
+userSchema.methods.updateActivity = function() {
+    const now = new Date();
+    this.lastActivity = now;
+    this.isOnline = true;
+
+    if (this.currentSession) {
+        this.currentSession.lastActivity = now;
+    }
+
+    return this.updateOne({
+        $set: {
+            lastActivity: now,
+            isOnline: true,
+            'currentSession.lastActivity': now
+        }
+    });
+};
+
+// End current session
+userSchema.methods.endSession = function() {
+    const now = new Date();
+
+    if (this.currentSession && this.currentSession.sessionId) {
+        const sessionDuration = Math.floor((now - this.currentSession.loginTime) / (1000 * 60)); // in minutes
+
+        this.sessionHistory.unshift({
+            sessionId: this.currentSession.sessionId,
+            ipAddress: this.currentSession.ipAddress,
+            userAgent: this.currentSession.userAgent,
+            loginTime: this.currentSession.loginTime,
+            logoutTime: now,
+            duration: sessionDuration
+        });
+
+        // Keep only last 10 sessions
+        if (this.sessionHistory.length > 10) {
+            this.sessionHistory = this.sessionHistory.slice(0, 10);
+        }
+    }
+
+    this.currentSession = undefined;
+    this.isOnline = false;
+
+    return this.save();
+};
+
+// Check if user is currently active (active within last 5 minutes)
+userSchema.methods.isCurrentlyActive = function() {
+    if (!this.lastActivity) return false;
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    return this.lastActivity > fiveMinutesAgo && this.isOnline;
+};
+
+// Get user's current status
+userSchema.methods.getActivityStatus = function() {
+    if (!this.lastActivity) return 'never_active';
+
+    const now = Date.now();
+    const lastActivityTime = this.lastActivity.getTime();
+    const timeDiff = now - lastActivityTime;
+
+    if (this.isOnline && timeDiff < 5 * 60 * 1000) { // 5 minutes
+        return 'online';
+    } else if (timeDiff < 30 * 60 * 1000) { // 30 minutes
+        return 'away';
+    } else if (timeDiff < 24 * 60 * 60 * 1000) { // 24 hours
+        return 'offline';
+    } else {
+        return 'inactive';
+    }
 };
 
 

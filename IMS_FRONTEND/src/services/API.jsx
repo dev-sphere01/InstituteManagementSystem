@@ -119,13 +119,15 @@ const API = {
 
   // Role management endpoints
   roles: {
-    getAll: () => instance.get('/roles'),
+    getAll: (params = {}) => instance.get('/roles', { params }),
     getById: (id) => instance.get(`/roles/${id}`),
     create: (roleData) => instance.post('/roles', roleData),
     update: (id, roleData) => instance.put(`/roles/${id}`, roleData),
     delete: (id) => instance.delete(`/roles/${id}`),
     getPermissions: () => instance.get('/roles/permissions'),
-    updatePermissions: (id, permissions) => instance.put(`/roles/${id}/permissions`, { permissions })
+    updatePermissions: (id, permissions) => instance.put(`/roles/${id}/permissions`, { permissions }),
+    search: (params = {}) => instance.get('/roles/search', { params }),
+    getStats: () => instance.get('/roles/stats')
   },
 
   // Log management endpoints
