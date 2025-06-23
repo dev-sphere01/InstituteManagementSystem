@@ -1,8 +1,24 @@
 import React from 'react';
 import { useThemeStore } from '../../../../store';
 
-const AllBatches = ({ batches, onEditBatch, onDeleteBatch }) => {
+const AllBatches = ({ batches, onEditBatch, onDeleteBatch, loading, error }) => {
   const { isDarkMode } = useThemeStore();
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <span className="text-blue-500 text-lg font-semibold animate-pulse">Loading batches...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <span className="text-red-500 text-lg font-semibold">{error}</span>
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4`}>

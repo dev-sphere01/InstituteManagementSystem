@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
+import API from '../../../../services/API';
+import { useNotification } from '../../../../services/NotificationService';
 
-const AddBatch = ({ onBatchCreated, onCancel }) => {
+const AddBatch = ({ onBatchCreated, onCancel, loading: parentLoading }) => {
   const { isDarkMode } = useThemeStore();
+  const notify = useNotification();
   const [form, setForm] = useState({
     centreCode: '',
     batchTiming: '',
@@ -29,14 +32,20 @@ const AddBatch = ({ onBatchCreated, onCancel }) => {
     if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: '' });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      onBatchCreated(form);
+    try {
+      const { _id, createdAt, updatedAt, __v, ...batchData } = form;
+      const res = await API.post('/batches', batchData);
+      onBatchCreated(res.data);
+      notify('Batch added successfully', 'success');
+    } catch (err) {
+      notify(err.response?.data?.message || 'Failed to add batch', 'error');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
 
   return (
@@ -53,6 +62,7 @@ const AddBatch = ({ onBatchCreated, onCancel }) => {
               onChange={handleChange}
               className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.centreCode ? 'border-red-500' : isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
               placeholder="Enter centre code"
+              disabled={isSubmitting || parentLoading}
             />
             {errors.centreCode && <p className="mt-1 text-sm text-red-500">{errors.centreCode}</p>}
           </div>
@@ -65,6 +75,7 @@ const AddBatch = ({ onBatchCreated, onCancel }) => {
               onChange={handleChange}
               className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.batchTiming ? 'border-red-500' : isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
               placeholder="e.g. 9:00 AM - 11:00 AM"
+              disabled={isSubmitting || parentLoading}
             />
             {errors.batchTiming && <p className="mt-1 text-sm text-red-500">{errors.batchTiming}</p>}
           </div>
@@ -79,6 +90,7 @@ const AddBatch = ({ onBatchCreated, onCancel }) => {
               onChange={handleChange}
               className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.subject ? 'border-red-500' : isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
               placeholder="Enter subject"
+              disabled={isSubmitting || parentLoading}
             />
             {errors.subject && <p className="mt-1 text-sm text-red-500">{errors.subject}</p>}
           </div>
@@ -91,6 +103,7 @@ const AddBatch = ({ onBatchCreated, onCancel }) => {
               onChange={handleChange}
               className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.course ? 'border-red-500' : isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
               placeholder="Enter course"
+              disabled={isSubmitting || parentLoading}
             />
             {errors.course && <p className="mt-1 text-sm text-red-500">{errors.course}</p>}
           </div>
@@ -105,6 +118,7 @@ const AddBatch = ({ onBatchCreated, onCancel }) => {
               onChange={handleChange}
               className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.teacherName ? 'border-red-500' : isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
               placeholder="Enter teacher name"
+              disabled={isSubmitting || parentLoading}
             />
             {errors.teacherName && <p className="mt-1 text-sm text-red-500">{errors.teacherName}</p>}
           </div>
@@ -114,15 +128,16 @@ const AddBatch = ({ onBatchCreated, onCancel }) => {
             type="button"
             onClick={onCancel}
             className={`px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isDarkMode ? 'border-gray-600 text-gray-300 bg-gray-700 hover:bg-gray-600' : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'}`}
+            disabled={isSubmitting || parentLoading}
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
-            className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+            disabled={isSubmitting || parentLoading}
+            className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSubmitting || parentLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
           >
-            {isSubmitting ? 'Adding...' : 'Add Batch'}
+            {isSubmitting || parentLoading ? 'Adding...' : 'Add Batch'}
           </button>
         </div>
       </form>

@@ -1,39 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useThemeStore } from '../../../store';
 import AddBatch from './components/AddBatch';
 import AllBatches from './components/AllBatches';
 import EditBatch from './components/EditBatch';
-
-// Mock data for demonstration
-const initialBatches = [
-  {
-    _id: '1',
-    centreCode: 'C001',
-    batchTiming: '9:00 AM - 11:00 AM',
-    subject: 'Mathematics',
-    course: 'BSc',
-    teacherName: 'John Doe',
-  },
-  {
-    _id: '2',
-    centreCode: 'C002',
-    batchTiming: '11:00 AM - 1:00 PM',
-    subject: 'Physics',
-    course: 'BSc',
-    teacherName: 'Jane Smith',
-  },
-];
+import API from '../../../services/API';
+import { useNotification } from '../../../services/NotificationService';
 
 const Batch = () => {
   const { isDarkMode } = useThemeStore();
+  const notify = useNotification();
   const [activeTab, setActiveTab] = useState('all');
-  const [batches, setBatches] = useState(initialBatches);
+  const [batches, setBatches] = useState([]);
   const [editingBatch, setEditingBatch] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const tabs = [
-    { id: 'all', label: 'All Batches', icon: '📋' },
-    { id: 'add', label: 'Add Batch', icon: '➕' },
-  ];
+  const fetchBatches = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await API.get('/batches');
+      setBatches(res.data);
+    } catch (err) {
+      setError('Failed to fetch batches');
+      notify('Failed to fetch batches', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBatches();
+    // eslint-disable-next-line
+  }, []);
 
   const handleEditBatch = (batch) => {
     setEditingBatch(batch);
@@ -45,20 +44,52 @@ const Batch = () => {
     setActiveTab('all');
   };
 
-  const handleBatchCreated = (newBatch) => {
-    setBatches([...batches, { ...newBatch, _id: (batches.length + 1).toString() }]);
-    setActiveTab('all');
+  const handleBatchCreated = async (newBatch) => {
+    try {
+      setLoading(true);
+      const res = await API.post('/batches', newBatch);
+      setBatches([...batches, res.data]);
+      setActiveTab('all');
+      notify('Batch added successfully', 'success');
+    } catch (err) {
+      notify(err.response?.data?.message || 'Failed to add batch', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleBatchUpdated = (updatedBatch) => {
-    setBatches(batches.map((b) => (b._id === updatedBatch._id ? updatedBatch : b)));
-    setEditingBatch(null);
-    setActiveTab('all');
+  const handleBatchUpdated = async (updatedBatch) => {
+    try {
+      setLoading(true);
+      const res = await API.put(`/batches/${updatedBatch._id}`, updatedBatch);
+      setBatches(batches.map((b) => (b._id === updatedBatch._id ? res.data : b)));
+      setEditingBatch(null);
+      setActiveTab('all');
+      notify('Batch updated successfully', 'success');
+    } catch (err) {
+      notify(err.response?.data?.message || 'Failed to update batch', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleBatchDeleted = (id) => {
-    setBatches(batches.filter((b) => b._id !== id));
+  const handleBatchDeleted = async (id) => {
+    try {
+      setLoading(true);
+      await API.delete(`/batches/${id}`);
+      setBatches(batches.filter((b) => b._id !== id));
+      notify('Batch deleted successfully', 'success');
+    } catch (err) {
+      notify(err.response?.data?.message || 'Failed to delete batch', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const tabs = [
+    { id: 'all', label: 'All Batches', icon: '📋' },
+    { id: 'add', label: 'Add Batch', icon: '➕' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -114,16 +145,19 @@ const Batch = () => {
             batches={batches}
             onEditBatch={handleEditBatch}
             onDeleteBatch={handleBatchDeleted}
+            loading={loading}
+            error={error}
           />
         )}
         {activeTab === 'add' && (
-          <AddBatch onBatchCreated={handleBatchCreated} onCancel={() => setActiveTab('all')} />
+          <AddBatch onBatchCreated={handleBatchCreated} onCancel={() => setActiveTab('all')} loading={loading} />
         )}
         {activeTab === 'edit' && editingBatch && (
           <EditBatch
             batch={editingBatch}
             onBatchUpdated={handleBatchUpdated}
             onClose={handleCloseEdit}
+            loading={loading}
           />
         )}
       </div>
