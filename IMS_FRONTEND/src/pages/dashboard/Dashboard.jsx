@@ -108,18 +108,20 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="flex flex-wrap justify-center gap-4">
         {quickLinks.map((link, idx) => (
           <motion.button
             key={idx}
-            whileHover={{ scale: 1.03 }}
-            className="btn w-full bg-base-200 hover:bg-base-300 text-base-content justify-start"
+            whileHover={{ translateX: -2, translateY: -2 }}
+            className="w-52 px-4 py-2 text-sm font-medium text-[#2563eb] bg-white-100 border border-[#2563eb] rounded shadow-[3px_3px_0px_0px_#2563eb] hover:bg-[#2563eb] transition-all duration-200 flex items-center justify-start"
           >
-            <span className="text-xl mr-2">{link.icon}</span>
+            <span className="text-lg mr-2">{link.icon}</span>
             {link.label}
           </motion.button>
         ))}
       </div>
+
+
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Today's Enquiries */}
