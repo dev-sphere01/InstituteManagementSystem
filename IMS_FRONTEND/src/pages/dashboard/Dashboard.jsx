@@ -66,38 +66,13 @@ const courseCount = [
   { name: "CCC", count: 3 },
   { name: "Advance Excel", count: 4 },
   { name: "Scratch", count: 2 },
-  { name: "O'Level", count: 5 },
-  { name: "CCC", count: 3 },
-  { name: "Advance Excel", count: 4 },
-  { name: "Scratch", count: 2 },
-  { name: "O'Level", count: 5 },
-  { name: "CCC", count: 3 },
-  { name: "Advance Excel", count: 4 },
-  { name: "Scratch", count: 2 },
-  { name: "O'Level", count: 5 },
-  { name: "CCC", count: 3 },
-  { name: "Advance Excel", count: 4 },
-  { name: "Scratch", count: 2 },
-  { name: "O'Level", count: 5 },
-  { name: "CCC", count: 3 },
-  { name: "Advance Excel", count: 4 },
-  { name: "Scratch", count: 2 },
-  { name: "O'Level", count: 5 },
-  { name: "CCC", count: 3 },
-  { name: "Advance Excel", count: 4 },
-  { name: "Scratch", count: 2 },
-  { name: "O'Level", count: 5 },
-  { name: "CCC", count: 3 },
-  { name: "Advance Excel", count: 4 },
-  { name: "Scratch", count: 2 },
-  { name: "O'Level", count: 5 },
-  { name: "CCC", count: 3 },
-  { name: "Advance Excel", count: 4 },
-  { name: "Scratch", count: 2 },
-  { name: "O'Level", count: 5 },
-  { name: "CCC", count: 3 },
-  { name: "Advance Excel", count: 4 },
-  { name: "Scratch", count: 2 },
+  { name: "Python", count: 1 },
+  { name: "Web Development", count: 2 },
+  { name: "Data Science", count: 3 },
+  { name: "Graphic Design", count: 2 },
+  { name: "Tally", count: 1 },
+  { name: "GFX & DTP", count: 2 },
+  { name: "Python", count: 3 },
 ];
 
 const paymentStatus = [
@@ -190,9 +165,9 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Line Chart - Admissions */}
-        <div className="bg-white rounded-xl p-4 shadow-md">
+        <div className="bg-white rounded-xl p-4 shadow-md lg:col-span-8">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-semibold">Admissions Over Time</h2>
             <select
@@ -216,24 +191,8 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Bar Chart - Course Count */}
-        <div className="bg-white rounded-xl p-4 shadow-md">
-          <h2 className="text-xl font-semibold mb-2">Available Course Count</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={courseCount}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#10b981" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pie Chart - Payment Status */}
-        <div className="bg-white rounded-xl p-4 shadow-md">
+        <div className="bg-white rounded-xl p-4 shadow-md lg:col-span-4">
           <h2 className="text-xl font-semibold mb-4">Payment Status Breakdown</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -247,6 +206,26 @@ export default function Dashboard() {
             </PieChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+
+      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      </div> */}
+
+
+      {/* Bar Chart - Course Count */}
+      <div className="bg-white rounded-xl p-4 shadow-md">
+        <h2 className="text-xl font-semibold mb-2">Available Course Count</h2>
+        <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={courseCount}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="count" fill="#10b981" />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
