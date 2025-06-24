@@ -13,6 +13,7 @@ const universityRoutes = require('./universityRoutes');
 const batchRoutes = require('./batchRoutes');
 const goalsRoutes = require('./goalsRoutes');
 const stateAndCityRoutes = require('./stateAndCitiesRoutes');
+const sessionRoutes = require('./sessionRoutes');
 
 // Mount routes
 router.use('/users', userRoutes);
@@ -26,5 +27,6 @@ router.use('/universities', universityRoutes);
 router.use('/batches', batchRoutes);
 router.use('/goals', goalsRoutes);
 router.use('/state-and-city', stateAndCityRoutes);
+router.use('/sessions', sessionRoutes);
 
 module.exports = router;
