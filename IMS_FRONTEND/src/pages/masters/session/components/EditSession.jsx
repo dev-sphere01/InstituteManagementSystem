@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
 import API from '../../../../services/API';
-// import { useNotification } from '../../../../services/NotificationService';
+import { useNotification } from '../../../../services/NotificationService';
 
 const EditSession = ({ session, onSessionUpdated, onClose, loading: parentLoading }) => {
   const { isDarkMode } = useThemeStore();
-  // const notify = useNotification();
+  const notify = useNotification();
   const [form, setForm] = useState({
     ...session,
     cityNames: Array.isArray(session.cityNames) ? session.cityNames.join(', ') : '',
@@ -43,10 +43,10 @@ const EditSession = ({ session, onSessionUpdated, onClose, loading: parentLoadin
       delete payload.__v;
       const res = await API.put(`/sessions/${form._id}`, payload);
       if (typeof onSessionUpdated === 'function') onSessionUpdated(res.data.data);
-      // notify('Session updated successfully', 'success');
+      notify('Session updated successfully', 'success');
       if (onClose) onClose();
     } catch (err) {
-      // notify(err.response?.data?.message || 'Failed to update session', 'error');
+      notify(err.response?.data?.message || 'Failed to update session', 'error');
     } finally {
       setIsSubmitting(false);
     }

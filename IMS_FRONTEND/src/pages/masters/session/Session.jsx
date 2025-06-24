@@ -4,11 +4,11 @@ import AddSession from './components/AddSession';
 import AllSessions from './components/AllSessions';
 import EditSession from './components/EditSession';
 import API from '../../../services/API';
-// import { useNotification } from '../../../services/NotificationService';
+import { useNotification } from '../../../services/NotificationService';
 
 const Session = () => {
   const { isDarkMode } = useThemeStore();
-  // const notify = useNotification();
+  const notify = useNotification();
   const [activeTab, setActiveTab] = useState('all');
   const [sessions, setSessions] = useState([]);
   const [editingSession, setEditingSession] = useState(null);
@@ -23,7 +23,7 @@ const Session = () => {
       setSessions(res.data.data || []);
     } catch (err) {
       setError('Failed to fetch sessions');
-      // notify('Failed to fetch sessions', 'error');
+      notify('Failed to fetch sessions', 'error');
     } finally {
       setLoading(false);
     }
@@ -51,9 +51,9 @@ const Session = () => {
       setSessions(sessions.map((s) => (s._id === updatedSession._id ? res.data.data : s)));
       setEditingSession(null);
       setActiveTab('all');
-      // notify('Session updated successfully', 'success');
+      notify('Session updated successfully', 'success');
     } catch (err) {
-      // notify(err.response?.data?.message || 'Failed to update session', 'error');
+      notify(err.response?.data?.message || 'Failed to update session', 'error');
     } finally {
       setLoading(false);
     }
@@ -64,9 +64,9 @@ const Session = () => {
       setLoading(true);
       await API.delete(`/sessions/${id}`);
       setSessions(sessions.filter((s) => s._id !== id));
-      // notify('Session deleted successfully', 'success');
+      notify('Session deleted successfully', 'success');
     } catch (err) {
-      // notify(err.response?.data?.message || 'Failed to delete session', 'error');
+      notify(err.response?.data?.message || 'Failed to delete session', 'error');
     } finally {
       setLoading(false);
     }

@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
 import API from '../../../../services/API';
-// import { useNotification } from '../../../../services/NotificationService';
+import { useNotification } from '../../../../services/NotificationService';
 
 const AddSession = ({ onSessionCreated, onCancel, loading: parentLoading }) => {
   const { isDarkMode } = useThemeStore();
-  // const notify = useNotification();
+  const notify = useNotification();
   const [form, setForm] = useState({
     sessionName: '',
     startDate: '',
     endDate: '',
     isActive: true,
-    cityNames: '', // comma-separated string for input
     description: '',
   });
   const [errors, setErrors] = useState({});
@@ -22,7 +21,6 @@ const AddSession = ({ onSessionCreated, onCancel, loading: parentLoading }) => {
     if (!form.sessionName.trim()) errs.sessionName = 'Session name is required';
     if (!form.startDate) errs.startDate = 'Start date is required';
     if (!form.endDate) errs.endDate = 'End date is required';
-    if (!form.cityNames.trim()) errs.cityNames = 'At least one city is required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -34,24 +32,29 @@ const AddSession = ({ onSessionCreated, onCancel, loading: parentLoading }) => {
   };
 
   const handleSubmit = async (e) => {
+    console.log("Submit button cilcked !", { isSubmitting, parentLoading });
     e.preventDefault();
-    if (!validate()) return;
+    const isValid = validate();
+    console.log("Validation result:", isValid, form);
+    if (!isValid) return;
     setIsSubmitting(true);
     try {
       const payload = {
         ...form,
-        cityNames: form.cityNames.split(',').map((c) => c.trim()).filter(Boolean),
       };
       delete payload._id;
       delete payload.createdAt;
       delete payload.updatedAt;
       delete payload.__v;
+      console.log("About to post:", payload);
       const res = await API.post('/sessions', payload);
+      console.log("API response:", res);
       if (typeof onSessionCreated === 'function') onSessionCreated(res.data.data);
-      // notify('Session added successfully', 'success');
+      notify('Session added successfully', 'success');
       if (onCancel) onCancel();
     } catch (err) {
-      // notify(err.response?.data?.message || 'Failed to add session', 'error');
+      console.error("API error:", err);
+      notify(err.response?.data?.message || 'Failed to add session', 'error');
     } finally {
       setIsSubmitting(false);
     }
