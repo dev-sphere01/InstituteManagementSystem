@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import TableService from '../../../../services/TableService'
 import { useThemeStore } from '../../../../store'
 
-const AllCourses = ({ courses, onEditCourse, onDeleteCourse, loading, error }) => {
+const AllCourses = ({ courses, onEditCourse, onDeleteCourse, onViewCourse, onAddCourse, loading, error }) => {
   const { isDarkMode } = useThemeStore()
 
   const columns = useMemo(
@@ -60,6 +60,12 @@ const AllCourses = ({ courses, onEditCourse, onDeleteCourse, loading, error }) =
         cell: ({ row }) => (
           <div className="flex justify-center gap-2">
             <button
+              className="inline-flex items-center px-3 py-1 rounded bg-gray-500 hover:bg-gray-600 text-white text-xs font-medium shadow"
+              onClick={() => onViewCourse(row.original)}
+            >
+              👁️ View
+            </button>
+            <button
               className="inline-flex items-center px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium shadow"
               onClick={() => onEditCourse(row.original)}
             >
@@ -80,7 +86,7 @@ const AllCourses = ({ courses, onEditCourse, onDeleteCourse, loading, error }) =
         enableColumnFilter: false,
       },
     ],
-    [onEditCourse, onDeleteCourse]
+    [onEditCourse, onDeleteCourse, onViewCourse]
   )
 
   if (loading) {
@@ -95,8 +101,28 @@ const AllCourses = ({ courses, onEditCourse, onDeleteCourse, loading, error }) =
 
   if (error) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <span className="text-red-500 text-lg font-semibold">{error}</span>
+      <div className="flex flex-col items-center justify-center py-12">
+        <span className="text-red-500 text-lg font-semibold mb-4">{error}</span>
+        <button
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          onClick={onAddCourse}
+        >
+          + Add Course
+        </button>
+      </div>
+    )
+  }
+
+  if (!courses || courses.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <span className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>No courses found.</span>
+        <button
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          onClick={onAddCourse}
+        >
+          + Add Course
+        </button>
       </div>
     )
   }
@@ -107,13 +133,21 @@ const AllCourses = ({ courses, onEditCourse, onDeleteCourse, loading, error }) =
         isDarkMode ? 'bg-gray-800' : 'bg-white'
       } p-4`}
     >
-      <h2
-        className={`text-lg font-semibold mb-4 ${
-          isDarkMode ? 'text-white' : 'text-gray-900'
-        }`}
-      >
-        All Courses
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2
+          className={`text-lg font-semibold ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}
+        >
+          All Courses
+        </h2>
+        <button
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          onClick={onAddCourse}
+        >
+          + Add Course
+        </button>
+      </div>
       <TableService columns={columns} data={courses} initialPageSize={10} />
     </div>
   )
