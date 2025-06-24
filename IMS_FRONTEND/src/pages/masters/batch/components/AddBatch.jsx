@@ -37,9 +37,14 @@ const AddBatch = ({ onBatchCreated, onCancel, loading: parentLoading }) => {
     if (!validate()) return;
     setIsSubmitting(true);
     try {
-      const { _id, createdAt, updatedAt, __v, ...batchData } = form;
+      // Ensure _id is never sent in the payload
+      const batchData = { ...form };
+      delete batchData._id;
+      delete batchData.createdAt;
+      delete batchData.updatedAt;
+      delete batchData.__v;
       const res = await API.post('/batches', batchData);
-      onBatchCreated(res.data);
+      if (typeof onBatchCreated === 'function') onBatchCreated(res.data);
       notify('Batch added successfully', 'success');
     } catch (err) {
       notify(err.response?.data?.message || 'Failed to add batch', 'error');

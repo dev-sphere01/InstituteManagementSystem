@@ -44,20 +44,6 @@ const Batch = () => {
     setActiveTab('all');
   };
 
-  const handleBatchCreated = async (newBatch) => {
-    try {
-      setLoading(true);
-      const res = await API.post('/batches', newBatch);
-      setBatches([...batches, res.data]);
-      setActiveTab('all');
-      notify('Batch added successfully', 'success');
-    } catch (err) {
-      notify(err.response?.data?.message || 'Failed to add batch', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleBatchUpdated = async (updatedBatch) => {
     try {
       setLoading(true);
@@ -96,7 +82,7 @@ const Batch = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}> 
+          <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
               Batch Master
             </span>
@@ -106,17 +92,16 @@ const Batch = () => {
       </div>
 
       {/* Tabs */}
-      <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}> 
+      <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <nav className="-mb-px flex space-x-8">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-                activeTab === tab.id
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === tab.id
                   ? `border-blue-500 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`
                   : `border-transparent ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} hover:border-gray-300`
-              }`}
+                }`}
             >
               <span className="mr-2">{tab.icon}</span>
               {tab.label}
@@ -125,11 +110,10 @@ const Batch = () => {
           {editingBatch && (
             <button
               onClick={() => setActiveTab('edit')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-                activeTab === 'edit'
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === 'edit'
                   ? `border-blue-500 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`
                   : `border-transparent ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} hover:border-gray-300`
-              }`}
+                }`}
             >
               <span className="mr-2">✏️</span>
               Edit Batch
@@ -150,7 +134,7 @@ const Batch = () => {
           />
         )}
         {activeTab === 'add' && (
-          <AddBatch onBatchCreated={handleBatchCreated} onCancel={() => setActiveTab('all')} loading={loading} />
+          <AddBatch onCancel={() => setActiveTab('all')} loading={loading} />
         )}
         {activeTab === 'edit' && editingBatch && (
           <EditBatch
