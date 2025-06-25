@@ -5,8 +5,7 @@ import { useSidebarStore } from '../store';
 const PrimarySideBar = () => {
   const { isPrimarySidebarOpen, isFooterVisible } = useSidebarStore();
   const location = useLocation();
-  const [isMastersOpen, setIsMastersOpen] = useState(false);
-  const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState(null); // 'masters' | 'enquiry' | null
 
   // Main navigation items (remove flat Enquiry)
   const mainNavItems = [
@@ -53,17 +52,14 @@ const PrimarySideBar = () => {
     return enquiryNavItems.some(item => isActive(item.path));
   };
 
-  // Auto-expand masters if any masters route is active
+  // Auto-expand correct menu if route is active
   React.useEffect(() => {
     if (isMastersActive()) {
-      setIsMastersOpen(true);
-    }
-  }, [location.pathname]);
-
-  // Auto-expand enquiry if any enquiry route is active
-  React.useEffect(() => {
-    if (isEnquiryActive()) {
-      setIsEnquiryOpen(true);
+      setOpenMenu('masters');
+    } else if (isEnquiryActive()) {
+      setOpenMenu('enquiry');
+    } else {
+      setOpenMenu(null);
     }
   }, [location.pathname]);
 
@@ -150,7 +146,7 @@ const PrimarySideBar = () => {
 
   return (
     <aside
-      className={`bg-gray-900 text-white transition-all text-sm duration-300 ease-in-out ${isPrimarySidebarOpen ? 'w-auto ' : 'w-0 md:w-16'} overflow-hidden h-full fixed md:static z-50 top-16 md:top-0 left-0 bottom-0`}
+      className={`bg-gray-900 text-white transition-all text-sm duration-300 ease-in-out ${isPrimarySidebarOpen ? 'w-50 ' : 'w-0 md:w-16'} overflow-hidden h-full fixed md:static z-50 top-16 md:top-0 left-0 bottom-0`}
     >
       <div className="h-full flex flex-col">
         {/* Sidebar header */}
@@ -180,19 +176,19 @@ const PrimarySideBar = () => {
             {isPrimarySidebarOpen ? (
               <li>
                 <button
-                  onClick={() => setIsEnquiryOpen(!isEnquiryOpen)}
+                  onClick={() => setOpenMenu(openMenu === 'enquiry' ? null : 'enquiry')}
                   className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${isEnquiryActive() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
                 >
                   <div className="flex items-center">
                     <span className="inline-flex">{renderIcon('folder')}</span>
                     <span className="ml-3">Enquiry</span>
                   </div>
-                  <span className={`transition-transform duration-200 ${isEnquiryOpen ? 'rotate-180' : ''}`}>
+                  <span className={`transition-transform duration-200 ${openMenu === 'enquiry' ? 'rotate-180' : ''}`}>
                     {renderIcon('chevron')}
                   </span>
                 </button>
                 {/* Enquiry submenu for expanded sidebar */}
-                {isEnquiryOpen && (
+                {openMenu === 'enquiry' && (
                   <ul className="mt-2 space-y-1">
                     {enquiryNavItems.map((item) => (
                       <li key={item.path}>
@@ -227,20 +223,20 @@ const PrimarySideBar = () => {
             {isPrimarySidebarOpen ? (
               <li>
                 <button
-                  onClick={() => setIsMastersOpen(!isMastersOpen)}
+                  onClick={() => setOpenMenu(openMenu === 'masters' ? null : 'masters')}
                   className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${isMastersActive() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
                 >
                   <div className="flex items-center">
                     <span className="inline-flex">{renderIcon('folder')}</span>
                     <span className="ml-3">Masters</span>
                   </div>
-                  <span className={`transition-transform duration-200 ${isMastersOpen ? 'rotate-180' : ''}`}>
+                  <span className={`transition-transform duration-200 ${openMenu === 'masters' ? 'rotate-180' : ''}`}>
                     {renderIcon('chevron')}
                   </span>
                 </button>
 
                 {/* Masters submenu for expanded sidebar */}
-                {isMastersOpen && (
+                {openMenu === 'masters' && (
                   <ul className="mt-2 space-y-1">
                     {mastersNavItems.map((item) => (
                       <li key={item.path}>
