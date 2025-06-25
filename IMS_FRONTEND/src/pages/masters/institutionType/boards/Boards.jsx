@@ -4,15 +4,17 @@ import { useNotification } from '../../../../services/NotificationService';
 import AddBoard from './components/AddBoards';
 import EditBoard from './components/EditBoards';
 import AllBoards from './components/AllBoards';
+import { useThemeStore } from '../../../../store';
 
 const BoardMaster = () => {
   const notify = useNotification();
+  const { isDarkMode } = useThemeStore();
 
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingBoard, setEditingBoard] = useState(null);
-  const [adding, setAdding] = useState(false);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'add'
 
   const fetchBoards = async () => {
     setLoading(true);
@@ -33,6 +35,7 @@ const BoardMaster = () => {
 
   const handleBoardCreated = (newBoard) => {
     setBoards((prev) => [newBoard, ...prev]);
+    setActiveTab('all');
   };
 
   const handleBoardUpdated = async (updatedBoard) => {
@@ -60,41 +63,72 @@ const BoardMaster = () => {
 
   return (
     <div className="space-y-6">
-      {!adding && !editingBoard && (
-        <div className="flex justify-end">
-          <button
-            onClick={() => setAdding(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md font-medium shadow"
-          >
-            ➕ Add Board
-          </button>
-        </div>
-      )}
+      {/* Page Header */}
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">Board Master</span>
+        </h1>
+        <p className="text-sm text-gray-400">
+          Manage all academic boards in the system
+        </p>
+      </div>
 
-      {adding && (
-        <AddBoard
-          onCancel={() => setAdding(false)}
-          onBoardCreated={handleBoardCreated}
-        />
-      )}
+      {/* Tabs */}
+      <div className={`border-b  ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex space-x-6 text-sm font-medium `}>
+        <button
+          className={`flex items-center gap-1 py-2 px-2 border-b-2 ${
+            activeTab === 'all'
+              ? 'border-blue-500 text-blue-400'
+              : 'border-transparent text-gray-400 hover:text-white'
+          }`}
+          onClick={() => {
+            setEditingBoard(null);
+            setActiveTab('all');
+          }}
+        >
+          📋 All Boards
+        </button>
+        <button
+          className={`flex items-center gap-1 py-2 px-2 border-b-2 ${
+            activeTab === 'add'
+              ? 'border-purple-500 text-purple-400'
+              : 'border-transparent text-gray-400 hover:text-white'
+          }`}
+          onClick={() => {
+            setEditingBoard(null);
+            setActiveTab('add');
+          }}
+        >
+          ➕ Add Board
+        </button>
+      </div>
 
-      {editingBoard && (
-        <EditBoard
-          board={editingBoard}
-          onCancel={() => setEditingBoard(null)}
-          onBoardUpdated={handleBoardUpdated}
-        />
-      )}
-
-      {!adding && !editingBoard && (
-        <AllBoards
-          boards={boards}
-          onEditBoard={(board) => setEditingBoard(board)}
-          onDeleteBoard={handleDeleteBoard}
-          loading={loading}
-          error={error}
-        />
-      )}
+      {/* Main Content */}
+      <div>
+        {editingBoard ? (
+          <EditBoard
+            board={editingBoard}
+            onCancel={() => setEditingBoard(null)}
+            onBoardUpdated={handleBoardUpdated}
+          />
+        ) : activeTab === 'add' ? (
+          <AddBoard
+            onCancel={() => setActiveTab('all')}
+            onBoardCreated={handleBoardCreated}
+          />
+        ) : (
+          <AllBoards
+            boards={boards}
+            onEditBoard={(board) => {
+              setEditingBoard(board);
+              setActiveTab('');
+            }}
+            onDeleteBoard={handleDeleteBoard}
+            loading={loading}
+            error={error}
+          />
+        )}
+      </div>
     </div>
   );
 };

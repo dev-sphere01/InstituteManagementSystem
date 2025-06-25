@@ -1,7 +1,8 @@
 import React from 'react'
 import AddUniversities from './components/AddUniversities';
 import AllUniversities from './components/AllUniversities';
-import EditUniversities from './components/EditUniversities';
+import EditUniversities from './components/EditUinversities';
+
 import { useThemeStore } from './../../../../store';
 import API from './../../../../services/API';
 import { useNotification } from './../../../../services/NotificationService';
