@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useThemeStore } from './../../../../../store';
-import TableService from './../../../../../services/TableService';
+import { useNotification } from '../../../../../services/NotificationService';
 
 const EditBoard = ({ board, onBoardUpdated, onCancel, loading }) => {
   const { isDarkMode } = useThemeStore();

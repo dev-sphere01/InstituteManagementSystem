@@ -9,7 +9,10 @@ const AllBoards = ({ boards, onEditBoard, onDeleteBoard, loading, error }) => {
     {
       accessorKey: 'boardName',
       header: 'Board Name',
-      cell: info => info.getValue(),
+      cell: info => {
+        const value = info.getValue();
+        return typeof value === 'string' ? value : <span className="text-red-500">Invalid</span>;
+      },
       enableSorting: true,
       enableColumnFilter: true,
     },
@@ -67,12 +70,15 @@ const AllBoards = ({ boards, onEditBoard, onDeleteBoard, loading, error }) => {
     );
   }
 
+  // Defensive: filter out invalid board objects
+  const safeBoards = boards.filter(b => b && typeof b.boardName === 'string');
+
   return (
     <div className={`rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4`}>
       <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
         All Boards
       </h2>
-      <TableService columns={columns} data={boards} initialPageSize={10} />
+      <TableService columns={columns} data={safeBoards} initialPageSize={10} />
     </div>
   );
 };
