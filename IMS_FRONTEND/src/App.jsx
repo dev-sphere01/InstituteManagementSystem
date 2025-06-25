@@ -12,6 +12,7 @@ import RoleBasedRoutes from './routes/RoleBasedRoutes'
 // Pages
 import Home from './pages/Home'
 import NotFound from './pages/NotFound'
+import DaisyUITest from './pages/DaisyUITest'
 
 // Enquiry Pages
 import EnquiryForm from './pages/enquiry/EnquiryForm.jsx'
@@ -57,6 +58,7 @@ function App() {
                 <Route path="reset-password/:token" element={<ResetPassword />} />
                 <Route path="auth-success" element={<AuthSuccess />} />
                 <Route path="auth-failed" element={<AuthFailed />} />
+                <Route path="daisyui-test" element={<DaisyUITest />} />
               </Route>
 
               {/* Role-based protected routes */}
