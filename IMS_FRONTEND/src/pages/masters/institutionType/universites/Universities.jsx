@@ -21,7 +21,11 @@ const UniversityMaster = () => {
     setError('');
     try {
       const res = await API.get('/universities');
-      setUniversities(Array.isArray(res.data) ? res.data : []);
+      // Defensive: always expect array of objects with universityName
+      let data = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.data) ? res.data.data : []);
+      // Filter out any undefined/null/invalid objects
+      data = data.filter(u => u && typeof u === 'object' && typeof u.universityName === 'string');
+      setUniversities(data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load universities');
       setUniversities([]);
@@ -35,7 +39,10 @@ const UniversityMaster = () => {
   }, []);
 
   const handleUniversityCreated = (newUniversity) => {
-    setUniversities((prev) => [newUniversity, ...prev]);
+    // Defensive: only add if valid
+    if (newUniversity && typeof newUniversity.universityName === 'string') {
+      setUniversities((prev) => [newUniversity, ...prev]);
+    }
     setActiveTab('all');
   };
 
