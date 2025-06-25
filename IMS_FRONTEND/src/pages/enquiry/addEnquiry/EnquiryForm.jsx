@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useThemeStore } from '../../store';
-import { useNotification } from '../../services/NotificationService';
+import { useThemeStore } from '../../../store';
+import { useNotification } from '../../../services/NotificationService';
+import API from '../../../services/API';
 
 // Form section imports
 import Registration from './components/Registration';
@@ -11,6 +12,9 @@ import CoursePref from './components/CoursePref';
 import { SchedulePref } from './components/SchedulePref';
 import Referral from './components/Referral';
 import GoalsAndReq from './components/GoalsAndReq';
+
+//Css Classes Import
+import { getEnquiryStyleClasses } from './styleClasses';
 
 const initialState = {
   // Registration Information
@@ -92,11 +96,14 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
         setShow(false);
       }
     }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
   }, [show]);
 
   const handleSelect = (val) => {
+    // Prevent click event from bubbling to the document and closing the dropdown before selection
+    setShow(false);
+    setSearch('');
     if (isMulti) {
       if (value.includes(val)) {
         onChange(value.filter(v => v !== val));
@@ -105,7 +112,6 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
       }
     } else {
       onChange(val);
-      setShow(false);
     }
   };
 
@@ -122,14 +128,22 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
         style={{ minHeight: '42px' }}
         onClick={() => setShow(s => !s)}
       >
-        <input
-          className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder-gray-400"
-          style={{ minWidth: 0 }}
-          placeholder={placeholder}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          onClick={e => { e.stopPropagation(); setShow(true); }}
-        />
+        {/* Show selected value if not multi-select */}
+        {!isMulti && value && (
+          <span className="flex-1 truncate text-gray-900 dark:text-white">{options.find(o => o.value === value)?.label || ''}</span>
+        )}
+        {/* Show input for searching only if dropdown is open */}
+        {show && (
+          <input
+            className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder-gray-400"
+            style={{ minWidth: 0 }}
+            placeholder={placeholder}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onClick={e => { e.stopPropagation(); setShow(true); }}
+            autoFocus
+          />
+        )}
         <span className="ml-2 text-gray-400">▼</span>
       </div>
       {show && (
@@ -142,6 +156,7 @@ function SearchableDropdown({ options, value, onChange, placeholder, isMulti = f
               key={opt.value}
               className={`px-3 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 ${(isMulti ? value.includes(opt.value) : value === opt.value)
                 ? 'bg-blue-50 dark:bg-gray-800 font-semibold' : ''}`}
+              onMouseDown={e => e.preventDefault()}
               onClick={() => handleSelect(opt.value)}
             >
               {opt.label}
@@ -174,7 +189,8 @@ const EnquiryForm = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [eduType, setEduType] = useState('board'); // 'board' or 'university'
+  const [eduType, setEduType] = useState('board');
+  // 'board' or 'university'
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -213,34 +229,106 @@ const EnquiryForm = () => {
     const errors = {};
     if (!formData.fullName.trim()) errors.fullName = 'Full Name is required';
     if (!formData.contactNumber.trim() || !/^\d{10}$/.test(formData.contactNumber)) errors.contactNumber = 'Valid 10-digit contact number is required';
-    if (!formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email)) errors.email = 'Valid email address is required';
+    // if (!formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email)) errors.email = 'Valid email address is required';
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
+  const toEnumOrUndefined = v => v === '' ? undefined : v;
 
-  const handleSubmit = (e) => {
+  // Map frontend values to backend enums
+  const genderMap = { male: 'Male', female: 'Female', other: 'Other' };
+  const categoryMap = { general: 'GEN', st: 'ST', sc: 'SC', obc: 'OBC', other: 'OTHER' };
+
+  // Sample ObjectIds for demo/testing
+  const SAMPLE_BOARD_ID = '60d21b4667d0d8992e610c85'; // Replace with a real ObjectId from your DB
+  const SAMPLE_SUBJECT_IDS = ['60d21b4967d0d8992e610c86', '60d21b4967d0d8992e610c87']; // Replace with real ObjectIds
+  // Sample university ObjectIds for demo/testing
+  const UNIVERSITY_ID_MAP = {
+    delhi: '665f2b1e2c8b4e3a2c1d4e5f',
+    mumbai: '665f2b1e2c8b4e3a2c1d4e60',
+    bangalore: '665f2b1e2c8b4e3a2c1d4e61',
+  };
+
+  // Transform flat formData to backend structure
+  const transformFormData = (formData) => ({
+    registrationInfo: {
+      centerCode: formData.centerCode,
+      employeeId: formData.employeeId,
+      otherInfo: formData.otherInfo,
+    },
+    personalInfo: {
+      fullName: formData.fullName,
+      dob: formData.dob,
+      gender: genderMap[formData.gender] || undefined,
+      category: categoryMap[formData.category] || undefined,
+      exServicemen: !!formData.isExServiceMan,
+      speciallyAbled: !!formData.isSpeciallyAbled,
+    },
+    contactInfo: {
+      contactNumber: formData.contactNumber,
+      alternateContactNumber: formData.altContactNumber,
+      email: formData.email,
+      address: formData.address,
+      pinCode: formData.pinCode,
+    },
+    educationInfo: {
+      qualification: formData.qualification,
+      boardId: formData.board ? SAMPLE_BOARD_ID : undefined,
+      universityId: formData.university ? UNIVERSITY_ID_MAP[formData.university] : undefined,
+      yearOfPassing: formData.passingYear,
+      subjectIds: formData.subjects && formData.subjects.length > 0 ? SAMPLE_SUBJECT_IDS : [],
+    },
+    coursePreferences: {
+      interestedCourses: formData.interestedCourse ? [formData.interestedCourse] : [],
+      mode: toEnumOrUndefined(formData.learningMode), // Map if needed
+      courseLevel: toEnumOrUndefined(formData.courseLevel), // Map if needed
+    },
+    schedulePreferences: {
+      preferredBatchTime: formData.preferredBatchTime,
+    },
+    referralInfo: {
+      referralSource: toEnumOrUndefined(formData.referralSource), // Map if needed
+      sourceName: formData.sourceName,
+      referralCode: formData.referralCode,
+    },
+    goalsRequirements: {
+      courseGoal: formData.courseGoals,
+      futureGoals: formData.futureGoals,
+      hasComputerAccess: toEnumOrUndefined(formData.hasComputerAccess),
+    }
+  });
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccess('');
     setError('');
     if (!validateForm()) return;
-    notify('Enquiry submitted successfully!', 'success');
-    setFormData(initialState);
+    const payload = transformFormData(formData);
+    try {
+      await API.post('/enquiry', payload);
+      notify('Enquiry submitted successfully!', 'success');
+      setFormData(initialState);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Submission failed');
+    }
   };
 
-  // Theme-based classes
-  const cardClass = `rounded-lg shadow-md p-6 border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`;
-  const formTitleClass = `text-3xl font-bold  bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600`;
-  const formSubtitleClass = `mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`;
-  const sectionTitleClass = `text-base font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`;
-  const labelClass = `block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`;
-  const inputClass = `block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'}`;
-  const errorClass = 'mt-1 text-sm text-red-500';
-  const radioCheckClass = `h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded`;
-  const buttonClass = `px-6 py-2 rounded-md font-semibold transition-colors duration-150 shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isDarkMode ? 'bg-blue-800 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`;
-  const resetButtonClass = `px-4 py-2 border rounded-md font-medium transition-colors duration-150 shadow ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`;
-  const dividerClass = `my-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`;
-  const toggleBtnClass = (active) => `h-full px-3 py-1 text-sm rounded-l-md border border-r-0 font-medium focus:outline-none transition-colors duration-100 ${active ? 'bg-blue-600 text-white' : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`;
-  const toggleBtnClassRight = (active) => `h-full px-3 py-2 text-sm rounded-r-md border font-medium focus:outline-none transition-colors duration-100 ${active ? 'bg-blue-600 text-white' : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`;
+  //Custom css classes imported here
+  const {
+    cardClass,
+    formTitleClass,
+    formSubtitleClass,
+    sectionTitleClass,
+    labelClass,
+    inputClass,
+    errorClass,
+    radioCheckClass,
+    buttonClass,
+    resetButtonClass,
+    dividerClass,
+    toggleBtnClass,
+    toggleBtnClassRight
+  } = getEnquiryStyleClasses(isDarkMode);
 
   return (
     <div className="p-0">

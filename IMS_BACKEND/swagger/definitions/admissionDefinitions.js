@@ -3,15 +3,15 @@
  */
 
 const paths = {
-  '/api/v1/admissions': {
+  '/admissions': {
     post: {
       summary: 'Create a new admission',
-      tags: ['Admission'],
+      tags: ['Admissions'],
       requestBody: {
         required: true,
         content: {
           'application/json': {
-            schema: { $ref: '#/components/schemas/AdmissionInput' }
+            schema: { $ref: '#/components/schemas/Admission' }
           }
         }
       },
@@ -30,21 +30,15 @@ const paths = {
     },
     get: {
       summary: 'Get all admissions',
-      tags: ['Admission'],
+      tags: ['Admissions'],
       responses: {
         200: {
           description: 'List of all admissions',
           content: {
             'application/json': {
               schema: {
-                type: 'object',
-                properties: {
-                  success: { type: 'boolean' },
-                  data: {
-                    type: 'array',
-                    items: { $ref: '#/components/schemas/Admission' }
-                  }
-                }
+                type: 'array',
+                items: { $ref: '#/components/schemas/Admission' }
               }
             }
           }
@@ -53,10 +47,10 @@ const paths = {
       }
     }
   },
-  '/api/v1/admissions/{id}': {
+  '/admissions/{id}': {
     get: {
       summary: 'Get admission by ID',
-      tags: ['Admission'],
+      tags: ['Admissions'],
       parameters: [
         {
           in: 'path',
@@ -81,7 +75,7 @@ const paths = {
     },
     put: {
       summary: 'Update admission by ID',
-      tags: ['Admission'],
+      tags: ['Admissions'],
       parameters: [
         {
           in: 'path',
@@ -95,7 +89,7 @@ const paths = {
         required: true,
         content: {
           'application/json': {
-            schema: { $ref: '#/components/schemas/AdmissionInput' }
+            schema: { $ref: '#/components/schemas/Admission' }
           }
         }
       },
@@ -107,7 +101,7 @@ const paths = {
     },
     delete: {
       summary: 'Delete admission by ID',
-      tags: ['Admission'],
+      tags: ['Admissions'],
       parameters: [
         {
           in: 'path',
@@ -130,7 +124,7 @@ const schemas = {
   Admission: {
     type: 'object',
     properties: {
-      _id: { type: 'string' },
+      _id: { type: 'string', readOnly: true },
       formNo: { type: 'string' },
       centerCode: { type: 'string' },
       employeeId: { type: 'string' },
@@ -143,12 +137,14 @@ const schemas = {
       aadharNo: { type: 'string' },
       religion: { type: 'string' },
       contactNumber: { type: 'string' },
+      alternateContactNumber: {type: 'string'},
       emailAddress: { type: 'string' },
       state: { type: 'string' },
       district: { type: 'string' },
       address: { type: 'string' },
       pinCode: { type: 'string' },
       fathersName: { type: 'string' },
+      fathersOccupation: {type: 'string'},
       mothersName: { type: 'string' },
       highestEducationalQualification: { type: 'string' },
       boardOrUniversity: { type: 'string' },
@@ -159,51 +155,8 @@ const schemas = {
       regNo: { type: 'string' },
       month: { type: 'string' },
       status: { type: 'string' },
-      createdAt: { type: 'string', format: 'date-time' },
-      updatedAt: { type: 'string', format: 'date-time' }
-    }
-  },
-  AdmissionInput: {
-    type: 'object',
-    required: [
-      'formNo', 'centerCode', 'employeeId', 'generatedRegNo', 'fullName',
-      'dob', 'gender', 'category', 'aadharNo', 'religion', 'contactNumber',
-      'emailAddress', 'state', 'district', 'address', 'pinCode',
-      'fathersName', 'mothersName', 'highestEducationalQualification',
-      'boardOrUniversity', 'yearOfPassing', 'subjectsStudied',
-      'courseApplied', 'preferredModeOfLearning', 'regNo', 'month'
-    ],
-    properties: {
-      formNo: { type: 'string' },
-      centerCode: { type: 'string' },
-      employeeId: { type: 'string' },
-      otherInfo: { type: 'string' },
-      generatedRegNo: { type: 'string' },
-      fullName: { type: 'string' },
-      dob: { type: 'string', format: 'date' },
-      gender: { type: 'string' },
-      category: { type: 'string' },
-      aadharNo: { type: 'string' },
-      religion: { type: 'string' },
-      contactNumber: { type: 'string' },
-      alternateContactNumber: { type: 'string' },
-      emailAddress: { type: 'string' },
-      state: { type: 'string' },
-      district: { type: 'string' },
-      address: { type: 'string' },
-      pinCode: { type: 'string' },
-      fathersName: { type: 'string' },
-      fathersOccupation: { type: 'string' },
-      mothersName: { type: 'string' },
-      guardianName: { type: 'string' },
-      highestEducationalQualification: { type: 'string' },
-      boardOrUniversity: { type: 'string' },
-      yearOfPassing: { type: 'string' },
-      subjectsStudied: { type: 'string' },
-      courseApplied: { type: 'string' },
-      preferredModeOfLearning: { type: 'string' },
-      regNo: { type: 'string' },
-      month: { type: 'string' }
+      createdAt: { type: 'string', format: 'date-time', readOnly: true },
+      updatedAt: { type: 'string', format: 'date-time', readOnly: true }
     }
   }
 };

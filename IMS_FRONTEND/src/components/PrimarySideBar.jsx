@@ -6,13 +6,15 @@ const PrimarySideBar = () => {
   const { isPrimarySidebarOpen, isFooterVisible } = useSidebarStore();
   const location = useLocation();
   const [isMastersOpen, setIsMastersOpen] = useState(false);
+  const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
 
-  // Main navigation items
+  // Main navigation items (remove flat Enquiry)
   const mainNavItems = [
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
+    { path: '/dashboard/admission', icon: 'document-add', label: 'Admission' },
     { path: '/dashboard/reports', icon: 'document', label: 'Reports' },
     { path: '/dashboard/settings', icon: 'settings', label: 'Settings' },
-    { path: '/dashboard/enquiry', icon: 'settings', label: 'Enquiry' },
+    // Removed Enquiry from here
   ];
 
   // Masters navigation items
@@ -22,6 +24,13 @@ const PrimarySideBar = () => {
     { path: '/dashboard/courses', icon: 'book', label: 'Courses' },
     { path: '/dashboard/batches', icon: 'collection', label: 'Batches' },
     { path: '/dashboard/sessions', icon: 'calendar', label: 'Sessions' },
+    { path: '/dashboard/institution-type', icon: 'collection', label: 'Institution Type' },
+  ];
+
+  // Enquiry navigation items
+  const enquiryNavItems = [
+    { path: '/dashboard/enquiry/create', icon: 'document-add', label: 'New' },
+    { path: '/dashboard/enquiry/view', icon: 'document', label: 'All' },
   ];
 
   // Function to check if a path is active
@@ -39,10 +48,22 @@ const PrimarySideBar = () => {
     return mastersNavItems.some(item => isActive(item.path));
   };
 
+  // Function to check if any enquiry route is active
+  const isEnquiryActive = () => {
+    return enquiryNavItems.some(item => isActive(item.path));
+  };
+
   // Auto-expand masters if any masters route is active
   React.useEffect(() => {
     if (isMastersActive()) {
       setIsMastersOpen(true);
+    }
+  }, [location.pathname]);
+
+  // Auto-expand enquiry if any enquiry route is active
+  React.useEffect(() => {
+    if (isEnquiryActive()) {
+      setIsEnquiryOpen(true);
     }
   }, [location.pathname]);
 
@@ -65,6 +86,12 @@ const PrimarySideBar = () => {
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+      case 'document-add':
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         );
       case 'users':
@@ -123,15 +150,15 @@ const PrimarySideBar = () => {
 
   return (
     <aside
-      className={`bg-gray-900 text-white transition-all duration-300 ease-in-out ${isPrimarySidebarOpen ? 'w-44 ' : 'w-0 md:w-16'} overflow-hidden h-full fixed md:static z-50 top-16 md:top-0 left-0 bottom-0`}
+      className={`bg-gray-900 text-white transition-all text-sm duration-300 ease-in-out ${isPrimarySidebarOpen ? 'w-auto ' : 'w-0 md:w-16'} overflow-hidden h-full fixed md:static z-50 top-16 md:top-0 left-0 bottom-0`}
     >
       <div className="h-full flex flex-col">
         {/* Sidebar header */}
-        <div className="p-4 border-b border-gray-800">
+        {/* <div className="p-4 border-b border-gray-800">
           <h2 className={`font-bold text-xl ${isPrimarySidebarOpen ? 'block' : 'hidden md:block text-center'}`}>
             {isPrimarySidebarOpen ? 'Navigation' : ''}
           </h2>
-        </div>
+        </div> */}
 
         {/* Navigation links */}
         <nav className="flex-1 overflow-y-auto py-4">
@@ -148,6 +175,53 @@ const PrimarySideBar = () => {
                 </Link>
               </li>
             ))}
+
+            {/* Enquiry section */}
+            {isPrimarySidebarOpen ? (
+              <li>
+                <button
+                  onClick={() => setIsEnquiryOpen(!isEnquiryOpen)}
+                  className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${isEnquiryActive() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                >
+                  <div className="flex items-center">
+                    <span className="inline-flex">{renderIcon('folder')}</span>
+                    <span className="ml-3">Enquiry</span>
+                  </div>
+                  <span className={`transition-transform duration-200 ${isEnquiryOpen ? 'rotate-180' : ''}`}>
+                    {renderIcon('chevron')}
+                  </span>
+                </button>
+                {/* Enquiry submenu for expanded sidebar */}
+                {isEnquiryOpen && (
+                  <ul className="mt-2 space-y-1">
+                    {enquiryNavItems.map((item) => (
+                      <li key={item.path}>
+                        <Link
+                          to={item.path}
+                          className={`flex items-center p-2 pl-8 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                        >
+                          <span className="inline-flex">{renderIcon(item.icon)}</span>
+                          <span className="ml-3">{item.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ) : (
+              /* Enquiry items as individual icons when sidebar is collapsed */
+              enquiryNavItems.map((item) => (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center p-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                  >
+                    <span className="inline-flex">{renderIcon(item.icon)}</span>
+                    <span className="ml-3 hidden">{item.label}</span>
+                  </Link>
+                </li>
+              ))
+            )}
 
             {/* Masters section */}
             {isPrimarySidebarOpen ? (
@@ -189,24 +263,15 @@ const PrimarySideBar = () => {
                   <Link
                     to={item.path}
                     className={`flex items-center p-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
-                    title={item.label}
                   >
                     <span className="inline-flex">{renderIcon(item.icon)}</span>
+                    <span className="ml-3 hidden">{item.label}</span>
                   </Link>
                 </li>
               ))
             )}
           </ul>
         </nav>
-
-        {/* Sidebar footer - only shown when main footer is hidden */}
-        {!isFooterVisible && (
-          <div className="p-4 border-t border-gray-800">
-            <div className={`text-sm text-gray-400 ${isPrimarySidebarOpen ? 'block' : 'hidden'}`}>
-              <p>© {new Date().getFullYear()} Your Company</p>
-            </div>
-          </div>
-        )}
       </div>
     </aside>
   );

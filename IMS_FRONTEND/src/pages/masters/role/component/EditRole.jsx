@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useThemeStore } from '../../../../store'
 import API from '../../../../services/API'
 import modulesData from '../../../../store/modules.json'
+import { useNotification } from '../../../../services/NotificationService'
 
 const EditRole = ({ role, onRoleUpdated, onClose }) => {
   const { isDarkMode } = useThemeStore()
+  const notify = useNotification()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -159,7 +161,7 @@ const EditRole = ({ role, onRoleUpdated, onClose }) => {
 
       if (response.success) {
         setSuccess('Role updated successfully!')
-
+        notify('Role updated successfully!', 'success')
         // Call parent callback
         if (onRoleUpdated) {
           setTimeout(() => {
@@ -169,7 +171,9 @@ const EditRole = ({ role, onRoleUpdated, onClose }) => {
       }
     } catch (err) {
       console.error('Error updating role:', err)
-      setError(err.response?.data?.message || 'Failed to update role')
+      const msg = err.response?.data?.message || 'Failed to update role'
+      setError(msg)
+      notify(msg, 'error')
     } finally {
       setLoading(false)
     }
@@ -213,14 +217,14 @@ const EditRole = ({ role, onRoleUpdated, onClose }) => {
       </div>
 
       {/* Success Message */}
-      {success && (
+      {/* {success && (
         <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
           <div className="flex items-center">
             <span className="mr-2">✅</span>
             {success}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Error Message */}
       {error && (

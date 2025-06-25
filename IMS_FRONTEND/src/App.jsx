@@ -15,7 +15,9 @@ import NotFound from './pages/NotFound'
 import DaisyUITest from './pages/DaisyUITest'
 
 // Enquiry Pages
-import EnquiryForm from './pages/enquiry/EnquiryForm.jsx'
+import EnquiryForm from './pages/enquiry/addEnquiry/EnquiryForm.jsx'
+import ViewEnquiry from './pages/enquiry/viewEnquiry/ViewEnquiry.jsx'
+import EnquiryDetails from './pages/enquiry/viewEnquiry/components/EnquiryDetails.jsx'
 
 // Auth Pages
 import Login from './pages/auth/Login.jsx'
@@ -36,9 +38,11 @@ import Role from './pages/masters/role/Role.jsx'
 import Courses from './pages/masters/courses/Courses.jsx'
 import Batch from './pages/masters/batch/Batch.jsx'
 import Session from './pages/masters/session/Session.jsx'
+import InstitutionType from './pages/masters/institutionType/InstitutionType.jsx';
 
 // Student Pages
 import Student from './pages/student/Student.jsx'
+import Admission from './pages/admission/createAdmissions/Admission.jsx'
 
 
 function App() {
@@ -79,9 +83,15 @@ function App() {
                 <Route path="courses" element={<Courses />} />
                 <Route path="batches" element={<Batch />} />
                 <Route path="sessions" element={<Session />} />
+                <Route path="institution-type" element={<InstitutionType />} />
 
                 {/* Enquiry Routes */}
-                <Route path="enquiry" element={<EnquiryForm />} />
+                <Route path="enquiry/create" element={<EnquiryForm />} />
+                <Route path="enquiry/view" element={<ViewEnquiry />} />
+                <Route path="enquiry/details/:id" element={<EnquiryDetails />} />
+
+                {/* Admission Routes */}
+                <Route path="admission" element={<Admission />} />
               </Route>
 
               {/* 404 route */}

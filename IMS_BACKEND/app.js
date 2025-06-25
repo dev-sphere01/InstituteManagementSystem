@@ -63,9 +63,11 @@ app.use('/api', auditMiddleware);
 
 // Import API routes
 const apiV1Routes = require("./api/v1/routes");
+// const enquiryRoutes = require('./api/v1/routes/enquiryRoutes');
 
 // Mount API routes with versioning
 app.use("/api/v1", apiV1Routes);
+// app.use('/api/v1/enquiry', enquiryRoutes);
 
 // Serve frontend static files
 // Set static folder - update path to point to Vite's output directory

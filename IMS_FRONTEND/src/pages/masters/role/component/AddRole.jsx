@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useThemeStore } from '../../../../store'
 import API from '../../../../services/API'
 import modulesData from '../../../../store/modules.json'
+import { useNotification } from '../../../../services/NotificationService'
 
 const AddRole = ({ onRoleCreated }) => {
   const { isDarkMode } = useThemeStore()
+  const notify = useNotification()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -144,6 +146,7 @@ const AddRole = ({ onRoleCreated }) => {
 
       if (response.success) {
         setSuccess('Role created successfully!')
+        notify('Role created successfully!', 'success')
         setFormData({
           RoleName: '',
           description: '',
@@ -163,7 +166,9 @@ const AddRole = ({ onRoleCreated }) => {
       }
     } catch (err) {
       console.error('Error creating role:', err)
-      setError(err.response?.data?.message || 'Failed to create role')
+      const msg = err.response?.data?.message || 'Failed to create role'
+      setError(msg)
+      notify(msg, 'error')
     } finally {
       setLoading(false)
     }
