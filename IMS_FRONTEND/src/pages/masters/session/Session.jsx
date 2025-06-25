@@ -20,7 +20,9 @@ const Session = () => {
     setError(null);
     try {
       const res = await API.get('/sessions');
-      setSessions(res.data.data || []);
+      // console.log("API call response",res.data)
+      setSessions(res?.data);
+      // console.log("Post State Set -",sessions)
     } catch (err) {
       setError('Failed to fetch sessions');
       notify('Failed to fetch sessions', 'error');

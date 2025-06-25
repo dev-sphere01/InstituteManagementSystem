@@ -56,7 +56,7 @@ const EditSession = ({ session, onSessionUpdated, onClose, loading: parentLoadin
     <div className={`rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 max-w-2xl mx-auto`}>
       <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Edit Session</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
           <div>
             <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Session Name <span className="text-red-500">*</span></label>
             <input
@@ -70,6 +70,8 @@ const EditSession = ({ session, onSessionUpdated, onClose, loading: parentLoadin
             />
             {errors.sessionName && <p className="mt-1 text-sm text-red-500">{errors.sessionName}</p>}
           </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Start Date <span className="text-red-500">*</span></label>
             <input
@@ -82,8 +84,6 @@ const EditSession = ({ session, onSessionUpdated, onClose, loading: parentLoadin
             />
             {errors.startDate && <p className="mt-1 text-sm text-red-500">{errors.startDate}</p>}
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>End Date <span className="text-red-500">*</span></label>
             <input
@@ -95,19 +95,6 @@ const EditSession = ({ session, onSessionUpdated, onClose, loading: parentLoadin
               disabled={isSubmitting || parentLoading}
             />
             {errors.endDate && <p className="mt-1 text-sm text-red-500">{errors.endDate}</p>}
-          </div>
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Cities <span className="text-red-500">*</span></label>
-            <input
-              type="text"
-              name="cityNames"
-              value={form.cityNames}
-              onChange={handleChange}
-              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.cityNames ? 'border-red-500' : isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'}`}
-              placeholder="Enter cities (comma separated)"
-              disabled={isSubmitting || parentLoading}
-            />
-            {errors.cityNames && <p className="mt-1 text-sm text-red-500">{errors.cityNames}</p>}
           </div>
         </div>
         <div>
