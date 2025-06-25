@@ -1,216 +1,150 @@
-import React, { useState, useCallback } from 'react'
-import AddCourse from './components/AddCourse'
-import AllCourses from './components/AllCourses'
-import EditCourse from './components/EditCourse'
-import CourseDetails from './components/CourseDetails'
-import { useThemeStore } from '../../../store'
+import React, { useEffect, useState } from 'react';
+import { useThemeStore } from '../../../store';
+import AddCourse from './components/AddCourse';
+import AllCourses from './components/AllCourses';
+import EditCourse from './components/EditCourse';
+import API from '../../../services/API';
+import { useNotification } from '../../../services/NotificationService';
 
 const Courses = () => {
   const { isDarkMode } = useThemeStore();
-  const [courses, setCourses] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [currentView, setCurrentView] = useState('list'); // 'list', 'add', 'edit', 'view'
-  const [selectedCourseId, setSelectedCourseId] = useState(null);
-  const [editCourse, setEditCourse] = useState(null);
+  const notify = useNotification();
+  const [activeTab, setActiveTab] = useState('all');
+  const [courses, setCourses] = useState([]);
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Fetch courses from backend
-  const fetchCourses = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch('/api/courses')
-      const data = await res.json()
-      if (data.success) {
-        setCourses(data.data)
-      } else {
-        setError('Failed to fetch courses')
-      }
-    } catch (err) {
-      setError('Failed to fetch courses')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  React.useEffect(() => {
-    fetchCourses()
-  }, [fetchCourses])
-
-  // Handlers for view changes
-  const handleViewChange = (view, courseId = null, courseObj = null) => {
-    setCurrentView(view);
-    setSelectedCourseId(courseId);
-    setEditCourse(courseObj);
-  };
-
-  const handleBackToList = () => {
-    setCurrentView('list');
-    setSelectedCourseId(null);
-    setEditCourse(null);
-    fetchCourses();
-  };
-
-  // Add course
-  const handleAddCourse = async (course) => {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch('/api/courses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(course),
-      })
-      const data = await res.json()
-      if (data.success) {
-        handleBackToList();
-      } else {
-        setError(data.message || 'Failed to add course')
-      }
-    } catch (err) {
-      setError('Failed to add course')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Update course
-  const handleUpdateCourse = async (course) => {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch(`/api/courses/${course._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(course),
-      })
-      const data = await res.json()
-      if (data.success) {
-        handleBackToList();
-      } else {
-        setError(data.message || 'Failed to update course')
-      }
-    } catch (err) {
-      setError('Failed to update course')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Delete course
-  const handleDeleteCourse = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this course?')) return;
+  const fetchCourses = async () => {
     setLoading(true);
-    setError('');
+    setError(null);
     try {
-      const res = await fetch(`/api/courses/${id}`, { method: 'DELETE' });
-      if (res.status === 204) {
-        fetchCourses();
-      } else {
-        setError('Failed to delete course');
-      }
+      const res = await API.get('/courses');
+      setCourses(res?.data || []);
     } catch (err) {
-      setError('Failed to delete course');
+      setError('Failed to fetch courses');
+      notify('Failed to fetch courses', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  // Render current view
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case 'add':
-        return (
-          <AddCourse onCourseCreated={handleAddCourse} onCancel={handleBackToList} loading={loading} />
-        );
-      case 'edit':
-        return (
-          <EditCourse course={editCourse} onCourseUpdated={handleUpdateCourse} onCancel={handleBackToList} loading={loading} />
-        );
-      case 'view':
-        return (
-          <CourseDetails courseId={selectedCourseId} onBack={handleBackToList} />
-        );
-      default:
-        return (
-          <AllCourses
-            courses={courses}
-            onEditCourse={(course) => handleViewChange('edit', course._id, course)}
-            onDeleteCourse={handleDeleteCourse}
-            onViewCourse={(course) => handleViewChange('view', course._id, course)}
-            onAddCourse={() => handleViewChange('add')}
-            loading={loading}
-            error={error}
-          />
-        );
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const handleEditCourse = (course) => {
+    setEditingCourse(course);
+    setActiveTab('edit');
+  };
+
+  const handleCloseEdit = () => {
+    setEditingCourse(null);
+    setActiveTab('all');
+  };
+
+  const handleCourseUpdated = async (updatedCourse) => {
+    try {
+      setLoading(true);
+      const res = await API.put(`/courses/${updatedCourse._id}`, updatedCourse);
+      setCourses(courses.map((c) => (c._id === updatedCourse._id ? res.data.data : c)));
+      setEditingCourse(null);
+      setActiveTab('all');
+      notify('Course updated successfully', 'success');
+    } catch (err) {
+      notify(err.response?.data?.message || 'Failed to update course', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Breadcrumb label
-  const getBreadcrumbLabel = () => {
-    switch (currentView) {
-      case 'add':
-        return 'Add Course';
-      case 'edit':
-        return 'Edit Course';
-      case 'view':
-        return 'Course Details';
-      default:
-        return null;
+  const handleCourseDeleted = async (id) => {
+    try {
+      setLoading(true);
+      await API.delete(`/courses/${id}`);
+      setCourses(courses.filter((c) => c._id !== id));
+      notify('Course deleted successfully', 'success');
+    } catch (err) {
+      notify(err.response?.data?.message || 'Failed to delete course', 'error');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const tabs = [
+    { id: 'all', label: 'All Courses', icon: '📚' },
+    { id: 'add', label: 'Add Course', icon: '➕' },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
               Course Master
             </span>
           </h1>
-          <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Manage all courses, levels, and details</p>
+          <p className={`mt-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Manage all academic courses in the system
+          </p>
         </div>
-        {/* Breadcrumb */}
-        {currentView !== 'list' && (
-          <nav className="flex" aria-label="Breadcrumb">
-            <ol className="flex items-center space-x-2">
-              <li>
-                <button
-                  onClick={handleBackToList}
-                  className={`text-sm font-medium ${
-                    isDarkMode
-                      ? 'text-gray-400 hover:text-gray-200'
-                      : 'text-gray-500 hover:text-gray-700'
-                  } transition-colors`}
-                >
-                  Courses
-                </button>
-              </li>
-              <li>
-                <svg className={`w-4 h-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </li>
-              <li>
-                <span className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                }`}>
-                  {getBreadcrumbLabel()}
-                </span>
-              </li>
-            </ol>
-          </nav>
-        )}
       </div>
-      {/* Content */}
-      <div className={`rounded-lg ${
-        isDarkMode ? 'bg-gray-800' : 'bg-white'
-      } shadow-sm border ${
-        isDarkMode ? 'border-gray-700' : 'border-gray-200'
-      }`}>
-        {renderCurrentView()}
+
+      {/* Tabs */}
+      <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <nav className="-mb-px flex space-x-8">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === tab.id
+                  ? `border-blue-500 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`
+                  : `border-transparent ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} hover:border-gray-300`
+                }`}
+            >
+              <span className="mr-2">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+          {editingCourse && (
+            <button
+              onClick={() => setActiveTab('edit')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${activeTab === 'edit'
+                  ? `border-blue-500 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`
+                  : `border-transparent ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} hover:border-gray-300`
+                }`}
+            >
+              <span className="mr-2">✏️</span>
+              Edit Course
+            </button>
+          )}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <div className="mt-6">
+        {activeTab === 'all' && (
+          <AllCourses
+            courses={courses}
+            onEditCourse={handleEditCourse}
+            onDeleteCourse={handleCourseDeleted}
+            loading={loading}
+            error={error}
+          />
+        )}
+        {activeTab === 'add' && (
+          <AddCourse onCancel={() => setActiveTab('all')} loading={loading} />
+        )}
+        {activeTab === 'edit' && editingCourse && (
+          <EditCourse
+            course={editingCourse}
+            onCourseUpdated={handleCourseUpdated}
+            onClose={handleCloseEdit}
+            loading={loading}
+          />
+        )}
       </div>
     </div>
   );
