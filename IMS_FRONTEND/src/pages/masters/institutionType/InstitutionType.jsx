@@ -1,8 +1,9 @@
 import React from 'react'
+import Boards from './boards/Boards'
 
 const InstitutionType = () => {
   return (
-    <div>InstitutionType</div>
+    <div><Boards/></div>
   )
 }
 
