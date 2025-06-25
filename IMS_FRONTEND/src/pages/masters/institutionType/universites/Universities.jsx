@@ -21,7 +21,7 @@ const UniversityMaster = () => {
     setError('');
     try {
       const res = await API.get('/universities');
-      setUniversities(Array.isArray(res.data.data) ? res.data.data : []);
+      setUniversities(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load universities');
       setUniversities([]);

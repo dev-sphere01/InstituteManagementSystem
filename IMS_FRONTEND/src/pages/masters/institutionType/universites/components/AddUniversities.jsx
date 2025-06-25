@@ -20,7 +20,9 @@ const AddUniversity = ({ onCancel, onUniversityCreated }) => {
     }
     setLoading(true);
     try {
-      const res = await API.post('/universities', { universityName });
+      // Always send trimmed name, only once
+      const nameToSend = universityName.trim();
+      const res = await API.post('/universities', { universityName: nameToSend });
       notify('University created successfully', 'success');
       onUniversityCreated(res.data.data);
       setUniversityName('');
@@ -28,11 +30,14 @@ const AddUniversity = ({ onCancel, onUniversityCreated }) => {
       onCancel();
     } catch (error) {
       const msg = error.response?.data?.message || 'Failed to create university';
-      // Show duplicate error under field
+      // Show duplicate error only in notification, not under field
       if (msg.toLowerCase().includes('duplicate') && msg.toLowerCase().includes('universityname')) {
+        setError(''); // Don't show under field
+        notify(msg, 'error');
+      } else {
         setError(msg);
+        notify(msg, 'error');
       }
-      notify(msg, 'error');
     } finally {
       setLoading(false);
     }
