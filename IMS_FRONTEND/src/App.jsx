@@ -37,6 +37,7 @@ import Role from './pages/masters/role/Role.jsx'
 import Courses from './pages/masters/courses/Courses.jsx'
 import Batch from './pages/masters/batch/Batch.jsx'
 import Session from './pages/masters/session/Session.jsx'
+import InstitutionType from './pages/masters/institutionType/InstitutionType.jsx';
 
 // Student Pages
 import Student from './pages/student/Student.jsx'
@@ -80,6 +81,7 @@ function App() {
                 <Route path="courses" element={<Courses />} />
                 <Route path="batches" element={<Batch />} />
                 <Route path="sessions" element={<Session />} />
+                <Route path="institution-type" element={<InstitutionType />} />
 
                 {/* Enquiry Routes */}
                 <Route path="enquiry/create" element={<EnquiryForm />} />

@@ -24,6 +24,7 @@ const PrimarySideBar = () => {
     { path: '/dashboard/courses', icon: 'book', label: 'Courses' },
     { path: '/dashboard/batches', icon: 'collection', label: 'Batches' },
     { path: '/dashboard/sessions', icon: 'calendar', label: 'Sessions' },
+    { path: '/dashboard/institution-type', icon: 'collection', label: 'Institution Type' },
   ];
 
   // Enquiry navigation items
@@ -149,15 +150,15 @@ const PrimarySideBar = () => {
 
   return (
     <aside
-      className={`bg-gray-900 text-white transition-all duration-300 ease-in-out ${isPrimarySidebarOpen ? 'w-44 ' : 'w-0 md:w-16'} overflow-hidden h-full fixed md:static z-50 top-16 md:top-0 left-0 bottom-0`}
+      className={`bg-gray-900 text-white transition-all text-sm duration-300 ease-in-out ${isPrimarySidebarOpen ? 'w-auto ' : 'w-0 md:w-16'} overflow-hidden h-full fixed md:static z-50 top-16 md:top-0 left-0 bottom-0`}
     >
       <div className="h-full flex flex-col">
         {/* Sidebar header */}
-        <div className="p-4 border-b border-gray-800">
+        {/* <div className="p-4 border-b border-gray-800">
           <h2 className={`font-bold text-xl ${isPrimarySidebarOpen ? 'block' : 'hidden md:block text-center'}`}>
             {isPrimarySidebarOpen ? 'Navigation' : ''}
           </h2>
-        </div>
+        </div> */}
 
         {/* Navigation links */}
         <nav className="flex-1 overflow-y-auto py-4">
