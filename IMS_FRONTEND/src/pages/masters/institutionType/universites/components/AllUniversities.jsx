@@ -1,57 +1,83 @@
-import React from 'react';
-import {useThemeStore} from '../../../../../store';
+import React, { useMemo } from 'react';
+import { useThemeStore } from '../../../../../store';
+import TableService from '../../../../../services/TableService';
 
 const AllUniversities = ({ universities, onEditUniversity, onDeleteUniversity, loading, error }) => {
   const { isDarkMode } = useThemeStore();
 
-  return (
-    <div className={`rounded-md p-6 shadow-md border ${isDarkMode ? 'bg-[#1f2937] border-gray-700' : 'bg-white border-gray-300'}`}>
-      <h2 className="text-lg font-semibold mb-4">All Universities</h2>
-
-      {loading ? (
-        <p className="text-sm">Loading...</p>
-      ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
-      ) : universities.length === 0 ? (
-        <p className="text-sm text-gray-500">No universities found.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className={`${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-black'}`}>
-                <th className="text-left px-4 py-2">#</th>
-                <th className="text-left px-4 py-2">University Name</th>
-                <th className="text-left px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {universities.map((university, index) => (
-                <tr
-                  key={university._id}
-                  className={`border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
-                >
-                  <td className="px-4 py-2">{index + 1}</td>
-                  <td className="px-4 py-2">{university.universityName}</td>
-                  <td className="px-4 py-2 space-x-2">
-                    <button
-                      onClick={() => onEditUniversity(university)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => onDeleteUniversity(university._id)}
-                      className="text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'universityName',
+      header: 'University Name',
+      cell: info => {
+        const value = info.getValue();
+        return typeof value === 'string' ? value : <span className="text-red-500">Invalid</span>;
+      },
+      enableSorting: true,
+      enableColumnFilter: true,
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-2">
+          <button
+            className="inline-flex items-center px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium shadow"
+            onClick={() => onEditUniversity(row.original)}
+          >
+            ✏️ Edit
+          </button>
+          <button
+            className="inline-flex items-center px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white text-xs font-medium shadow"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete this university?')) {
+                onDeleteUniversity(row.original._id);
+              }
+            }}
+          >
+            🗑️ Delete
+          </button>
         </div>
-      )}
+      ),
+      enableSorting: false,
+      enableColumnFilter: false,
+    },
+  ], [onEditUniversity, onDeleteUniversity]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <span className="text-blue-500 text-lg font-semibold animate-pulse">Loading universities...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <span className="text-red-500 text-lg font-semibold">{error}</span>
+      </div>
+    );
+  }
+
+  if (!universities || universities.length === 0) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <span className={`text-lg font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          No universities found.
+        </span>
+      </div>
+    );
+  }
+
+  const safeUniversities = universities.filter(u => u && typeof u.universityName === 'string');
+
+  return (
+    <div className={`rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4`}>
+      <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        All Universities
+      </h2>
+      <TableService columns={columns} data={safeUniversities} initialPageSize={10} />
     </div>
   );
 };
