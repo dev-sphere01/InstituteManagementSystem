@@ -5,7 +5,7 @@ const router = express.Router();
 const userRoutes = require('./userRoutes');
 const logRoutes = require('./logRoutes');
 const roleRoutes = require('./roleRoutes');
-const enquiryRoutes = require("./enquiryRoutes");
+const enquiryRoutes = require('./enquiryRoutes');
 const admissionRoutes = require('./admissionRoutes');
 const centreCodeRoutes = require('./centreCodeRoutes');
 const boardsRoutes = require('./boardsRoutes');
@@ -20,7 +20,7 @@ const coursesRoutes  = require('./coursesRoutes')
 router.use('/users', userRoutes);
 router.use('/logs', logRoutes);
 router.use('/roles', roleRoutes);
-router.use("/enquiries", enquiryRoutes);
+router.use('/enquiry', enquiryRoutes);
 router.use('/admissions', admissionRoutes);
 router.use('/centre-codes', centreCodeRoutes);
 router.use('/boards', boardsRoutes);
