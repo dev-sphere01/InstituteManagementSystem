@@ -1,10 +1,15 @@
 const mongoose = require('mongoose');
 
 const courseSchema = new mongoose.Schema({
-  code: {
+  Code: {
     type: String,
     required: true,
     unique: true,
+    trim: true
+  },
+  centreCode: {
+    type: String,
+    required: true,
     trim: true
   },
   name: {
@@ -19,6 +24,11 @@ const courseSchema = new mongoose.Schema({
   duration: {
     type: String,
     trim: true
+  },
+  fee: {
+    type: Number,
+    required: true,
+    min: 0
   },
   level: {
     type: String,
