@@ -76,6 +76,13 @@ const admissionDetailsSchema = new mongoose.Schema({
   status: { type: String, default: 'Pending' },
   regNo: { type: String, required: true },
   month: { type: String, required: true },
+
+  //Track Step wise data and completed status
+  currentStep: { type: String, default: 'basic' }, // values: 'basic', 'contact', 'education', 'extras', 'review', 'submitted'
+  isCompleted: { type: Boolean, default: false }
+
+
+
 }, {
   timestamps: true // Adds createdAt and updatedAt fields
 });
