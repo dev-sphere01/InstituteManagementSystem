@@ -3,6 +3,7 @@ import { useThemeStore } from '../../../../../../store';
 
 const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
+  const referral = formData.referral || {};
 
   const referralSources = [
     'Social Media',
@@ -14,17 +15,14 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       referral: {
-        ...prev.referral,
+        ...(prev.referral || {}),
         [name]: value,
       },
     }));
   };
-
-  const referral = formData?.referral ?? {};
 
   const inputClass = `w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
     isDarkMode
@@ -45,14 +43,12 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
       }`}
     >
       <h3 className="text-xl font-bold mb-6">Referral Information</h3>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Referral Source */}
         <div>
           <label className={labelClass}>How did you hear about us?</label>
           <select
             name="referralSource"
-            value={referral?.referralSource ?? ''}
+            value={referral.referralSource || ''}
             onChange={handleChange}
             className={inputClass}
           >
@@ -65,7 +61,6 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
           </select>
         </div>
 
-        {/* Other input if selected */}
         {referral.referralSource === 'Other' && (
           <div>
             <label className={labelClass}>Other (please specify)</label>
@@ -74,13 +69,12 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
               name="referralSourceOther"
               value={referral.referralSourceOther || ''}
               onChange={handleChange}
-              placeholder="Specify other source"
               className={inputClass}
+              placeholder="Specify other source"
             />
           </div>
         )}
 
-        {/* Referred Name */}
         <div className="md:col-span-2">
           <label className={labelClass}>Referred by (Name)</label>
           <input

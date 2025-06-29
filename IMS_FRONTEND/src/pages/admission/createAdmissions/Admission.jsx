@@ -13,61 +13,68 @@ const Admission = () => {
   const [currentStep, setCurrentStep] = useState('basic');
   const [completedSteps, setCompletedSteps] = useState([]);
   const [formData, setFormData] = useState({
-    formNo: '',
-    centerCode: '',
-    employeeId: '',
-    generatedRegNo: '',
-    fullName: '',
-    dob: '',
-    gender: '',
-    category: '',
-    aadharNo: '',
-    religion: '',
-    otherInfo: '',
+  // Basic Info
+  formNo: '',
+  centerCode: '',
+  employeeId: '',
+  generatedRegNo: '',
+  fullName: '',
+  dob: '',
+  gender: '',
+  category: '',
+  aadharNo: '',
+  religion: '',
+  otherInfo: '',
 
-    contactNumber: '',
-    emailAddress: '',
-    whatsappNumber: '',
-    address: '',
-    city: '',
-    pincode: '',
-    state: '',
-    fatherName: '',
-    fatherContact: '',
-    motherName: '',
-    motherContact: '',
+  // Contact Info
+  contactNumber: '',
+  emailAddress: '',
+  whatsappNumber: '',
+  address: '',
+  city: '',
+  pincode: '',
+  state: '',
+  fatherName: '',
+  fatherContact: '',
+  motherName: '',
+  motherContact: '',
 
-    highestQualification: '',
-    boardOrUniversity: '',
-    yearOfPassing: '',
-    subjects: '',
-    courseApplied: '',
-    learningMode: '',
+  // Education Info
+  highestQualification: '',
+  boardOrUniversity: '',
+  yearOfPassing: '',
+  subjects: '',
+  courseApplied: '',
+  learningMode: '',
 
-    features: {
-      tShirt: false,
-      itTools: false,
-      webDesigning: false,
-      tally: false,
-      gfxDtp: false,
-      python: false,
-      iot: false,
-    },
+  // Extra Features
+  features: {
+    tShirt: false,
+    itTools: false,
+    webDesigning: false,
+    tally: false,
+    gfxDtp: false,
+    python: false,
+    iot: false,
+  },
 
-    computerAccess: {
-      location: '',
-      otherLocation: '',
-    },
+  // Computer Access Info
+  computerAccess: {
+    computerAccess: false,         // This was missing
+    computerAccessOther: '',       // Renamed from `otherLocation` to match schema
+  },
 
-    referral: {
-      referralSource: '',
-      referralSourceOther: '',
-      referalName: '',
-    },
+  // Referral Info
+  referral: {
+    referralSource: '',
+    referralSourceOther: '',
+    referalName: '',
+  },
 
-    currentStep: 1,
-    isCompleted: false,
-  });
+  // Step Tracking
+  currentStep: 1,
+  isCompleted: false,
+});
 
   const [formId, setFormId] = useState(null);
   const [validationsEnabled, setValidationsEnabled] = useState(true);

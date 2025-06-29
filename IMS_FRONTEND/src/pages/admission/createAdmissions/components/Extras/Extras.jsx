@@ -6,36 +6,78 @@ import { useThemeStore } from '../../../../../store';
 import API from './../../../../../services/api';
 import { useNotification } from './../../../../../services/NotificationService';
 
-const Extras = ({ formData, setFormData, onNext, onBack, validationsEnabled = true }) => {
+const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
   const notify = useNotification();
 
-  // Fetch form data if formId exists and not already fetched
+  // Default structure to prevent undefined errors
+  const defaultFormData = {
+    referral: {
+      referralSource: '',
+      referralSourceOther: '',
+      referalName: '',
+    },
+    computerAccess: {
+      location: '',
+      otherLocation: '',
+    },
+    features: {
+      tShirt: false,
+      itTools: false,
+      webDesigning: false,
+      tally: false,
+      gfxDtp: false,
+      python: false,
+      iot: false,
+    },
+  };
+
+  // Combine existing formData with safe defaults
+  const safeFormData = {
+    ...defaultFormData,
+    ...formData,
+    referral: {
+      ...defaultFormData.referral,
+      ...(formData?.referral || {}),
+    },
+    computerAccess: {
+      ...defaultFormData.computerAccess,
+      ...(formData?.computerAccess || {}),
+    },
+    features: {
+      ...defaultFormData.features,
+      ...(formData?.features || {}),
+    },
+  };
+
+  // Fetch previous step data from API on load
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!formData?._id) return; // Skip if no ID
+        if (!formData?._id) return;
+
         const { data } = await API.get(`/admissions/${formData._id}`);
+
         setFormData((prev) => ({
           ...prev,
           ...data,
           referral: {
-            referralSource: data.referralSource || '',
-            referralSourceOther: data.referralSourceOther || '',
-            referalName: data.referalName || '',
+            referralSource: data?.referralSource || '',
+            referralSourceOther: data?.referralSourceOther || '',
+            referalName: data?.referalName || '',
           },
           computerAccess: {
-            location: data.computerAccessOther || '',
-            otherLocation: data.computerAccessOther || '',
+            location: data?.computerAccessOther || '',
+            otherLocation: data?.computerAccessOther || '',
           },
           features: {
-            tShirt: data.tShirt || false,
-            itTools: data.itTools || false,
-            webDesigning: data.webDesigning || false,
-            tally: data.tally || false,
-            gfxDtp: data.gfxDtp || false,
-            python: data.python || false,
-            iot: data.iot || false,
+            tShirt: data?.tShirt || false,
+            itTools: data?.itTools || false,
+            webDesigning: data?.webDesigning || false,
+            tally: data?.tally || false,
+            gfxDtp: data?.gfxDtp || false,
+            python: data?.python || false,
+            iot: data?.iot || false,
           },
         }));
       } catch (err) {
@@ -48,12 +90,11 @@ const Extras = ({ formData, setFormData, onNext, onBack, validationsEnabled = tr
   }, [formData?._id]);
 
   const handleSubmit = () => {
-    const features = formData.features || {};
-    const referral = formData.referral || {};
-    const computerAccess = formData.computerAccess || {};
+    const { features, referral, computerAccess } = safeFormData;
 
     const flattenedData = {
-      ...formData,
+      ...formData, // keep original _id and other values
+
       // Flatten features
       tShirt: features.tShirt || false,
       itTools: features.itTools || false,
@@ -71,7 +112,9 @@ const Extras = ({ formData, setFormData, onNext, onBack, validationsEnabled = tr
       // Flatten computer access
       computerAccess: !!computerAccess.location,
       computerAccessOther:
-        computerAccess.location === 'Other' ? computerAccess.otherLocation || '' : computerAccess.location || '',
+        computerAccess.location === 'Other'
+          ? computerAccess.otherLocation || ''
+          : computerAccess.location || '',
     };
 
     if (typeof onNext === 'function') {
@@ -97,17 +140,17 @@ const Extras = ({ formData, setFormData, onNext, onBack, validationsEnabled = tr
 
       <div className="space-y-8">
         <Features
-          formData={formData}
+          formData={safeFormData}
           setFormData={setFormData}
           validationsEnabled={validationsEnabled}
         />
         <ComputerAccess
-          formData={formData}
+          formData={safeFormData}
           setFormData={setFormData}
           validationsEnabled={validationsEnabled}
         />
         <Referral
-          formData={formData}
+          formData={safeFormData}
           setFormData={setFormData}
           validationsEnabled={validationsEnabled}
         />
@@ -129,7 +172,7 @@ const Extras = ({ formData, setFormData, onNext, onBack, validationsEnabled = tr
         <button
           type="button"
           onClick={handleSubmit}
-          className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600`}
+          className="px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600"
         >
           Next
         </button>

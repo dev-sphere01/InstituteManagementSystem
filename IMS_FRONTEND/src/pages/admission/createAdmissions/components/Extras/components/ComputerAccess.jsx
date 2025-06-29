@@ -3,6 +3,7 @@ import { useThemeStore } from '../../../../../../store';
 
 const ComputerAccess = ({ formData = {}, setFormData = () => {}, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
+  const computerAccess = formData.computerAccess || {};
 
   const accessOptions = [
     'Home',
@@ -14,17 +15,14 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {}, validationsEnab
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       computerAccess: {
-        ...prev.computerAccess,
+        ...(prev.computerAccess || {}),
         [name]: value,
       },
     }));
   };
-
-  const computerAccess = formData.computerAccess || {};
 
   const inputClass = `w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
     isDarkMode
@@ -47,7 +45,6 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {}, validationsEnab
       <h3 className="text-xl font-bold mb-6">Computer Access</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Access location */}
         <div>
           <label className={labelClass}>Where do you access a computer?</label>
           <select
@@ -65,7 +62,6 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {}, validationsEnab
           </select>
         </div>
 
-        {/* Other location input */}
         {computerAccess.location === 'Other' && (
           <div>
             <label className={labelClass}>Other (please specify)</label>
