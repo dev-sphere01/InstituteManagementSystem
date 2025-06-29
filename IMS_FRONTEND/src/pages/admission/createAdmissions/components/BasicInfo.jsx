@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useThemeStore } from '../../../../store';
+import { useNotification } from '../../../../services/NotificationService';
 
 const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsEnabled }) => {
+  const notify = useNotification();
   const { isDarkMode } = useThemeStore();
 
   const [form, setForm] = useState({
@@ -22,20 +24,12 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    setForm({ ...form, ...formData }); // preload form from parent
+    setForm((prev) => ({ ...prev, ...formData }));
   }, [formData]);
 
   const requiredFields = [
-    'formNo',
-    'centerCode',
-    'employeeId',
-    'generatedRegNo',
-    'fullName',
-    'dob',
-    'gender',
-    'category',
-    'aadharNo',
-    'religion',
+    'formNo', 'centerCode', 'employeeId', 'generatedRegNo',
+    'fullName', 'dob', 'gender', 'category', 'aadharNo', 'religion',
   ];
 
   const validate = () => {
@@ -50,6 +44,9 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
     });
 
     setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      notify('Please fill all required fields.', 'error');
+    }
     return Object.keys(errs).length === 0;
   };
 
@@ -62,14 +59,17 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+
     setIsSubmitting(true);
 
     try {
       if (typeof onNext === 'function') {
-        onNext(form); // will be merged and saved in Admission.jsx
+        onNext(form);
+        notify('Basic information saved successfully.', 'success');
       }
     } catch (err) {
       console.error('Failed to proceed:', err);
+      notify('Failed to proceed to next step.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -109,6 +109,7 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
             { name: 'generatedRegNo', label: 'Generated Reg No' },
             { name: 'fullName', label: 'Full Name' },
             { name: 'aadharNo', label: 'Aadhar No' },
+            { name: 'religion', label: 'Religion' },
             { name: 'dob', label: 'Date of Birth', type: 'date' },
           ].map(({ name, label, type = 'text' }) => (
             <div key={name}>
