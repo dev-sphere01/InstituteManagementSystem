@@ -2,92 +2,80 @@ const mongoose = require('mongoose');
 
 const admissionDetailsSchema = new mongoose.Schema({
   // Basic Info
-  timestamp: { type: Date, default: Date.now },
-  formNo: { type: String, required: true }, // F + Branch + Unique Number
-  centerCode: { type: String, required: true },
-  employeeId: { type: String, required: true }, // E + Branch + Unique Number
-  otherInfo: { type: String },
-  generatedRegNo: { type: String, required: true }, // R + Branch + Month + Year + ID
-  fullName: { type: String, required: true },
-  dob: { type: Date, required: true },
-  gender: { type: String, required: true },
-  category: { type: String, required: true },
-  aadharNo: { type: String, required: true },
-  religion: { type: String, required: true },
-  
-  // Documents
-  aadharPhoto: { type: String }, // URL or base64 string
-  candidatePhoto: { type: String },
-  candidateSignature: { type: String },
-  candidateLeftThumbImpression: { type: String },
-  apaarId: { type: String },
-  tenthMarksheet: { type: String },
-  twelfthMarksheet: { type: String },
-  exServicemen: { type: String },
-  speciallyAbled: { type: String },
-  speciallyAbledOther: { type: String },
+  timestamp: { type: Date, default: Date.now },//automatically created when submitted
+  formNo: { type: String, required: true }, // combination of (F + Branch + Unique Number) 
+  centerCode: { type: String, required: true },//alpha numeric allowed 
+  employeeId: { type: String, required: true }, //combination of  (E + Branch + Unique Number)
+  otherInfo: { type: String },//just a normal text
+  generatedRegNo: { type: String, required: true }, //comination of ( R + Branch + Month + Year + ID)
+  fullName: { type: String, required: true },//text data
+  dob: { type: Date, required: true },//date format - dd/mm/yyyy
+  gender: { type: String, required: true },//Male/Female/Others only
+  category: { type: String, required: true },//GEN/ST/SC/OBC only
+  aadharNo: { type: String, required: true },//max 16 digit numeric data only
+  religion: { type: String, required: true },//text data
 
   // Contact Details
-  contactNumber: { type: String, required: true },
-  alternateContactNumber: { type: String },
-  emailAddress: { type: String, required: true },
-  state: { type: String, required: true },
-  district: { type: String, required: true },
-  address: { type: String, required: true },
-  pinCode: { type: String, required: true },
-  fathersName: { type: String, required: true },
-  fathersOccupation: { type: String, required: true },
-  fathersJobRole: { type: String },
-  departmentOrCompany: { type: String },
-  mothersName: { type: String, required: true },
-  guardianName: { type: String },
-  guardianRelation: { type: String },
-  guardianContactNumber: { type: String },
+  contactNumber: { type: String, required: true },//requried 10 digit numeric data
+  alternateContactNumber: { type: String },//optinal 10 digit numeric data
+  emailAddress: { type: String, required: true },//email address data
+  state: { type: String, required: true },//text data
+  district: { type: String, required: true },//text data
+  address: { type: String, required: true },//long text data
+  pinCode: { type: String, required: true },//numeric data 
+  fathersName: { type: String, required: true },//text data
+  fathersOccupation: { type: String, required: true },//text data
+  fathersJobRole: { type: String },//text data
+  departmentOrCompany: { type: String },//text data
+  mothersName: { type: String, required: true },//text data
+  guardianName: { type: String },//text data
+  guardianRelation: { type: String },//text data
+  guardianContactNumber: { type: String },//optinal 10 digit numeric data
+
+  // Documents
+  aadharPhoto: { type: String }, // for now base64 , later url
+  candidatePhoto: { type: String },// for now base64 , later url
+  candidateSignature: { type: String },// for now base64 , later url
+  candidateLeftThumbImpression: { type: String },// for now base64 , later url
+  apaarId: { type: String },//text data
+  tenthMarksheet: { type: String },// for now base64 , later url
+  twelfthMarksheet: { type: String },// for now base64 , later url
+  exServicemen: { type: Boolean, default: false },//only Yes or No
+  speciallyAbled: { type: Boolean, default: false},//only Yes or No
+  speciallyAbledOther: { type: String },//text data
 
   // Education & Course
-  highestEducationalQualification: { type: String, required: true },
-  boardOrUniversity: { type: String, required: true },
-  yearOfPassing: { type: String, required: true },
-  subjectsStudied: { type: String, required: true },
-  courseApplied: { type: String, required: true },
-  preferredModeOfLearning: { type: String, required: true },
+  highestEducationalQualification: { type: String, required: true },//text data
+  boardOrUniversity: { type: String, required: true },//text data
+  yearOfPassing: { type: Number, required: true },//numeric data
+  subjectsStudied: { type: String, required: true },//json but in string
+  courseApplied: { type: String, required: true },//text data
+  preferredModeOfLearning: { type: String, required: true },//either offline or online
 
+
+  // ----Extras----------------------------------
   // Features Options
-  tShirt: { type: Boolean, default: false },
-  itTools: { type: Boolean, default: false },
-  webDesigning: { type: Boolean, default: false },
-  tally: { type: Boolean, default: false },
-  gfxDtp: { type: Boolean, default: false },
-  python: { type: Boolean, default: false },
-  iot: { type: Boolean, default: false },
+  tShirt: { type: Boolean, default: false },//yes or no
+  itTools: { type: Boolean, default: false },//yes or no
+  webDesigning: { type: Boolean, default: false },//yes or no
+  tally: { type: Boolean, default: false },//yes or no
+  gfxDtp: { type: Boolean, default: false },//yes or no
+  python: { type: Boolean, default: false },//yes or no
+  iot: { type: Boolean, default: false },//yes or no
 
   // Referral Information
-  referralSource: { type: String },
-  referralSourceOther: { type: String },
-  referalName: { type: String },
+  referralSource: { type: String },//text data
+  referralSourceOther: { type: String },//text data
+  referalName: { type: String },//text data
 
   // Computer Access
-  computerAccess: { type: String },
-  computerAccessOther: { type: String },
+  computerAccess: { type: Boolean, default: false},//yes or no
+  computerAccessOther: { type: String },//text data
 
   // Status and Registration
   status: { type: String, default: 'Pending' },
   regNo: { type: String, required: true },
   month: { type: String, required: true },
-
-  // Monthly fee tracking (if needed)
-  // january: { type: Number, default: 0 },
-  // february: { type: Number, default: 0 },
-  // march: { type: Number, default: 0 },
-  // april: { type: Number, default: 0 },
-  // may: { type: Number, default: 0 },
-  // june: { type: Number, default: 0 },
-  // july: { type: Number, default: 0 },
-  // august: { type: Number, default: 0 },
-  // september: { type: Number, default: 0 },
-  // october: { type: Number, default: 0 },
-  // november: { type: Number, default: 0 },
-  // december: { type: Number, default: 0 }
 }, {
   timestamps: true // Adds createdAt and updatedAt fields
 });
