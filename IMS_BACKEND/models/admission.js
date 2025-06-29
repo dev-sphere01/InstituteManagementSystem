@@ -12,49 +12,52 @@ const admissionDetailsSchema = new mongoose.Schema({
   dob: { type: Date, required: true },//date format - dd/mm/yyyy
   gender: { type: String, required: true },//Male/Female/Others only
   category: { type: String, required: true },//GEN/ST/SC/OBC only
-  aadharNo: { type: String, required: true },//max 16 digit numeric data only
+  aadharNo: { type: String, required: true },//12 digit numeric data
   religion: { type: String, required: true },//text data
 
   // Contact Details
   contactNumber: { type: String, required: true },//requried 10 digit numeric data
-  alternateContactNumber: { type: String },//optinal 10 digit numeric data
-  emailAddress: { type: String, required: true },//email address data
+  alternateContactNumber: { type: String },//optional 10 digit numeric data
+  emailAddress: { type: String },//optional email address text data
   state: { type: String, required: true },//text data
   district: { type: String, required: true },//text data
   address: { type: String, required: true },//long text data
-  pinCode: { type: String, required: true },//numeric data 
+  pinCode: { type: String, required: true },//max 6 digit numeric data 
   fathersName: { type: String, required: true },//text data
-  fathersOccupation: { type: String, required: true },//text data
-  fathersJobRole: { type: String },//text data
-  departmentOrCompany: { type: String },//text data
+  fathersOccupation: { type: String },//optional text data
+  fathersJobRole: { type: String },//optional text data
+  fathersDepartmentOrCompany: { type: String },//optional text data
   mothersName: { type: String, required: true },//text data
-  guardianName: { type: String },//text data
-  guardianRelation: { type: String },//text data
-  guardianContactNumber: { type: String },//optinal 10 digit numeric data
+  mothersOccupation: { type: String },//optional text data
+  mothersJobRole: { type: String },//optional text data
+  mothersDepartmentOrCompany: { type: String },//optional text data
+  guardianName: { type: String },//optional text data
+  guardianRelation: { type: String },//optional text data
+  guardianContactNumber: { type: Number },//optinal 10 digit numeric data
 
   // Documents
-  aadharPhoto: { type: String }, // for now base64 , later url
-  candidatePhoto: { type: String },// for now base64 , later url
-  candidateSignature: { type: String },// for now base64 , later url
+  aadharPhoto: { type: String }, //   url , to be stored in root folder
+  candidatePhoto: { type: String },//   url , to be stored in root folder
+  candidateSignature: { type: String },// url , to be stored in root folder
   candidateLeftThumbImpression: { type: String },// for now base64 , later url
-  apaarId: { type: String },//text data
+  apaarId: { type: Number },//12 digit optional numeric data
   tenthMarksheet: { type: String },// for now base64 , later url
   twelfthMarksheet: { type: String },// for now base64 , later url
   exServicemen: { type: Boolean, default: false },//only Yes or No
-  speciallyAbled: { type: Boolean, default: false},//only Yes or No
-  speciallyAbledOther: { type: String },//text data
+  speciallyAbled: { type: Boolean, default: false },//only Yes or No
+  incomeCertificate: { type: String },//add income certificate url if EWS enabled
 
   // Education & Course
   highestEducationalQualification: { type: String, required: true },//text data
   boardOrUniversity: { type: String, required: true },//text data
   yearOfPassing: { type: Number, required: true },//numeric data
-  subjectsStudied: { type: String, required: true },//json but in string
   courseApplied: { type: String, required: true },//text data
+  subjectsStudied: { type: String, required: true },//array of subject names
   preferredModeOfLearning: { type: String, required: true },//either offline or online
 
 
   // ----Extras----------------------------------
-  // Features Options
+  // Features Options //maintain masters first , passed in array
   tShirt: { type: Boolean, default: false },//yes or no
   itTools: { type: Boolean, default: false },//yes or no
   webDesigning: { type: Boolean, default: false },//yes or no
@@ -69,8 +72,8 @@ const admissionDetailsSchema = new mongoose.Schema({
   referalName: { type: String },//text data
 
   // Computer Access
-  computerAccess: { type: Boolean, default: false},//yes or no
-  computerAccessOther: { type: String },//text data
+  computerAccess: { type: Boolean, default: false },//yes or no
+  computerAccessOther: { type: String },//optional description text data
 
   // Status and Registration
   status: { type: String, default: 'Pending' },

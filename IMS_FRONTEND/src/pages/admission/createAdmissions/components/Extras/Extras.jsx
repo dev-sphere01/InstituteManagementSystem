@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Referral from './components/Referral';
 import ComputerAccess from './components/ComputerAccess';
 import Features from './components/Features';
@@ -9,8 +9,8 @@ import { useNotification } from './../../../../../services/NotificationService';
 const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
   const notify = useNotification();
+  const hasFetchedRef = useRef(false);
 
-  // Default structure to prevent undefined errors
   const defaultFormData = {
     referral: {
       referralSource: '',
@@ -32,7 +32,6 @@ const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled
     },
   };
 
-  // Combine existing formData with safe defaults
   const safeFormData = {
     ...defaultFormData,
     ...formData,
@@ -50,36 +49,58 @@ const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled
     },
   };
 
-  // Fetch previous step data from API on load
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        if (!formData?._id) return;
+      if (!formData?._id || hasFetchedRef.current) return;
 
-        const { data } = await API.get(`/admissions/${formData._id}`);
+      try {
+        const response = await API.get(`/admissions/${formData._id}`);
+        const data = response?.data;
+        console.log("Fetched Extras data:", data);
+
+        if (!data || typeof data !== 'object') {
+          notify('Failed to load Extras: No valid data received.', 'info');
+          return;
+        }
+
+        const hasExtrasData =
+          !!data?.referralSource ||
+          !!data?.referralSourceOther ||
+          !!data?.referalName ||
+          !!data?.tShirt ||
+          !!data?.itTools ||
+          !!data?.webDesigning ||
+          !!data?.computerAccessOther;
+
+        if (!hasExtrasData) {
+          notify('No previous Extras data found.', 'info');
+          return;
+        }
 
         setFormData((prev) => ({
           ...prev,
-          ...data,
           referral: {
-            referralSource: data?.referralSource || '',
-            referralSourceOther: data?.referralSourceOther || '',
-            referalName: data?.referalName || '',
+            referralSource: data.referralSource || '',
+            referralSourceOther: data.referralSourceOther || '',
+            referalName: data.referalName || '',
           },
           computerAccess: {
-            location: data?.computerAccessOther || '',
-            otherLocation: data?.computerAccessOther || '',
+            location: data.computerAccessOther || '',
+            otherLocation: data.computerAccessOther || '',
           },
           features: {
-            tShirt: data?.tShirt || false,
-            itTools: data?.itTools || false,
-            webDesigning: data?.webDesigning || false,
-            tally: data?.tally || false,
-            gfxDtp: data?.gfxDtp || false,
-            python: data?.python || false,
-            iot: data?.iot || false,
+            tShirt: data.tShirt || false,
+            itTools: data.itTools || false,
+            webDesigning: data.webDesigning || false,
+            tally: data.tally || false,
+            gfxDtp: data.gfxDtp || false,
+            python: data.python || false,
+            iot: data.iot || false,
           },
         }));
+
+        notify('Extras data loaded successfully.', 'success');
+        hasFetchedRef.current = true;
       } catch (err) {
         console.error('Failed to fetch Extras data:', err);
         notify('Failed to load previous data for Extras.', 'error');
@@ -93,23 +114,23 @@ const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled
     const { features, referral, computerAccess } = safeFormData;
 
     const flattenedData = {
-      ...formData, // keep original _id and other values
+      ...formData,
 
-      // Flatten features
-      tShirt: features.tShirt || false,
-      itTools: features.itTools || false,
-      webDesigning: features.webDesigning || false,
-      tally: features.tally || false,
-      gfxDtp: features.gfxDtp || false,
-      python: features.python || false,
-      iot: features.iot || false,
+      // Flattened features
+      tShirt: features.tShirt,
+      itTools: features.itTools,
+      webDesigning: features.webDesigning,
+      tally: features.tally,
+      gfxDtp: features.gfxDtp,
+      python: features.python,
+      iot: features.iot,
 
-      // Flatten referral
-      referralSource: referral.referralSource || '',
-      referralSourceOther: referral.referralSourceOther || '',
-      referalName: referral.referalName || '',
+      // Referral
+      referralSource: referral.referralSource,
+      referralSourceOther: referral.referralSourceOther,
+      referalName: referral.referalName,
 
-      // Flatten computer access
+      // Computer access
       computerAccess: !!computerAccess.location,
       computerAccessOther:
         computerAccess.location === 'Other'
