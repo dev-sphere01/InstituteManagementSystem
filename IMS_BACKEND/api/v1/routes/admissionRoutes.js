@@ -3,17 +3,18 @@ const router = express.Router();
 const admissionController = require('../../../controllers/admissioncontroller');
 const { validateAdmission } = require('../../../middlewares/validateAdmission');
 
-// Create
+// CREATE
 router.post('/', validateAdmission, admissionController.createAdmission);
 
-// Read
+// READ
 router.get('/', admissionController.getAllAdmissions);
+router.get('/search/query', admissionController.searchAdmission);
 router.get('/:id', admissionController.getAdmissionById);
 
-// Update
+// UPDATE
 router.put('/:id', validateAdmission, admissionController.updateAdmission);
 
-// Delete
+// DELETE
 router.delete('/:id', admissionController.deleteAdmission);
 
 module.exports = router;
