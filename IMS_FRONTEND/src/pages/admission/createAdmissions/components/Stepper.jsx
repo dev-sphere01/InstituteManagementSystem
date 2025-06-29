@@ -10,14 +10,14 @@ const Stepper = ({ currentStep, completedSteps = [] }) => {
   ];
 
   return (
-    <div className="flex items-center justify-between gap-2 p-2 sm:p-4 bg-background rounded-xl shadow-md overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
+    <div className="w-full flex items-center justify-between gap-2 p-2 sm:p-4 bg-background rounded-xl shadow-md overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
       {steps.map((step, index) => {
         const isCompleted = completedSteps.includes(step.id);
         const isActive = currentStep === step.id;
 
         return (
-          <div key={step.id} className="flex items-center gap-1 sm:gap-2 min-w-0">
-            <div className="flex flex-col items-center text-xs sm:text-sm text-center min-w-[60px] sm:min-w-[80px]">
+          <div key={step.id} className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+            <div className="flex flex-col items-center text-xs sm:text-sm text-center min-w-[60px] sm:min-w-[80px] w-full">
               <div
                 className={`
                   w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mb-1 transition-colors duration-200 border-2

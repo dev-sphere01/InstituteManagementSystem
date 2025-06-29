@@ -47,24 +47,32 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
     }, 300);
   };
 
+  // Enhanced input style for theme and focus
   const inputStyle = (field) =>
-    `block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+    `block w-full px-4 py-2 border rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
       errors[field]
-        ? 'border-red-500'
+        ? 'border-red-500 focus:ring-red-400'
         : isDarkMode
-        ? 'border-gray-600 bg-gray-700 text-white'
-        : 'border-gray-300 bg-white text-gray-900'
+        ? 'border-gray-700 bg-[#23272f] text-white placeholder-gray-400 focus:bg-[#23272f]'
+        : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white'
     }`;
 
-  const labelStyle = `block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`;
+  const labelStyle = `block text-sm font-semibold mb-2 tracking-wide ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`;
 
   return (
-    <div className={`rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 max-w-4xl mx-auto`}>
-      <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+    <div
+      className={`rounded-2xl shadow-lg ${
+        isDarkMode
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
+          : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
+      } p-8 w-full mx-auto mt-8`}
+      style={{ maxWidth: '100%' }}
+    >
+      <h2 className={`text-2xl font-bold mb-8 tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>
         Step 1: Basic Info
       </h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {[
             { name: 'formNo', label: 'Form No' },
             { name: 'centerCode', label: 'Center Code' },
@@ -75,26 +83,30 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
             { name: 'dob', label: 'Date of Birth', type: 'date' },
           ].map(({ name, label, type = 'text' }) => (
             <div key={name}>
-              <label className={labelStyle}>
+              <label className={labelStyle} htmlFor={name}>
                 {label} <span className="text-red-500">*</span>
               </label>
               <input
+                id={name}
                 type={type}
                 name={name}
                 value={form[name]}
                 onChange={handleChange}
                 disabled={isSubmitting || parentLoading}
                 className={inputStyle(name)}
+                placeholder={label}
+                autoComplete="off"
               />
-              {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+              {errors[name] && <p className="text-xs text-red-400 mt-1 font-medium">{errors[name]}</p>}
             </div>
           ))}
 
           <div>
-            <label className={labelStyle}>
+            <label className={labelStyle} htmlFor="gender">
               Gender <span className="text-red-500">*</span>
             </label>
             <select
+              id="gender"
               name="gender"
               value={form.gender}
               onChange={handleChange}
@@ -106,14 +118,15 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
-            {errors.gender && <p className="text-sm text-red-500 mt-1">{errors.gender}</p>}
+            {errors.gender && <p className="text-xs text-red-400 mt-1 font-medium">{errors.gender}</p>}
           </div>
 
           <div>
-            <label className={labelStyle}>
+            <label className={labelStyle} htmlFor="category">
               Category <span className="text-red-500">*</span>
             </label>
             <input
+              id="category"
               type="text"
               name="category"
               value={form.category}
@@ -121,15 +134,17 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
               placeholder="General / OBC / SC / ST"
               disabled={isSubmitting || parentLoading}
               className={inputStyle('category')}
+              autoComplete="off"
             />
-            {errors.category && <p className="text-sm text-red-500 mt-1">{errors.category}</p>}
+            {errors.category && <p className="text-xs text-red-400 mt-1 font-medium">{errors.category}</p>}
           </div>
 
           <div>
-            <label className={labelStyle}>
+            <label className={labelStyle} htmlFor="religion">
               Religion <span className="text-red-500">*</span>
             </label>
             <input
+              id="religion"
               type="text"
               name="religion"
               value={form.religion}
@@ -137,13 +152,15 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
               placeholder="e.g. Hindu / Muslim / Christian"
               disabled={isSubmitting || parentLoading}
               className={inputStyle('religion')}
+              autoComplete="off"
             />
-            {errors.religion && <p className="text-sm text-red-500 mt-1">{errors.religion}</p>}
+            {errors.religion && <p className="text-xs text-red-400 mt-1 font-medium">{errors.religion}</p>}
           </div>
 
           <div className="md:col-span-2">
-            <label className={labelStyle}>Other Info</label>
+            <label className={labelStyle} htmlFor="otherInfo">Other Info</label>
             <textarea
+              id="otherInfo"
               name="otherInfo"
               value={form.otherInfo}
               onChange={handleChange}
@@ -155,14 +172,14 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
+        <div className="flex items-center justify-end space-x-4 pt-8 border-t border-gray-200 dark:border-gray-700">
           <button
             type="button"
             onClick={onCancel}
-            className={`px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+            className={`px-6 py-2 rounded-lg shadow font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
               isDarkMode
-                ? 'border-gray-600 text-gray-300 bg-gray-700 hover:bg-gray-600'
-                : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                ? 'border border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700 hover:text-white'
+                : 'border border-gray-300 text-blue-700 bg-white hover:bg-blue-50 hover:text-blue-900'
             }`}
             disabled={isSubmitting || parentLoading}
           >
@@ -171,8 +188,10 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
           <button
             type="submit"
             disabled={isSubmitting || parentLoading}
-            className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-              isSubmitting || parentLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+            className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+              isSubmitting || parentLoading
+                ? 'bg-blue-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
             }`}
           >
             {isSubmitting || parentLoading ? 'Saving...' : 'Next'}
