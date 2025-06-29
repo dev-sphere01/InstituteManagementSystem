@@ -1,6 +1,10 @@
 import React from 'react';
+import { useThemeStore } from '../../../../../../store';
+
 
 const Referral = ({ formData = {}, setFormData = () => {} }) => {
+  const { isDarkMode } = useThemeStore();
+
   const referralSources = [
     'Social Media',
     'Friend/Relative',
@@ -17,19 +21,35 @@ const Referral = ({ formData = {}, setFormData = () => {} }) => {
     }));
   };
 
+  const inputClass = `w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
+    isDarkMode
+      ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
+      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+  }`;
+
+  const labelClass = `block text-sm font-medium mb-1 ${
+    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+  }`;
+
   return (
-    <div className="p-6 rounded-xl shadow-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-4xl mx-auto">
-      <h2 className="text-2xl font-semibold mb-6">Referral Information</h2>
+    <div
+      className={`w-full rounded-2xl shadow-md p-6 ${
+        isDarkMode
+          ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border border-gray-700 text-white'
+          : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200 text-gray-900'
+      }`}
+    >
+      <h3 className="text-xl font-bold mb-6">Referral Information</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Referral Source */}
         <div>
-          <label className="block mb-1">How did you hear about us?</label>
+          <label className={labelClass}>How did you hear about us?</label>
           <select
             name="referralSource"
             value={formData.referralSource || ''}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-md bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            className={inputClass}
           >
             <option value="">Select a source</option>
             {referralSources.map((source) => (
@@ -40,31 +60,31 @@ const Referral = ({ formData = {}, setFormData = () => {} }) => {
           </select>
         </div>
 
-        {/* Referral Source Other */}
+        {/* If source is "Other", show additional input */}
         {formData.referralSource === 'Other' && (
           <div>
-            <label className="block mb-1">Other (please specify)</label>
+            <label className={labelClass}>Other (please specify)</label>
             <input
               type="text"
               name="referralSourceOther"
               value={formData.referralSourceOther || ''}
               onChange={handleChange}
               placeholder="Specify other source"
-              className="w-full px-3 py-2 border rounded-md bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className={inputClass}
             />
           </div>
         )}
 
-        {/* Referral Name */}
+        {/* Referred Name */}
         <div className="md:col-span-2">
-          <label className="block mb-1">Referred by (Name)</label>
+          <label className={labelClass}>Referred by (Name)</label>
           <input
             type="text"
             name="referalName"
             value={formData.referalName || ''}
             onChange={handleChange}
             placeholder="Enter name of the person"
-            className="w-full px-3 py-2 border rounded-md bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            className={inputClass}
           />
         </div>
       </div>
