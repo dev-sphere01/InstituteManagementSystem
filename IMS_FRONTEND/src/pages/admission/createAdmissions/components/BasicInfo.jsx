@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
+import API from '../../../../services/api';
 
-const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading, validationsEnabled }) => {
+const BasicInfoForm = ({ formId, onNext, onCancel, loading: parentLoading, validationsEnabled }) => {
   const { isDarkMode } = useThemeStore();
 
   const [form, setForm] = useState({
     formNo: '',
     centerCode: '',
     employeeId: '',
-    otherInfo: '',
     generatedRegNo: '',
     fullName: '',
     dob: '',
@@ -16,6 +16,7 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading, validationsEn
     category: '',
     aadharNo: '',
     religion: '',
+    otherInfo: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -44,6 +45,7 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading, validationsEn
     requiredFields.forEach((field) => {
       if (!form[field]?.trim()) errs[field] = 'This field is required';
     });
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -54,14 +56,34 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading, validationsEn
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      if (typeof onNext === 'function') onNext(form);
+
+    try {
+      const payload = {
+        ...form,
+        currentStep: 'basic',
+        isCompleted: false,
+      };
+
+      let response;
+      if (formId) {
+        response = await API.put(`/admissions/${formId}`, payload);
+      } else {
+        response = await API.post('/admissions', payload);
+      }
+
+      if (typeof onNext === 'function') {
+        onNext(response); // return whole saved response (contains _id)
+      }
+    } catch (err) {
+      console.error('Error saving basic info:', err);
+      alert('Failed to save basic info.');
+    } finally {
       setIsSubmitting(false);
-    }, 300);
+    }
   };
 
   const inputStyle = (field) =>
@@ -90,7 +112,7 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading, validationsEn
       </h2>
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {[
+          {[ 
             { name: 'formNo', label: 'Form No' },
             { name: 'centerCode', label: 'Center Code' },
             { name: 'employeeId', label: 'Employee ID' },
@@ -154,24 +176,6 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading, validationsEn
               autoComplete="off"
             />
             {errors.category && <p className="text-xs text-red-400 mt-1 font-medium">{errors.category}</p>}
-          </div>
-
-          <div>
-            <label className={labelStyle} htmlFor="religion">
-              Religion {validationsEnabled && <span className="text-red-500">*</span>}
-            </label>
-            <input
-              id="religion"
-              type="text"
-              name="religion"
-              value={form.religion}
-              onChange={handleChange}
-              placeholder="e.g. Hindu / Muslim / Christian"
-              disabled={isSubmitting || parentLoading}
-              className={inputStyle('religion')}
-              autoComplete="off"
-            />
-            {errors.religion && <p className="text-xs text-red-400 mt-1 font-medium">{errors.religion}</p>}
           </div>
 
           <div className="md:col-span-2">

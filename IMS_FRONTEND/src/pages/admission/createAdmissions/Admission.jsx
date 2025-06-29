@@ -5,26 +5,55 @@ import Education from './components/Education';
 import Extras from './components/Extras/Extras';
 import Review from './components/Review';
 import Stepper from './components/Stepper';
+import API from './../../../services/API';
 
 const Admission = () => {
   const [currentStep, setCurrentStep] = useState('basic');
   const [completedSteps, setCompletedSteps] = useState([]);
   const [formData, setFormData] = useState({});
+  const [formId, setFormId] = useState(null);
   const [validationsEnabled, setValidationsEnabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const steps = ['basic', 'contact', 'education', 'extras', 'review'];
 
   const goToStep = (step) => setCurrentStep(step);
 
-  const handleNext = (data) => {
-    setFormData((prev) => ({ ...prev, ...data }));
+  const saveStepData = async (data, step) => {
+    try {
+      const payload = {
+        ...formData,
+        ...data,
+        currentStep: step,
+        isCompleted: step === 'submitted',
+      };
+
+      if (formId) {
+        const updated = await API.put(`/admission/${formId}`, payload);
+        setFormData(updated);
+      } else {
+        const created = await API.post('/admission', payload);
+        setFormId(created._id);
+        setFormData(created);
+      }
+    } catch (error) {
+      console.error('Failed to save step data', error);
+    }
+  };
+
+  const handleNext = async (data) => {
+    const mergedData = { ...formData, ...data };
     const currentIdx = steps.indexOf(currentStep);
+    const nextStep = steps[currentIdx + 1];
+
+    setFormData(mergedData);
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps((prev) => [...prev, currentStep]);
     }
-    if (currentIdx < steps.length - 1) {
-      setCurrentStep(steps[currentIdx + 1]);
-    }
+
+    await saveStepData(data, currentStep);
+
+    if (nextStep) setCurrentStep(nextStep);
   };
 
   const handleBack = () => {
@@ -34,7 +63,8 @@ const Admission = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    await saveStepData({}, 'submitted');
     alert('Form submitted!');
   };
 
@@ -56,6 +86,7 @@ const Admission = () => {
           <BasicInfo
             onNext={handleNext}
             validationsEnabled={validationsEnabled}
+            formData={formData}
           />
         )}
         {currentStep === 'contact' && (
@@ -63,6 +94,7 @@ const Admission = () => {
             onNext={handleNext}
             onBack={handleBack}
             validationsEnabled={validationsEnabled}
+            formData={formData}
           />
         )}
         {currentStep === 'education' && (
