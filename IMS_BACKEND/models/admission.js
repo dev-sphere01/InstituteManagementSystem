@@ -14,7 +14,7 @@ const admissionDetailsSchema = new mongoose.Schema({
   category: { type: String, required: true },
   aadharNo: { type: String, required: true },
   religion: { type: String, required: true },
-
+  
   // Documents
   aadharPhoto: { type: String }, // URL or base64 string
   candidatePhoto: { type: String },
