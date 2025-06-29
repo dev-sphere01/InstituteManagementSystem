@@ -4,12 +4,13 @@ const AdmissionDetails = require('../models/admission');
 exports.createAdmission = async (req, res) => {
   try {
     const admission = new AdmissionDetails(req.body);
-    const savedAdmission = await admission.save();
-    res.status(201).json(savedAdmission);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    await admission.save({ validateBeforeSave: false }); // disables full schema validation
+    res.status(201).json(admission);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
+
 
 // Get all admissions
 exports.getAllAdmissions = async (req, res) => {
@@ -109,18 +110,22 @@ exports.finalizeAdmission = async (req, res) => {
 // Update full admission (by MongoDB ID)
 exports.updateAdmission = async (req, res) => {
   try {
-    const updatedAdmission = await AdmissionDetails.findByIdAndUpdate(
+    const updated = await AdmissionDetails.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true, runValidators: true }
+      {
+        new: true,
+        runValidators: false, // disables schema validation on update
+      }
     );
-    if (!updatedAdmission) return res.status(404).json({ message: 'Not found' });
-    res.status(200).json(updatedAdmission);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    if (!updated) {
+      return res.status(404).json({ message: 'Admission not found' });
+    }
+    res.status(200).json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
-
 // Delete admission by ID
 exports.deleteAdmission = async (req, res) => {
   try {

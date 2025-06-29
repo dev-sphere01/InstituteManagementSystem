@@ -12,7 +12,6 @@ const Admission = () => {
   const [completedSteps, setCompletedSteps] = useState([]);
   const [formData, setFormData] = useState({});
   const [formId, setFormId] = useState(null);
-  const [validationsEnabled, setValidationsEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const steps = ['basic', 'contact', 'education', 'extras', 'review'];
@@ -28,14 +27,15 @@ const Admission = () => {
         isCompleted: step === 'submitted',
       };
 
+      let res;
       if (formId) {
-        const updated = await API.put(`/admission/${formId}`, payload);
-        setFormData(updated);
+        res = await API.put(`/admissions/${formId}`, payload);
       } else {
-        const created = await API.post('/admission', payload);
-        setFormId(created._id);
-        setFormData(created);
+        res = await API.post('/admissions', payload);
+        setFormId(res._id); // Store the form ID
       }
+
+      setFormData(res); // Sync saved data
     } catch (error) {
       console.error('Failed to save step data', error);
     }
@@ -58,34 +58,22 @@ const Admission = () => {
 
   const handleBack = () => {
     const currentIdx = steps.indexOf(currentStep);
-    if (currentIdx > 0) {
-      setCurrentStep(steps[currentIdx - 1]);
-    }
+    if (currentIdx > 0) setCurrentStep(steps[currentIdx - 1]);
   };
 
   const handleSubmit = async () => {
     await saveStepData({}, 'submitted');
-    alert('Form submitted!');
+    alert('Form submitted successfully!');
   };
 
   return (
     <div className="w-full p-2 sm:p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <label className="text-sm font-medium">Enable Validations (dev only):</label>
-        <input
-          type="checkbox"
-          checked={validationsEnabled}
-          onChange={(e) => setValidationsEnabled(e.target.checked)}
-        />
-      </div>
-
       <Stepper currentStep={currentStep} completedSteps={completedSteps} />
 
       <div className="mt-1">
         {currentStep === 'basic' && (
           <BasicInfo
             onNext={handleNext}
-            validationsEnabled={validationsEnabled}
             formData={formData}
           />
         )}
@@ -93,7 +81,6 @@ const Admission = () => {
           <Contact
             onNext={handleNext}
             onBack={handleBack}
-            validationsEnabled={validationsEnabled}
             formData={formData}
           />
         )}
@@ -103,7 +90,6 @@ const Admission = () => {
             setFormData={setFormData}
             onNext={handleNext}
             onBack={handleBack}
-            validationsEnabled={validationsEnabled}
           />
         )}
         {currentStep === 'extras' && (
@@ -112,7 +98,6 @@ const Admission = () => {
             setFormData={setFormData}
             onNext={handleNext}
             onBack={handleBack}
-            validationsEnabled={validationsEnabled}
           />
         )}
         {currentStep === 'review' && (
