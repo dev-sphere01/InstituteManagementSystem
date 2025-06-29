@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
 
-const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
+const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading, validationsEnabled }) => {
   const { isDarkMode } = useThemeStore();
 
   const [form, setForm] = useState({
@@ -22,22 +22,39 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validate = () => {
-    const requiredFields = ['formNo', 'centerCode', 'employeeId', 'generatedRegNo', 'fullName', 'dob', 'gender', 'category', 'aadharNo', 'religion'];
+    if (!validationsEnabled) {
+      setErrors({});
+      return true;
+    }
+
+    const requiredFields = [
+      'formNo',
+      'centerCode',
+      'employeeId',
+      'generatedRegNo',
+      'fullName',
+      'dob',
+      'gender',
+      'category',
+      'aadharNo',
+      'religion',
+    ];
+
     const errs = {};
-    requiredFields.forEach(field => {
+    requiredFields.forEach((field) => {
       if (!form[field]?.trim()) errs[field] = 'This field is required';
     });
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
@@ -47,7 +64,6 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
     }, 300);
   };
 
-  // Enhanced input style for theme and focus
   const inputStyle = (field) =>
     `block w-full px-4 py-2 border rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
       errors[field]
@@ -57,7 +73,9 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
         : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white'
     }`;
 
-  const labelStyle = `block text-sm font-semibold mb-2 tracking-wide ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`;
+  const labelStyle = `block text-sm font-semibold mb-2 tracking-wide ${
+    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+  }`;
 
   return (
     <div
@@ -66,7 +84,6 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
           ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
           : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
       } p-8 w-full mx-auto mt-8`}
-      style={{ maxWidth: '100%' }}
     >
       <h2 className={`text-2xl font-bold mb-8 tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>
         Step 1: Basic Info
@@ -84,7 +101,7 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
           ].map(({ name, label, type = 'text' }) => (
             <div key={name}>
               <label className={labelStyle} htmlFor={name}>
-                {label} <span className="text-red-500">*</span>
+                {label} {validationsEnabled && <span className="text-red-500">*</span>}
               </label>
               <input
                 id={name}
@@ -103,7 +120,7 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
 
           <div>
             <label className={labelStyle} htmlFor="gender">
-              Gender <span className="text-red-500">*</span>
+              Gender {validationsEnabled && <span className="text-red-500">*</span>}
             </label>
             <select
               id="gender"
@@ -123,7 +140,7 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
 
           <div>
             <label className={labelStyle} htmlFor="category">
-              Category <span className="text-red-500">*</span>
+              Category {validationsEnabled && <span className="text-red-500">*</span>}
             </label>
             <input
               id="category"
@@ -141,7 +158,7 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
 
           <div>
             <label className={labelStyle} htmlFor="religion">
-              Religion <span className="text-red-500">*</span>
+              Religion {validationsEnabled && <span className="text-red-500">*</span>}
             </label>
             <input
               id="religion"
@@ -158,7 +175,9 @@ const BasicInfoForm = ({ onNext, onCancel, loading: parentLoading }) => {
           </div>
 
           <div className="md:col-span-2">
-            <label className={labelStyle} htmlFor="otherInfo">Other Info</label>
+            <label className={labelStyle} htmlFor="otherInfo">
+              Other Info
+            </label>
             <textarea
               id="otherInfo"
               name="otherInfo"
