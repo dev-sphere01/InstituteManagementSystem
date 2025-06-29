@@ -13,13 +13,13 @@ const Admission = () => {
     <div> 
 
         <Stepper/>
-        {/* <BasicInfo/> */}
-        {/* <Contact/> */}
-        {/* <Documents/> */}
-        {/* <Education/> */}
-        {/* <Features/> */}
-        {/* <Referral/> */}
-        {/* <ComputerAccess/> */}
+        {/* <BasicInfo/>
+        <Contact/>
+        <Documents/>
+        <Education/>
+        <Features/>
+        <Referral/>
+        <ComputerAccess/> */}
 
 
     </div>

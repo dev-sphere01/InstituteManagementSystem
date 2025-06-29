@@ -8,10 +8,11 @@ const Stepper = ({ currentStep, completedSteps = [] }) => {
     { id: 'features', label: 'Features' },
     { id: 'referral', label: 'Referral' },
     { id: 'computerAccess', label: 'Computer Access' },
+    { id: 'review', label: 'Review' }, // Added review step
   ];
 
   return (
-    <div className="flex items-center justify-between gap-2 p-4 bg-gray-800 rounded-xl shadow-md overflow-x-auto">
+    <div className="flex items-center justify-between gap-2 p-4 bg-background rounded-xl shadow-md overflow-x-auto">
       {steps.map((step, index) => {
         const isCompleted = completedSteps.includes(step.id);
         const isActive = currentStep === step.id;
@@ -21,21 +22,29 @@ const Stepper = ({ currentStep, completedSteps = [] }) => {
             <div className="flex flex-col items-center text-sm text-center min-w-[80px]">
               <div
                 className={`
-                  w-8 h-8 rounded-full flex items-center justify-center mb-1
-                  ${isCompleted ? 'bg-green-500 text-white' :
-                    isActive ? 'bg-blue-500 text-white' :
-                      'bg-gray-600 text-gray-300'}
+                  w-10 h-10 rounded-full flex items-center justify-center mb-1 transition-colors duration-200 border-2
+                  ${isCompleted ? 'bg-success text-white border-success' :
+                    isActive ? 'bg-primary text-white border-primary shadow-lg ring-2 ring-primary/40' :
+                      'bg-muted text-muted-foreground border-muted-foreground/30'}
                 `}
               >
-                {isCompleted ? '✓' : index + 1}
+                {isCompleted ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                ) : (
+                  index + 1
+                )}
               </div>
-              <span className={`${isCompleted ? 'text-green-400' : isActive ? 'text-white' : 'text-gray-400'}`}>
+              <span className={`${isCompleted ? 'text-success' : isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                 {step.label}
               </span>
             </div>
 
             {index < steps.length - 1 && (
-              <div className="w-6 h-1 bg-gray-500 rounded" />
+              <div className="flex items-center h-10">
+                <svg className="w-4 h-4 text-muted-foreground mx-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             )}
           </div>
         );
