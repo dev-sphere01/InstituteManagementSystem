@@ -23,8 +23,13 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // ✅ Single useEffect to hydrate and format DOB
   useEffect(() => {
-    setForm((prev) => ({ ...prev, ...formData }));
+    const formattedDob = formData.dob ? formData.dob.substring(0, 10) : '';
+    setForm({
+      ...formData,
+      dob: formattedDob,
+    });
   }, [formData]);
 
   const requiredFields = [
@@ -40,7 +45,7 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
 
     const errs = {};
     requiredFields.forEach((field) => {
-      if (!form[field]?.trim()) errs[field] = 'This field is required';
+      if (!form[field]?.toString().trim()) errs[field] = 'This field is required';
     });
 
     setErrors(errs);
@@ -61,7 +66,6 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
     if (!validate()) return;
 
     setIsSubmitting(true);
-
     try {
       if (typeof onNext === 'function') {
         onNext(form);
