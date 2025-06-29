@@ -5,9 +5,7 @@ const Stepper = ({ currentStep, completedSteps = [] }) => {
     { id: 'basic', label: 'Basic Info' },
     { id: 'contact', label: 'Contact Details' },
     { id: 'education', label: 'Education' },
-    { id: 'features', label: 'Features' },
-    { id: 'referral', label: 'Referral' },
-    { id: 'computerAccess', label: 'Computer Access' },
+    { id: 'extras', label: 'Extras' },
     { id: 'review', label: 'Review' },
   ];
 

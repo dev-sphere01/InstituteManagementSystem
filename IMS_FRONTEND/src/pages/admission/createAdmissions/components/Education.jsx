@@ -1,7 +1,7 @@
 import React from 'react';
 import { useThemeStore } from '../../../../store';
 
-const Education = ({ formData=[], setFormData }) => {
+const Education = ({ formData = {}, setFormData, onNext, onBack }) => {
   const { isDarkMode } = useThemeStore();
 
   const handleChange = (e) => {
@@ -98,6 +98,11 @@ const Education = ({ formData=[], setFormData }) => {
             <option value="Hybrid">Hybrid</option>
           </select>
         </div>
+      </div>
+
+      <div className="flex justify-between mt-6">
+        <button type="button" className="btn btn-secondary" onClick={onBack}>Back</button>
+        <button type="button" className="btn btn-primary" onClick={() => onNext(formData)}>Next</button>
       </div>
     </div>
   );
