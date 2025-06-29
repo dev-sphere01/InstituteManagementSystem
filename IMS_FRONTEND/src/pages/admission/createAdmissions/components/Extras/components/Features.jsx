@@ -24,6 +24,8 @@ const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
     }));
   };
 
+  const features = formData.features || {};
+
   return (
     <div
       className={`w-full rounded-2xl shadow-md p-6 ${
@@ -44,7 +46,7 @@ const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
           >
             <input
               type="checkbox"
-              checked={!!formData?.features?.[key]}
+              checked={!!features[key]}
               onChange={() => handleCheckboxChange(key)}
               className={`w-4 h-4 rounded border focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
                 isDarkMode

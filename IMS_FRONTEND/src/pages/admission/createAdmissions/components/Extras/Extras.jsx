@@ -1,16 +1,81 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Referral from './components/Referral';
 import ComputerAccess from './components/ComputerAccess';
 import Features from './components/Features';
 import { useThemeStore } from '../../../../../store';
+import API from './../../../../../services/api';
+import { useNotification } from './../../../../../services/NotificationService';
 
 const Extras = ({ formData, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
+  const notify = useNotification();
+
+  // Fetch form data if formId exists and not already fetched
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (!formData?._id) return; // Skip if no ID
+        const { data } = await API.get(`/admissions/${formData._id}`);
+        setFormData((prev) => ({
+          ...prev,
+          ...data,
+          referral: {
+            referralSource: data.referralSource || '',
+            referralSourceOther: data.referralSourceOther || '',
+            referalName: data.referalName || '',
+          },
+          computerAccess: {
+            location: data.computerAccessOther || '',
+            otherLocation: data.computerAccessOther || '',
+          },
+          features: {
+            tShirt: data.tShirt || false,
+            itTools: data.itTools || false,
+            webDesigning: data.webDesigning || false,
+            tally: data.tally || false,
+            gfxDtp: data.gfxDtp || false,
+            python: data.python || false,
+            iot: data.iot || false,
+          },
+        }));
+      } catch (err) {
+        console.error('Failed to fetch Extras data:', err);
+        notify('Failed to load previous data for Extras.', 'error');
+      }
+    };
+
+    fetchData();
+  }, [formData?._id]);
 
   const handleSubmit = () => {
-    // Optional: Add any final validation here if needed
+    const features = formData.features || {};
+    const referral = formData.referral || {};
+    const computerAccess = formData.computerAccess || {};
+
+    const flattenedData = {
+      ...formData,
+      // Flatten features
+      tShirt: features.tShirt || false,
+      itTools: features.itTools || false,
+      webDesigning: features.webDesigning || false,
+      tally: features.tally || false,
+      gfxDtp: features.gfxDtp || false,
+      python: features.python || false,
+      iot: features.iot || false,
+
+      // Flatten referral
+      referralSource: referral.referralSource || '',
+      referralSourceOther: referral.referralSourceOther || '',
+      referalName: referral.referalName || '',
+
+      // Flatten computer access
+      computerAccess: !!computerAccess.location,
+      computerAccessOther:
+        computerAccess.location === 'Other' ? computerAccess.otherLocation || '' : computerAccess.location || '',
+    };
+
     if (typeof onNext === 'function') {
-      onNext(formData); // Pass all extras-related fields
+      onNext(flattenedData);
     }
   };
 

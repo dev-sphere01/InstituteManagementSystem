@@ -24,6 +24,8 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {}, validationsEnab
     }));
   };
 
+  const computerAccess = formData.computerAccess || {};
+
   const inputClass = `w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
     isDarkMode
       ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
@@ -33,8 +35,6 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {}, validationsEnab
   const labelClass = `block text-sm font-medium mb-1 ${
     isDarkMode ? 'text-gray-300' : 'text-gray-700'
   }`;
-
-  const computerAccess = formData.computerAccess || {};
 
   return (
     <div

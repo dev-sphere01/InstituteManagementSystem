@@ -24,6 +24,8 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
     }));
   };
 
+  const referral = formData?.referral ?? {};
+
   const inputClass = `w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
     isDarkMode
       ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
@@ -33,8 +35,6 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
   const labelClass = `block text-sm font-medium mb-1 ${
     isDarkMode ? 'text-gray-300' : 'text-gray-700'
   }`;
-
-  const referral = formData.referral || {};
 
   return (
     <div
@@ -52,7 +52,7 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
           <label className={labelClass}>How did you hear about us?</label>
           <select
             name="referralSource"
-            value={referral.referralSource || ''}
+            value={referral?.referralSource ?? ''}
             onChange={handleChange}
             className={inputClass}
           >
@@ -65,7 +65,7 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
           </select>
         </div>
 
-        {/* If source is "Other", show additional input */}
+        {/* Other input if selected */}
         {referral.referralSource === 'Other' && (
           <div>
             <label className={labelClass}>Other (please specify)</label>

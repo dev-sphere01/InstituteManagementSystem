@@ -5,18 +5,90 @@ import Education from './components/Education';
 import Extras from './components/Extras/Extras';
 import Review from './components/Review';
 import Stepper from './components/Stepper';
-import API from './../../../services/API';
+import API from './../../../services/api';
 
 const steps = ['basic', 'contact', 'education', 'extras', 'review'];
 
 const Admission = () => {
   const [currentStep, setCurrentStep] = useState('basic');
   const [completedSteps, setCompletedSteps] = useState([]);
-  const [formData, setFormData] = useState({});
   const [formId, setFormId] = useState(null);
   const [validationsEnabled, setValidationsEnabled] = useState(true);
 
-  // 🔁 Fetch latest form data when navigating back to any step
+  const [formData, setFormData] = useState({
+    // Step 1: Basic Info
+    formNo: '',
+    centerCode: '',
+    employeeId: '',
+    generatedRegNo: '',
+    fullName: '',
+    dob: '',
+    gender: '',
+    category: '',
+    aadharNo: '',
+    religion: '',
+    otherInfo: '',
+
+    // Step 2: Contact Info
+    contactNumber: '',
+    emailAddress: '',
+    whatsappNumber: '',
+    address: '',
+    city: '',
+    pincode: '',
+    state: '',
+    fatherName: '',
+    fatherContact: '',
+    motherName: '',
+    motherContact: '',
+
+    // Step 3: Education
+    highestQualification: '',
+    boardOrUniversity: '',
+    yearOfPassing: '',
+    subjects: '',
+    courseApplied: '',
+    learningMode: '',
+
+    // Step 4: Extras
+    features: {
+      tShirt: false,
+      itTools: false,
+      webDesigning: false,
+      tally: false,
+      gfxDtp: false,
+      python: false,
+      iot: false,
+    },
+    computerAccess: {
+      location: '',
+      otherLocation: '',
+    },
+    referral: {
+      referralSource: '',
+      referralSourceOther: '',
+      referalName: '',
+    },
+
+    // Helpers
+    currentStep: 1,
+    isCompleted: false,
+  });
+
+  // 🔁 Load from localStorage on mount
+  useEffect(() => {
+    const savedFormId = localStorage.getItem('admissionFormId');
+    if (savedFormId) {
+      setFormId(savedFormId);
+      fetchFormData(savedFormId);
+    }
+  }, []);
+
+  // 🔁 Refresh data on step change if already saved
+  useEffect(() => {
+    if (formId) fetchFormData(formId);
+  }, [currentStep]);
+
   const fetchFormData = async (id) => {
     try {
       const res = await API.get(`/admissions/${id}`);
@@ -25,13 +97,6 @@ const Admission = () => {
       console.error('Failed to fetch saved form data:', err);
     }
   };
-
-  // 🔁 Watch for step change — if formId exists, refresh data
-  useEffect(() => {
-    if (formId) {
-      fetchFormData(formId);
-    }
-  }, [currentStep]);
 
   const saveStepData = async (data = {}, step = currentStep, complete = false) => {
     const payload = {
@@ -44,10 +109,11 @@ const Admission = () => {
     try {
       let response;
       if (formId) {
-        response = await API.patch(`/admissions/${formId}`, payload); // ✅ PATCH after first save
+        response = await API.patch(`/admissions/${formId}`, payload);
       } else {
-        response = await API.post('/admissions', payload); // ✅ POST for first time
-        setFormId(response._id); // Store the form ID
+        response = await API.post('/admissions', payload);
+        setFormId(response._id);
+        localStorage.setItem('admissionFormId', response._id); // Save to localStorage
       }
 
       setFormData(response);
@@ -63,14 +129,11 @@ const Admission = () => {
     const success = await saveStepData(data, currentStep);
     if (!success) return;
 
-    const mergedData = { ...formData, ...data };
-    setFormData(mergedData);
-
+    const nextStep = steps[steps.indexOf(currentStep) + 1];
+    setFormData((prev) => ({ ...prev, ...data }));
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps((prev) => [...prev, currentStep]);
     }
-
-    const nextStep = steps[steps.indexOf(currentStep) + 1];
     if (nextStep) setCurrentStep(nextStep);
   };
 
@@ -85,6 +148,7 @@ const Admission = () => {
     const success = await saveStepData({}, 'review', true);
     if (success) {
       alert('Form submitted successfully!');
+      localStorage.removeItem('admissionFormId'); // Clear saved ID
     }
   };
 
@@ -94,6 +158,7 @@ const Admission = () => {
       setFormData({});
       setFormId(null);
       setCompletedSteps([]);
+      localStorage.removeItem('admissionFormId');
     }
   };
 
@@ -110,7 +175,6 @@ const Admission = () => {
 
       <Stepper currentStep={currentStep} completedSteps={completedSteps} />
 
-      {/* 👤 Student Info Header - visible if form is posted */}
       {formId && (
         <div className="flex justify-between items-center bg-blue-50 dark:bg-gray-800 text-sm px-4 py-2 rounded-lg mb-4 border dark:border-gray-700">
           <div className="font-medium text-blue-900 dark:text-white">
