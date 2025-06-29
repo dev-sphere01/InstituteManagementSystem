@@ -3,6 +3,7 @@ import { useThemeStore } from '../../../../store';
 
 const Contact = ({ onNext, onBack, loading, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
+
   const [form, setForm] = useState({
     contactNumber: '',
     alternateContactNumber: '',
@@ -20,26 +21,40 @@ const Contact = ({ onNext, onBack, loading, validationsEnabled = true }) => {
     guardianRelation: '',
     guardianContactNumber: '',
   });
+
   const [errors, setErrors] = useState({});
 
   const validate = () => {
-    if (!validationsEnabled) return true;
-    const errs = {};
+    if (!validationsEnabled) {
+      setErrors({});
+      return true;
+    }
+
     const requiredFields = [
-      'contactNumber', 'emailAddress', 'state', 'district', 'address',
-      'pinCode', 'fathersName', 'fathersOccupation', 'mothersName'
+      'contactNumber',
+      'emailAddress',
+      'state',
+      'district',
+      'address',
+      'pinCode',
+      'fathersName',
+      'fathersOccupation',
+      'mothersName',
     ];
+
+    const errs = {};
     requiredFields.forEach((field) => {
       if (!form[field]?.trim()) errs[field] = 'Required';
     });
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    if (errors[name]) setErrors({ ...errors, [name]: '' });
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = (e) => {
@@ -49,101 +64,89 @@ const Contact = ({ onNext, onBack, loading, validationsEnabled = true }) => {
   };
 
   const inputClass = (field) =>
-    `w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-      errors[field] ? 'border-red-500' : isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+    `w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+      errors[field]
+        ? 'border-red-500 focus:ring-red-400'
+        : isDarkMode
+        ? 'border-gray-700 bg-[#23272f] text-white placeholder-gray-400 focus:bg-[#23272f]'
+        : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white'
     }`;
 
-  const labelClass = `block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`;
+  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`;
+
+  const renderInput = ({ label, name, required = false, type = 'text', isTextArea = false }) => (
+    <div>
+      <label className={labelClass}>
+        {label} {required && validationsEnabled && <span className="text-red-500">*</span>}
+      </label>
+      {isTextArea ? (
+        <textarea
+          rows="3"
+          name={name}
+          value={form[name]}
+          onChange={handleChange}
+          className={`${inputClass(name)} resize-none`}
+        />
+      ) : (
+        <input
+          type={type}
+          name={name}
+          value={form[name]}
+          onChange={handleChange}
+          className={inputClass(name)}
+        />
+      )}
+      {errors[name] && <p className="text-xs text-red-400 mt-1 font-medium">{errors[name]}</p>}
+    </div>
+  );
 
   return (
-    <form onSubmit={handleSubmit} className="bg-background rounded-xl shadow-md p-6 w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="col-span-full">
-        <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Contact Details</h2>
+    <form
+      onSubmit={handleSubmit}
+      className={`w-full mt-8 rounded-2xl shadow-lg p-8 mx-auto ${
+        isDarkMode
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
+          : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
+      }`}
+    >
+      <h2
+        className={`text-2xl font-bold mb-8 tracking-tight ${
+          isDarkMode ? 'text-white' : 'text-blue-900'
+        }`}
+      >
+        Step 2: Contact Details
+      </h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {renderInput({ label: 'Contact Number', name: 'contactNumber', required: true })}
+        {renderInput({ label: 'Alternate Contact Number', name: 'alternateContactNumber' })}
+        {renderInput({ label: 'Email Address', name: 'emailAddress', required: true, type: 'email' })}
+        {renderInput({ label: 'State', name: 'state', required: true })}
+        {renderInput({ label: 'District', name: 'district', required: true })}
+        {renderInput({ label: 'Pin Code', name: 'pinCode', required: true })}
+
+        <div className="sm:col-span-2 lg:col-span-3">
+          {renderInput({ label: 'Address', name: 'address', required: true, isTextArea: true })}
+        </div>
+
+        {renderInput({ label: "Father's Name", name: 'fathersName', required: true })}
+        {renderInput({ label: "Father's Occupation", name: 'fathersOccupation', required: true })}
+        {renderInput({ label: "Father's Job Role", name: 'fathersJobRole' })}
+        {renderInput({ label: 'Department/Company', name: 'departmentOrCompany' })}
+        {renderInput({ label: "Mother's Name", name: 'mothersName', required: true })}
+        {renderInput({ label: "Guardian's Name", name: 'guardianName' })}
+        {renderInput({ label: "Guardian's Relation", name: 'guardianRelation' })}
+        {renderInput({ label: "Guardian's Contact Number", name: 'guardianContactNumber' })}
       </div>
 
-      <div>
-        <label className={labelClass}>Contact Number <span className="text-red-500">*</span></label>
-        <input type="text" name="contactNumber" value={form.contactNumber} onChange={handleChange} className={inputClass('contactNumber')} />
-        {errors.contactNumber && <p className="text-red-500 text-sm mt-1">{errors.contactNumber}</p>}
-      </div>
-      <div>
-        <label className={labelClass}>Alternate Contact Number</label>
-        <input type="text" name="alternateContactNumber" value={form.alternateContactNumber} onChange={handleChange} className={inputClass('alternateContactNumber')} />
-      </div>
-
-      <div>
-        <label className={labelClass}>Email Address <span className="text-red-500">*</span></label>
-        <input type="email" name="emailAddress" value={form.emailAddress} onChange={handleChange} className={inputClass('emailAddress')} />
-        {errors.emailAddress && <p className="text-red-500 text-sm mt-1">{errors.emailAddress}</p>}
-      </div>
-      <div>
-        <label className={labelClass}>State <span className="text-red-500">*</span></label>
-        <input type="text" name="state" value={form.state} onChange={handleChange} className={inputClass('state')} />
-        {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
-      </div>
-
-      <div>
-        <label className={labelClass}>District <span className="text-red-500">*</span></label>
-        <input type="text" name="district" value={form.district} onChange={handleChange} className={inputClass('district')} />
-        {errors.district && <p className="text-red-500 text-sm mt-1">{errors.district}</p>}
-      </div>
-      <div>
-        <label className={labelClass}>Pin Code <span className="text-red-500">*</span></label>
-        <input type="text" name="pinCode" value={form.pinCode} onChange={handleChange} className={inputClass('pinCode')} />
-        {errors.pinCode && <p className="text-red-500 text-sm mt-1">{errors.pinCode}</p>}
-      </div>
-
-      <div className="col-span-full">
-        <label className={labelClass}>Address <span className="text-red-500">*</span></label>
-        <textarea name="address" value={form.address} onChange={handleChange} rows="3" className={inputClass('address')}></textarea>
-        {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-      </div>
-
-      <div>
-        <label className={labelClass}>Father's Name <span className="text-red-500">*</span></label>
-        <input type="text" name="fathersName" value={form.fathersName} onChange={handleChange} className={inputClass('fathersName')} />
-        {errors.fathersName && <p className="text-red-500 text-sm mt-1">{errors.fathersName}</p>}
-      </div>
-      <div>
-        <label className={labelClass}>Father's Occupation <span className="text-red-500">*</span></label>
-        <input type="text" name="fathersOccupation" value={form.fathersOccupation} onChange={handleChange} className={inputClass('fathersOccupation')} />
-        {errors.fathersOccupation && <p className="text-red-500 text-sm mt-1">{errors.fathersOccupation}</p>}
-      </div>
-
-      <div>
-        <label className={labelClass}>Father's Job Role</label>
-        <input type="text" name="fathersJobRole" value={form.fathersJobRole} onChange={handleChange} className={inputClass('fathersJobRole')} />
-      </div>
-      <div>
-        <label className={labelClass}>Department/Company</label>
-        <input type="text" name="departmentOrCompany" value={form.departmentOrCompany} onChange={handleChange} className={inputClass('departmentOrCompany')} />
-      </div>
-
-      <div>
-        <label className={labelClass}>Mother's Name <span className="text-red-500">*</span></label>
-        <input type="text" name="mothersName" value={form.mothersName} onChange={handleChange} className={inputClass('mothersName')} />
-        {errors.mothersName && <p className="text-red-500 text-sm mt-1">{errors.mothersName}</p>}
-      </div>
-      <div>
-        <label className={labelClass}>Guardian's Name</label>
-        <input type="text" name="guardianName" value={form.guardianName} onChange={handleChange} className={inputClass('guardianName')} />
-      </div>
-
-      <div>
-        <label className={labelClass}>Guardian's Relation</label>
-        <input type="text" name="guardianRelation" value={form.guardianRelation} onChange={handleChange} className={inputClass('guardianRelation')} />
-      </div>
-      <div>
-        <label className={labelClass}>Guardian's Contact Number</label>
-        <input type="text" name="guardianContactNumber" value={form.guardianContactNumber} onChange={handleChange} className={inputClass('guardianContactNumber')} />
-      </div>
-
-      <div className="col-span-full flex justify-between gap-2 mt-4">
+      <div className="flex items-center justify-between pt-8 border-t mt-8 border-gray-200 dark:border-gray-700">
         <button
           type="button"
           onClick={onBack}
-          className={`px-4 py-2 text-sm rounded-md shadow-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            isDarkMode ? 'text-gray-300 border-gray-600 bg-gray-700 hover:bg-gray-600' : 'text-gray-700 border-gray-300 bg-white hover:bg-gray-50'
+          className={`px-6 py-2 rounded-lg shadow font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+            isDarkMode
+              ? 'border border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700 hover:text-white'
+              : 'border border-gray-300 text-blue-700 bg-white hover:bg-blue-50 hover:text-blue-900'
           }`}
           disabled={loading}
         >
@@ -151,10 +154,12 @@ const Contact = ({ onNext, onBack, loading, validationsEnabled = true }) => {
         </button>
         <button
           type="submit"
-          className={`px-4 py-2 text-sm rounded-md shadow-sm text-white border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-          }`}
           disabled={loading}
+          className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+            loading
+              ? 'bg-blue-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
+          }`}
         >
           {loading ? 'Saving...' : 'Next'}
         </button>
