@@ -4,7 +4,7 @@ const AdmissionDetails = require('../models/admission');
 exports.createAdmission = async (req, res) => {
   try {
     const admission = new AdmissionDetails(req.body);
-    await admission.save({ validateBeforeSave: false }); // disables full schema validation
+    await admission.save({ validateBeforeSave: false });
     res.status(201).json(admission);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -136,3 +136,22 @@ exports.deleteAdmission = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// controllers/admissionController.js
+exports.patchAdmission = async (req, res) => {
+  try {
+    const updated = await AdmissionDetails.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(404).json({ message: 'Admission not found' });
+    }
+    res.status(200).json(updated);
+  } catch (err) {
+    console.error('Patch error:', err);
+    res.status(500).json({ message: 'Server error during patch update' });
+  }
+};
+

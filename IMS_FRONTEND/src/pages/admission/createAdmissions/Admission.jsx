@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BasicInfo from './components/BasicInfo';
 import Contact from './components/Contact';
 import Education from './components/Education';
@@ -7,65 +7,77 @@ import Review from './components/Review';
 import Stepper from './components/Stepper';
 import API from './../../../services/API';
 
+const steps = ['basic', 'contact', 'education', 'extras', 'review'];
+
 const Admission = () => {
   const [currentStep, setCurrentStep] = useState('basic');
   const [completedSteps, setCompletedSteps] = useState([]);
   const [formData, setFormData] = useState({});
   const [formId, setFormId] = useState(null);
   const [validationsEnabled, setValidationsEnabled] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const steps = ['basic', 'contact', 'education', 'extras', 'review'];
+  // 🔁 Fetch latest form data when navigating back to any step
+  const fetchFormData = async (id) => {
+    try {
+      const res = await API.get(`/admissions/${id}`);
+      setFormData(res);
+    } catch (err) {
+      console.error('Failed to fetch saved form data:', err);
+    }
+  };
 
-  const goToStep = (step) => setCurrentStep(step);
+  // 🔁 Watch for step change — if formId exists, refresh data
+  useEffect(() => {
+    if (formId) {
+      fetchFormData(formId);
+    }
+  }, [currentStep]);
 
   const saveStepData = async (data = {}, step = currentStep, complete = false) => {
-    try {
-      const payload = {
-        ...formData,
-        ...data,
-        currentStep: step,
-        isCompleted: complete,
-      };
+    const payload = {
+      ...formData,
+      ...data,
+      currentStep: step,
+      isCompleted: complete,
+    };
 
+    try {
       let response;
       if (formId) {
-        response = await API.put(`/admissions/${formId}`, payload); // ✅ fixed endpoint
+        response = await API.patch(`/admissions/${formId}`, payload); // ✅ PATCH after first save
       } else {
-        response = await API.post('/admissions', payload); // ✅ fixed endpoint
-        setFormId(response._id);
+        response = await API.post('/admissions', payload); // ✅ POST for first time
+        setFormId(response._id); // Store the form ID
       }
 
       setFormData(response);
-      return true; // ✅ signal success
-    } catch (error) {
-      console.error('Failed to save step data', error);
+      return true;
+    } catch (err) {
+      console.error('Failed to save step data:', err);
       alert('Error saving data');
-      return false; // ✅ signal failure
+      return false;
     }
   };
 
   const handleNext = async (data) => {
-    const mergedData = { ...formData, ...data };
-    const currentIdx = steps.indexOf(currentStep);
-    const nextStep = steps[currentIdx + 1];
-
-    // ✅ Save and proceed only if successful
     const success = await saveStepData(data, currentStep);
     if (!success) return;
 
+    const mergedData = { ...formData, ...data };
     setFormData(mergedData);
+
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps((prev) => [...prev, currentStep]);
     }
 
+    const nextStep = steps[steps.indexOf(currentStep) + 1];
     if (nextStep) setCurrentStep(nextStep);
   };
 
   const handleBack = () => {
-    const currentIdx = steps.indexOf(currentStep);
-    if (currentIdx > 0) {
-      setCurrentStep(steps[currentIdx - 1]);
+    const idx = steps.indexOf(currentStep);
+    if (idx > 0) {
+      setCurrentStep(steps[idx - 1]);
     }
   };
 
@@ -73,6 +85,15 @@ const Admission = () => {
     const success = await saveStepData({}, 'review', true);
     if (success) {
       alert('Form submitted successfully!');
+    }
+  };
+
+  const handleExit = () => {
+    if (confirm('Are you sure you want to exit this form?')) {
+      setCurrentStep('basic');
+      setFormData({});
+      setFormId(null);
+      setCompletedSteps([]);
     }
   };
 
@@ -89,22 +110,15 @@ const Admission = () => {
 
       <Stepper currentStep={currentStep} completedSteps={completedSteps} />
 
-      {/* Header for student name + regNo after step 1 */}
-      {currentStep !== 'basic' && (
+      {/* 👤 Student Info Header - visible if form is posted */}
+      {formId && (
         <div className="flex justify-between items-center bg-blue-50 dark:bg-gray-800 text-sm px-4 py-2 rounded-lg mb-4 border dark:border-gray-700">
           <div className="font-medium text-blue-900 dark:text-white">
             👤 {formData.fullName || 'Unknown'} &nbsp; | &nbsp; 🆔 {formData.generatedRegNo || 'N/A'}
           </div>
           <button
             className="text-red-600 hover:text-red-800 font-semibold text-xs"
-            onClick={() => {
-              if (confirm('Are you sure you want to exit this form?')) {
-                setCurrentStep('basic');
-                setFormData({});
-                setFormId(null);
-                setCompletedSteps([]);
-              }
-            }}
+            onClick={handleExit}
           >
             Exit Form
           </button>

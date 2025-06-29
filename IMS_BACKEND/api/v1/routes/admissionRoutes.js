@@ -15,10 +15,13 @@ router.get('/search/query', admissionController.searchAdmission);
 // GET admission by ID
 router.get('/:id', admissionController.getAdmissionById);
 
-// UPDATE an admission
+// UPDATE an admission fully by ID
 router.put('/:id', validateAdmission, admissionController.updateAdmission);
 
-// DELETE an admission
+// PATCH admission (step update) by ID — ✅ FIXED PATH
+router.patch('/:id', admissionController.patchAdmission);
+
+// DELETE admission by ID
 router.delete('/:id', admissionController.deleteAdmission);
 
 module.exports = router;
