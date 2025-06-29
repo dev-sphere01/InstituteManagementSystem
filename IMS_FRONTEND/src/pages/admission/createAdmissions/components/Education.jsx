@@ -1,108 +1,168 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
 
-const Education = ({ formData = {}, setFormData, onNext, onBack }) => {
+const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const inputClasses = `w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
-    isDarkMode
-      ? 'bg-gray-800 border-gray-700 text-white'
-      : 'bg-white border-gray-300 text-gray-900'
-  }`;
+  const validate = () => {
+    if (!validationsEnabled) {
+      setErrors({});
+      return true;
+    }
 
-  const labelClasses = `block text-sm font-medium mb-1 ${
-    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-  }`;
+    const requiredFields = [
+      'highestEducationalQualification',
+      'boardOrUniversity',
+      'yearOfPassing',
+      'subjectsStudied',
+      'courseApplied',
+      'preferredModeOfLearning',
+    ];
+
+    const errs = {};
+    requiredFields.forEach((field) => {
+      if (!formData[field]?.trim()) errs[field] = 'Required';
+    });
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleNext = () => {
+    if (!validate()) return;
+    if (typeof onNext === 'function') onNext(formData);
+  };
+
+  const inputClass = (field) =>
+    `w-full px-4 py-2 border rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+      errors[field]
+        ? 'border-red-500 focus:ring-red-400'
+        : isDarkMode
+        ? 'border-gray-700 bg-[#23272f] text-white placeholder-gray-400 focus:bg-[#23272f]'
+        : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white'
+    }`;
+
+  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`;
+
+  const renderInput = ({ label, name, type = 'text', isSelect = false, options = [], placeholder = '', required = false }) => (
+    <div>
+      <label className={labelClass}>
+        {label} {required && validationsEnabled && <span className="text-red-500">*</span>}
+      </label>
+      {isSelect ? (
+        <select
+          name={name}
+          value={formData[name] || ''}
+          onChange={handleChange}
+          className={inputClass(name)}
+        >
+          <option value="">Select Mode</option>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type={type}
+          name={name}
+          value={formData[name] || ''}
+          onChange={handleChange}
+          className={inputClass(name)}
+          placeholder={placeholder}
+        />
+      )}
+      {errors[name] && <p className="text-xs text-red-400 mt-1 font-medium">{errors[name]}</p>}
+    </div>
+  );
 
   return (
-    <div className={`p-6 rounded-xl shadow-md ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} w-full max-w-4xl mx-auto`}>
-      <h2 className="text-2xl font-semibold mb-6">Education & Course Details</h2>
+    <div
+      className={`w-full mt-8 rounded-2xl shadow-lg p-8 mx-auto ${
+        isDarkMode
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
+          : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
+      }`}
+    >
+      <h2
+        className={`text-2xl font-bold mb-8 tracking-tight ${
+          isDarkMode ? 'text-white' : 'text-blue-900'
+        }`}
+      >
+        Step 3: Education & Course Details
+      </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div>
-          <label className={labelClasses}>Highest Educational Qualification <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="highestEducationalQualification"
-            value={formData.highestEducationalQualification || ''}
-            onChange={handleChange}
-            className={inputClasses}
-            placeholder="e.g. Bachelor's in Science"
-          />
-        </div>
-
-        <div>
-          <label className={labelClasses}>Board/University <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="boardOrUniversity"
-            value={formData.boardOrUniversity || ''}
-            onChange={handleChange}
-            className={inputClasses}
-            placeholder="e.g. CBSE, Delhi University"
-          />
-        </div>
-
-        <div>
-          <label className={labelClasses}>Year of Passing <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="yearOfPassing"
-            value={formData.yearOfPassing || ''}
-            onChange={handleChange}
-            className={inputClasses}
-            placeholder="e.g. 2023"
-          />
-        </div>
-
-        <div>
-          <label className={labelClasses}>Subjects Studied <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="subjectsStudied"
-            value={formData.subjectsStudied || ''}
-            onChange={handleChange}
-            className={inputClasses}
-            placeholder="e.g. Physics, Chemistry, Math"
-          />
-        </div>
-
-        <div>
-          <label className={labelClasses}>Course Applied <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="courseApplied"
-            value={formData.courseApplied || ''}
-            onChange={handleChange}
-            className={inputClasses}
-            placeholder="e.g. Diploma in Computer Applications"
-          />
-        </div>
-
-        <div>
-          <label className={labelClasses}>Preferred Mode of Learning <span className="text-red-500">*</span></label>
-          <select
-            name="preferredModeOfLearning"
-            value={formData.preferredModeOfLearning || ''}
-            onChange={handleChange}
-            className={inputClasses}
-          >
-            <option value="" disabled>Select Mode</option>
-            <option value="Online">Online</option>
-            <option value="Offline">Offline</option>
-            <option value="Hybrid">Hybrid</option>
-          </select>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {renderInput({
+          label: 'Highest Educational Qualification',
+          name: 'highestEducationalQualification',
+          required: true,
+          placeholder: "e.g. Bachelor's in Science",
+        })}
+        {renderInput({
+          label: 'Board/University',
+          name: 'boardOrUniversity',
+          required: true,
+          placeholder: 'e.g. CBSE, Delhi University',
+        })}
+        {renderInput({
+          label: 'Year of Passing',
+          name: 'yearOfPassing',
+          required: true,
+          placeholder: 'e.g. 2023',
+        })}
+        {renderInput({
+          label: 'Subjects Studied',
+          name: 'subjectsStudied',
+          required: true,
+          placeholder: 'e.g. Physics, Chemistry, Math',
+        })}
+        {renderInput({
+          label: 'Course Applied',
+          name: 'courseApplied',
+          required: true,
+          placeholder: 'e.g. Diploma in Computer Applications',
+        })}
+        {renderInput({
+          label: 'Preferred Mode of Learning',
+          name: 'preferredModeOfLearning',
+          required: true,
+          isSelect: true,
+          options: ['Online', 'Offline', 'Hybrid'],
+        })}
       </div>
 
-      <div className="flex justify-between mt-6">
-        <button type="button" className="btn btn-secondary" onClick={onBack}>Back</button>
-        <button type="button" className="btn btn-primary" onClick={() => onNext(formData)}>Next</button>
+      <div className="flex items-center justify-between pt-8 border-t mt-8 border-gray-200 dark:border-gray-700">
+        <button
+          type="button"
+          onClick={onBack}
+          className={`px-6 py-2 rounded-lg shadow font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+            isDarkMode
+              ? 'border border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700 hover:text-white'
+              : 'border border-gray-300 text-blue-700 bg-white hover:bg-blue-50 hover:text-blue-900'
+          }`}
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={handleNext}
+          className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+            Object.keys(errors).length
+              ? 'bg-blue-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
+          }`}
+        >
+          Next
+        </button>
       </div>
     </div>
   );
