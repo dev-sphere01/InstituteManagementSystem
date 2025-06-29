@@ -1,1 +1,0 @@
-// This will be our global store for the theme
