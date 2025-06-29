@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useThemeStore } from '../../../../store';
-import API from '../../../../services/api'; // Adjust path as needed
+import { useNotification } from '../../../../services/NotificationService';
 
-const Contact = ({ onNext, onBack, validationsEnabled = true, formData }) => {
+const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {} }) => {
   const { isDarkMode } = useThemeStore();
+  const notify = useNotification();
 
   const [form, setForm] = useState({
     contactNumber: '',
@@ -25,6 +26,10 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData }) => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, ...formData }));
+  }, [formData]);
 
   const validate = () => {
     if (!validationsEnabled) {
@@ -50,6 +55,9 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData }) => {
     });
 
     setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      notify('Please fill all required contact fields.', 'error');
+    }
     return Object.keys(errs).length === 0;
   };
 
@@ -62,20 +70,16 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+    setLoading(true);
 
     try {
-      setLoading(true);
-      const payload = {
-        ...formData,
-        ...form,
-        currentStep: 'contact', // for backend step tracking
-      };
-
-      const response = await API.post('/admissions', payload);
-      if (typeof onNext === 'function') onNext(response);
+      if (typeof onNext === 'function') {
+        await onNext(form);
+        notify('Contact details saved successfully.', 'success');
+      }
     } catch (err) {
-      console.error('Submission failed:', err);
-      alert('Error saving contact details. Check console for more info.');
+      console.error('Error saving contact details:', err);
+      notify('Failed to save contact details.', 'error');
     } finally {
       setLoading(false);
     }
@@ -86,11 +90,13 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData }) => {
       errors[field]
         ? 'border-red-500 focus:ring-red-400'
         : isDarkMode
-        ? 'border-gray-700 bg-[#23272f] text-white placeholder-gray-400 focus:bg-[#23272f]'
-        : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white'
+        ? 'border-gray-700 bg-[#23272f] text-white placeholder-gray-400'
+        : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400'
     }`;
 
-  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`;
+  const labelClass = `block text-sm font-semibold mb-1 ${
+    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+  }`;
 
   const renderInput = ({ label, name, required = false, type = 'text', isTextArea = false }) => (
     <div>
@@ -138,11 +144,9 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData }) => {
         {renderInput({ label: 'State', name: 'state', required: true })}
         {renderInput({ label: 'District', name: 'district', required: true })}
         {renderInput({ label: 'Pin Code', name: 'pinCode', required: true })}
-
         <div className="sm:col-span-2 lg:col-span-3">
           {renderInput({ label: 'Address', name: 'address', required: true, isTextArea: true })}
         </div>
-
         {renderInput({ label: "Father's Name", name: 'fathersName', required: true })}
         {renderInput({ label: "Father's Occupation", name: 'fathersOccupation', required: true })}
         {renderInput({ label: "Father's Job Role", name: 'fathersJobRole' })}
