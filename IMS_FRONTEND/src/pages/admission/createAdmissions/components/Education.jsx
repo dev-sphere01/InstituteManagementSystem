@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
+import API from '../../../../services/api';
 
 const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,16 +30,36 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
 
     const errs = {};
     requiredFields.forEach((field) => {
-      if (!formData[field]?.trim()) errs[field] = 'Required';
+      if (!formData[field]?.toString().trim()) errs[field] = 'Required';
     });
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validate()) return;
-    if (typeof onNext === 'function') onNext(formData);
+
+    setLoading(true);
+    try {
+      const payload = {
+        ...formData,
+        currentStep: 'education',
+      };
+
+      if (formData._id) {
+        await API.put(`/admissions/${formData._id}`, payload);
+      } else {
+        const response = await API.post('/admissions', payload);
+        setFormData((prev) => ({ ...prev, _id: response._id }));
+      }
+
+      if (typeof onNext === 'function') onNext(payload);
+    } catch (error) {
+      console.error('Failed to save education step:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputClass = (field) =>
@@ -51,7 +73,15 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
 
   const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`;
 
-  const renderInput = ({ label, name, type = 'text', isSelect = false, options = [], placeholder = '', required = false }) => (
+  const renderInput = ({
+    label,
+    name,
+    type = 'text',
+    isSelect = false,
+    options = [],
+    placeholder = '',
+    required = false,
+  }) => (
     <div>
       <label className={labelClass}>
         {label} {required && validationsEnabled && <span className="text-red-500">*</span>}
@@ -155,13 +185,14 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
         <button
           type="button"
           onClick={handleNext}
+          disabled={loading}
           className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-            Object.keys(errors).length
+            loading
               ? 'bg-blue-400 cursor-not-allowed'
               : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
           }`}
         >
-          Next
+          {loading ? 'Saving...' : 'Next'}
         </button>
       </div>
     </div>

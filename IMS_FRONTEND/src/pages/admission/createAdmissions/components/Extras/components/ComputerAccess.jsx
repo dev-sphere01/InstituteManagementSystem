@@ -1,8 +1,7 @@
 import React from 'react';
 import { useThemeStore } from '../../../../../../store';
 
-
-const ComputerAccess = ({ formData = {}, setFormData = () => {} }) => {
+const ComputerAccess = ({ formData = {}, setFormData = () => {}, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
 
   const accessOptions = [
@@ -15,9 +14,13 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {} }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      computerAccess: {
+        ...prev.computerAccess,
+        [name]: value,
+      },
     }));
   };
 
@@ -31,6 +34,8 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {} }) => {
     isDarkMode ? 'text-gray-300' : 'text-gray-700'
   }`;
 
+  const computerAccess = formData.computerAccess || {};
+
   return (
     <div
       className={`w-full rounded-2xl shadow-md p-6 mb-6 ${
@@ -42,12 +47,12 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {} }) => {
       <h3 className="text-xl font-bold mb-6">Computer Access</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Computer Access Dropdown */}
+        {/* Access location */}
         <div>
           <label className={labelClass}>Where do you access a computer?</label>
           <select
-            name="computerAccess"
-            value={formData.computerAccess || ''}
+            name="location"
+            value={computerAccess.location || ''}
             onChange={handleChange}
             className={inputClass}
           >
@@ -60,14 +65,14 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {} }) => {
           </select>
         </div>
 
-        {/* "Other" access input */}
-        {formData.computerAccess === 'Other' && (
+        {/* Other location input */}
+        {computerAccess.location === 'Other' && (
           <div>
             <label className={labelClass}>Other (please specify)</label>
             <input
               type="text"
-              name="computerAccessOther"
-              value={formData.computerAccessOther || ''}
+              name="otherLocation"
+              value={computerAccess.otherLocation || ''}
               onChange={handleChange}
               placeholder="Specify access location"
               className={inputClass}

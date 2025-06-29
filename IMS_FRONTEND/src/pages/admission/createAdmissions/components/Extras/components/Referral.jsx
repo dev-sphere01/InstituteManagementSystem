@@ -1,8 +1,7 @@
 import React from 'react';
 import { useThemeStore } from '../../../../../../store';
 
-
-const Referral = ({ formData = {}, setFormData = () => {} }) => {
+const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
 
   const referralSources = [
@@ -15,9 +14,13 @@ const Referral = ({ formData = {}, setFormData = () => {} }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      referral: {
+        ...prev.referral,
+        [name]: value,
+      },
     }));
   };
 
@@ -30,6 +33,8 @@ const Referral = ({ formData = {}, setFormData = () => {} }) => {
   const labelClass = `block text-sm font-medium mb-1 ${
     isDarkMode ? 'text-gray-300' : 'text-gray-700'
   }`;
+
+  const referral = formData.referral || {};
 
   return (
     <div
@@ -47,7 +52,7 @@ const Referral = ({ formData = {}, setFormData = () => {} }) => {
           <label className={labelClass}>How did you hear about us?</label>
           <select
             name="referralSource"
-            value={formData.referralSource || ''}
+            value={referral.referralSource || ''}
             onChange={handleChange}
             className={inputClass}
           >
@@ -61,13 +66,13 @@ const Referral = ({ formData = {}, setFormData = () => {} }) => {
         </div>
 
         {/* If source is "Other", show additional input */}
-        {formData.referralSource === 'Other' && (
+        {referral.referralSource === 'Other' && (
           <div>
             <label className={labelClass}>Other (please specify)</label>
             <input
               type="text"
               name="referralSourceOther"
-              value={formData.referralSourceOther || ''}
+              value={referral.referralSourceOther || ''}
               onChange={handleChange}
               placeholder="Specify other source"
               className={inputClass}
@@ -81,7 +86,7 @@ const Referral = ({ formData = {}, setFormData = () => {} }) => {
           <input
             type="text"
             name="referalName"
-            value={formData.referalName || ''}
+            value={referral.referalName || ''}
             onChange={handleChange}
             placeholder="Enter name of the person"
             className={inputClass}

@@ -1,10 +1,16 @@
 import React from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { useThemeStore } from '../../../../store'; // update path if needed
+import { useThemeStore } from '../../../../store'; // update if needed
 
 const Review = ({ formData = {}, onBack, onSubmit }) => {
   const { isDarkMode } = useThemeStore();
+
+  const featureKeys = ['tShirt', 'itTools', 'webDesigning', 'tally', 'gfxDtp', 'python', 'iot'];
+  const selectedFeatures = featureKeys
+    .filter((key) => formData[key])
+    .map((key) => key.charAt(0).toUpperCase() + key.slice(1))
+    .join(', ');
 
   const sections = [
     {
@@ -35,23 +41,28 @@ const Review = ({ formData = {}, onBack, onSubmit }) => {
         { label: 'Qualification', value: formData.highestEducationalQualification },
         { label: 'Board/University', value: formData.boardOrUniversity },
         { label: 'Year of Passing', value: formData.yearOfPassing },
+        { label: 'Subjects Studied', value: formData.subjectsStudied },
+        { label: 'Course Applied', value: formData.courseApplied },
+        { label: 'Mode of Learning', value: formData.preferredModeOfLearning },
       ],
     },
     {
       title: 'Extras',
       fields: [
+        { label: 'Selected Features', value: selectedFeatures || '-' },
+        { label: 'Computer Access', value: formData.computerAccess?.location },
         {
-          label: 'Features',
-          value: Object.entries(formData)
-            .filter(([k, v]) => ['tShirt', 'itTools', 'webDesigning', 'tally', 'gfxDtp', 'python', 'iot'].includes(k) && v)
-            .map(([k]) => k)
-            .join(', '),
+          label: 'Other Access Location',
+          value: formData.computerAccess?.otherLocation,
         },
-        { label: 'Computer Access', value: formData.computerAccess },
         { label: 'Referral Source', value: formData.referralSource },
         {
-          label: 'Referred By',
-          value: formData.referralSourceOther || formData.referalName || '-',
+          label: 'Referral - Other',
+          value: formData.referralSourceOther,
+        },
+        {
+          label: 'Referred By (Name)',
+          value: formData.referalName,
         },
       ],
     },
@@ -91,7 +102,7 @@ const Review = ({ formData = {}, onBack, onSubmit }) => {
         <button
           type="button"
           onClick={downloadPDF}
-          className="text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md "
+          className="text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
         >
           Download PDF
         </button>
@@ -101,7 +112,9 @@ const Review = ({ formData = {}, onBack, onSubmit }) => {
         {sections.map((section) => (
           <div key={section.title}>
             <h3 className={`text-lg font-semibold mb-2 ${textMuted}`}>{section.title}</h3>
-            <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ${sectionBg} p-4 rounded-lg`}>
+            <div
+              className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ${sectionBg} p-4 rounded-lg`}
+            >
               {section.fields.map((field) => (
                 <div key={field.label} className="flex flex-col">
                   <span className={`text-xs ${textMuted}`}>{field.label}</span>

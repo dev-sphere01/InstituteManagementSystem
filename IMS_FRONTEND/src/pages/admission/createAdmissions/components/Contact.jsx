@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
+import API from '../../../../services/api'; // Adjust path as needed
 
-const Contact = ({ onNext, onBack, loading, validationsEnabled = true }) => {
+const Contact = ({ onNext, onBack, validationsEnabled = true, formData }) => {
   const { isDarkMode } = useThemeStore();
 
   const [form, setForm] = useState({
@@ -23,6 +24,7 @@ const Contact = ({ onNext, onBack, loading, validationsEnabled = true }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
     if (!validationsEnabled) {
@@ -57,10 +59,26 @@ const Contact = ({ onNext, onBack, loading, validationsEnabled = true }) => {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    if (typeof onNext === 'function') onNext(form);
+
+    try {
+      setLoading(true);
+      const payload = {
+        ...formData,
+        ...form,
+        currentStep: 'contact', // for backend step tracking
+      };
+
+      const response = await API.post('/admissions', payload);
+      if (typeof onNext === 'function') onNext(response);
+    } catch (err) {
+      console.error('Submission failed:', err);
+      alert('Error saving contact details. Check console for more info.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputClass = (field) =>
@@ -109,11 +127,7 @@ const Contact = ({ onNext, onBack, loading, validationsEnabled = true }) => {
           : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
       }`}
     >
-      <h2
-        className={`text-2xl font-bold mb-8 tracking-tight ${
-          isDarkMode ? 'text-white' : 'text-blue-900'
-        }`}
-      >
+      <h2 className={`text-2xl font-bold mb-8 tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>
         Step 2: Contact Details
       </h2>
 

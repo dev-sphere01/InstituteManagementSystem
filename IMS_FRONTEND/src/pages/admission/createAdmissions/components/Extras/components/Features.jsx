@@ -1,8 +1,7 @@
 import React from 'react';
 import { useThemeStore } from '../../../../../../store';
 
-
-const Features = ({ formData = {}, setFormData = () => {} }) => {
+const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
 
   const featureList = [
@@ -18,7 +17,10 @@ const Features = ({ formData = {}, setFormData = () => {} }) => {
   const handleCheckboxChange = (key) => {
     setFormData((prev) => ({
       ...prev,
-      [key]: !prev?.[key],
+      features: {
+        ...prev.features,
+        [key]: !prev.features?.[key],
+      },
     }));
   };
 
@@ -42,7 +44,7 @@ const Features = ({ formData = {}, setFormData = () => {} }) => {
           >
             <input
               type="checkbox"
-              checked={!!formData[key]}
+              checked={!!formData?.features?.[key]}
               onChange={() => handleCheckboxChange(key)}
               className={`w-4 h-4 rounded border focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
                 isDarkMode

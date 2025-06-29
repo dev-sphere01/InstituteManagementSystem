@@ -4,9 +4,15 @@ import ComputerAccess from './components/ComputerAccess';
 import Features from './components/Features';
 import { useThemeStore } from '../../../../../store';
 
-
 const Extras = ({ formData, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
+
+  const handleSubmit = () => {
+    // Optional: Add any final validation here if needed
+    if (typeof onNext === 'function') {
+      onNext(formData); // Pass all extras-related fields
+    }
+  };
 
   return (
     <div
@@ -54,9 +60,10 @@ const Extras = ({ formData, setFormData, onNext, onBack, validationsEnabled = tr
         >
           Back
         </button>
+
         <button
           type="button"
-          onClick={() => onNext(formData)}
+          onClick={handleSubmit}
           className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600`}
         >
           Next
