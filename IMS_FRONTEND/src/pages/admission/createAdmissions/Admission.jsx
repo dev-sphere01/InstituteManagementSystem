@@ -12,11 +12,7 @@ const steps = ['basic', 'contact', 'education', 'extras', 'review'];
 const Admission = () => {
   const [currentStep, setCurrentStep] = useState('basic');
   const [completedSteps, setCompletedSteps] = useState([]);
-  const [formId, setFormId] = useState(null);
-  const [validationsEnabled, setValidationsEnabled] = useState(true);
-
   const [formData, setFormData] = useState({
-    // Step 1: Basic Info
     formNo: '',
     centerCode: '',
     employeeId: '',
@@ -29,7 +25,6 @@ const Admission = () => {
     religion: '',
     otherInfo: '',
 
-    // Step 2: Contact Info
     contactNumber: '',
     emailAddress: '',
     whatsappNumber: '',
@@ -42,7 +37,6 @@ const Admission = () => {
     motherName: '',
     motherContact: '',
 
-    // Step 3: Education
     highestQualification: '',
     boardOrUniversity: '',
     yearOfPassing: '',
@@ -50,7 +44,6 @@ const Admission = () => {
     courseApplied: '',
     learningMode: '',
 
-    // Step 4: Extras
     features: {
       tShirt: false,
       itTools: false,
@@ -60,49 +53,60 @@ const Admission = () => {
       python: false,
       iot: false,
     },
+
     computerAccess: {
       location: '',
       otherLocation: '',
     },
+
     referral: {
       referralSource: '',
       referralSourceOther: '',
       referalName: '',
     },
 
-    // Helpers
     currentStep: 1,
     isCompleted: false,
   });
 
-  // 🔁 Load from localStorage on mount
-  useEffect(() => {
-    const savedFormId = localStorage.getItem('admissionFormId');
-    if (savedFormId) {
-      setFormId(savedFormId);
-      fetchFormData(savedFormId);
-    }
-  }, []);
-
-  // 🔁 Refresh data on step change if already saved
-  useEffect(() => {
-    if (formId) fetchFormData(formId);
-  }, [currentStep]);
+  const [formId, setFormId] = useState(null);
+  const [validationsEnabled, setValidationsEnabled] = useState(true);
 
   const fetchFormData = async (id) => {
     try {
       const res = await API.get(`/admissions/${id}`);
       setFormData(res);
+
+      // Restore step state
+      const restoredStep = steps[res.currentStep - 1] || 'basic';
+      setCurrentStep(restoredStep);
+
+      const completed = steps.slice(0, res.currentStep - 1);
+      setCompletedSteps(completed);
     } catch (err) {
       console.error('Failed to fetch saved form data:', err);
     }
   };
 
+  useEffect(() => {
+    const savedId = localStorage.getItem('admissionFormId');
+    if (savedId) {
+      setFormId(savedId);
+      fetchFormData(savedId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (formId) {
+      localStorage.setItem('admissionFormId', formId);
+    }
+  }, [formId]);
+
   const saveStepData = async (data = {}, step = currentStep, complete = false) => {
     const payload = {
       ...formData,
       ...data,
-      currentStep: step,
+      currentStep: steps.indexOf(step) + 1,
       isCompleted: complete,
     };
 
@@ -113,7 +117,6 @@ const Admission = () => {
       } else {
         response = await API.post('/admissions', payload);
         setFormId(response._id);
-        localStorage.setItem('admissionFormId', response._id); // Save to localStorage
       }
 
       setFormData(response);
@@ -129,11 +132,14 @@ const Admission = () => {
     const success = await saveStepData(data, currentStep);
     if (!success) return;
 
-    const nextStep = steps[steps.indexOf(currentStep) + 1];
-    setFormData((prev) => ({ ...prev, ...data }));
+    const mergedData = { ...formData, ...data };
+    setFormData(mergedData);
+
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps((prev) => [...prev, currentStep]);
     }
+
+    const nextStep = steps[steps.indexOf(currentStep) + 1];
     if (nextStep) setCurrentStep(nextStep);
   };
 
@@ -148,7 +154,7 @@ const Admission = () => {
     const success = await saveStepData({}, 'review', true);
     if (success) {
       alert('Form submitted successfully!');
-      localStorage.removeItem('admissionFormId'); // Clear saved ID
+      localStorage.removeItem('admissionFormId');
     }
   };
 
