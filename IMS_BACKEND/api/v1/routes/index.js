@@ -15,6 +15,7 @@ const goalsRoutes = require('./goalsRoutes');
 const stateAndCityRoutes = require('./stateAndCitiesRoutes');
 const sessionRoutes = require('./sessionRoutes');
 const coursesRoutes  = require('./coursesRoutes')
+const additionalThingsRoutes = require('./additionalThingsRoute');
 
 // Mount routes
 router.use('/users', userRoutes);
@@ -30,5 +31,6 @@ router.use('/goals', goalsRoutes);
 router.use('/state-and-city', stateAndCityRoutes);
 router.use('/sessions', sessionRoutes);
 router.use('/courses', coursesRoutes);
+router.use('/additional-things', additionalThingsRoutes);
 
 module.exports = router;
