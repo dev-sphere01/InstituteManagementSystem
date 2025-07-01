@@ -22,7 +22,8 @@ const connectDatabase = async (retryCount = 0, maxRetries = 3) => {
     logger.info(`Attempting to connect to MongoDB... (Attempt ${retryCount + 1}/${maxRetries + 1})`);
 
     // Connect to MongoDB
-    const connection = await mongoose.connect(process.env.DB_URI, options);
+    const DB = process.env.NODE_ENV === "production" ? process.env.DB_URI : process.env.DB_URI_LOCAL;
+    const connection = await mongoose.connect(DB, options);
 
     // Wait for connection to be fully ready
     await new Promise((resolve, reject) => {

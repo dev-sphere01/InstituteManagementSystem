@@ -3,6 +3,7 @@ import { useThemeStore } from '../../../../../../store';
 
 const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
+  const features = formData.features || {};
 
   const featureList = [
     { key: 'tShirt', label: 'T-Shirt' },
@@ -23,8 +24,6 @@ const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
       },
     }));
   };
-
-  const features = formData.features || {};
 
   return (
     <div

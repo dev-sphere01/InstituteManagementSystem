@@ -3,6 +3,9 @@ node_modules/
 /IMS_FRONTEND/node_modules
 /IMS_BACKEND/node_modules
 
+#db backup data
+dump/
+
 # Environment files
 .env
 .env.*

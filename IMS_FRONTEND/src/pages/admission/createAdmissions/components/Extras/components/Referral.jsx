@@ -15,10 +15,11 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       referral: {
-        ...(prev.referral || {}),
+        ...prev.referral,
         [name]: value,
       },
     }));
@@ -44,6 +45,7 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
     >
       <h3 className="text-xl font-bold mb-6">Referral Information</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Referral Source */}
         <div>
           <label className={labelClass}>How did you hear about us?</label>
           <select
@@ -61,6 +63,7 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
           </select>
         </div>
 
+        {/* Other Source (if selected) */}
         {referral.referralSource === 'Other' && (
           <div>
             <label className={labelClass}>Other (please specify)</label>
@@ -75,6 +78,7 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
           </div>
         )}
 
+        {/* Name of Referrer */}
         <div className="md:col-span-2">
           <label className={labelClass}>Referred by (Name)</label>
           <input

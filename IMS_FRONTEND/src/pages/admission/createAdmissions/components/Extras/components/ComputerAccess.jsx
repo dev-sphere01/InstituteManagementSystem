@@ -3,7 +3,7 @@ import { useThemeStore } from '../../../../../../store';
 
 const ComputerAccess = ({ formData = {}, setFormData = () => {}, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
-  const computerAccess = formData.computerAccess || {};
+  const computerAccess = formData?.computerAccess || {};
 
   const accessOptions = [
     'Home',
@@ -15,6 +15,7 @@ const ComputerAccess = ({ formData = {}, setFormData = () => {}, validationsEnab
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       computerAccess: {

@@ -50,22 +50,13 @@ const Review = ({ formData = {}, onBack, onSubmit }) => {
       title: 'Extras',
       fields: [
         { label: 'Selected Features', value: selectedFeatures || '-' },
-        { label: 'Computer Access', value: formData.computerAccess?.location },
-        {
-          label: 'Other Access Location',
-          value: formData.computerAccess?.otherLocation,
-        },
-        { label: 'Referral Source', value: formData.referralSource },
-        {
-          label: 'Referral - Other',
-          value: formData.referralSourceOther,
-        },
-        {
-          label: 'Referred By (Name)',
-          value: formData.referalName,
-        },
+        { label: 'Computer Access', value: formData.computerAccessOther || '-' },
+        { label: 'Referral Source', value: formData.referralSource || '-' },
+        { label: 'Referral - Other', value: formData.referralSourceOther || '-' },
+        { label: 'Referred By (Name)', value: formData.referalName || '-' },
       ],
-    },
+    }
+    
   ];
 
   const downloadPDF = () => {

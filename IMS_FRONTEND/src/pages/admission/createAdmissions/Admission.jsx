@@ -6,49 +6,73 @@ import Extras from './components/Extras/Extras';
 import Review from './components/Review';
 import Stepper from './components/Stepper';
 import API from './../../../services/api';
+import { useNotification } from './../../../services/NotificationService';
 
 const steps = ['basic', 'contact', 'education', 'extras', 'review'];
 
 const Admission = () => {
   const [currentStep, setCurrentStep] = useState('basic');
   const [completedSteps, setCompletedSteps] = useState([]);
+  const notify = useNotification();
   const [formData, setFormData] = useState({
-  // Basic Info
-  formNo: '',
-  centerCode: '',
-  employeeId: '',
-  generatedRegNo: '',
-  fullName: '',
-  dob: '',
-  gender: '',
-  category: '',
-  aadharNo: '',
-  religion: '',
-  otherInfo: '',
+    // Basic Info
+    formNo: '',
+    centerCode: '',
+    employeeId: '',
+    otherInfo: '',
+    generatedRegNo: '',
+    fullName: '',
+    dob: '',
+    gender: '',
+    category: '',
+    aadharNo: '',
+    religion: '',
 
-  // Contact Info
-  contactNumber: '',
-  emailAddress: '',
-  whatsappNumber: '',
-  address: '',
-  city: '',
-  pincode: '',
-  state: '',
-  fatherName: '',
-  fatherContact: '',
-  motherName: '',
-  motherContact: '',
+    // Contact Info
+    contactNumber: '',
+    alternateContactNumber: '',
+    emailAddress: '',
+    state: '',
+    district: '',
+    address: '',
+    pinCode: '',
+    fathersName: '',
+    fathersOccupation: '',
+    fathersJobRole: '',
+    fathersDepartmentOrCompany: '',
+    mothersName: '',
+    mothersOccupation: '',
+    mothersJobRole: '',
+    mothersDepartmentOrCompany: '',
+    guardianName: '',
+    guardianRelation: '',
+    guardianContactNumber: '',
 
-  // Education Info
-  highestQualification: '',
-  boardOrUniversity: '',
-  yearOfPassing: '',
-  subjects: '',
-  courseApplied: '',
-  learningMode: '',
+    // Document Uploads
+    aadharPhoto: '',
+    candidatePhoto: '',
+    candidateSignature: '',
+    candidateLeftThumbImpression: '',
+    tenthMarksheet: '',
+    twelfthMarksheet: '',
+    incomeCertificate: '',
 
-  // Extra Features
-  features: {
+    // Optional Identifiers
+    apaarId: '',
+
+    // Optional Flags
+    exServicemen: false,
+    speciallyAbled: false,
+
+    // Education & Course Info
+    highestEducationalQualification: '',
+    boardOrUniversity: '',
+    yearOfPassing: '',
+    subjectsStudied: '',
+    courseApplied: '',
+    preferredModeOfLearning: '',
+
+    // Extra Features
     tShirt: false,
     itTools: false,
     webDesigning: false,
@@ -56,25 +80,26 @@ const Admission = () => {
     gfxDtp: false,
     python: false,
     iot: false,
-  },
 
-  // Computer Access Info
-  computerAccess: {
-    computerAccess: false,         // This was missing
-    computerAccessOther: '',       // Renamed from `otherLocation` to match schema
-  },
-
-  // Referral Info
-  referral: {
+    // Referral Info
     referralSource: '',
     referralSourceOther: '',
     referalName: '',
-  },
 
-  // Step Tracking
-  currentStep: 1,
-  isCompleted: false,
-});
+    // Computer Access
+    computerAccess: false,
+    computerAccessOther: '',
+
+    // System Fields
+    regNo: '',
+    month: '',
+    status: 'Pending',
+
+    // Step Tracking
+    currentStep: 'basic',
+    isCompleted: false,
+  });
+
 
   const [formId, setFormId] = useState(null);
   const [validationsEnabled, setValidationsEnabled] = useState(true);
@@ -160,19 +185,18 @@ const Admission = () => {
   const handleSubmit = async () => {
     const success = await saveStepData({}, 'review', true);
     if (success) {
-      alert('Form submitted successfully!');
+      notify('Form submitted successfully!','success');
       localStorage.removeItem('admissionFormId');
+      handleExit();
     }
   };
 
   const handleExit = () => {
-    if (confirm('Are you sure you want to exit this form?')) {
       setCurrentStep('basic');
       setFormData({});
       setFormId(null);
       setCompletedSteps([]);
       localStorage.removeItem('admissionFormId');
-    }
   };
 
   return (

@@ -150,7 +150,7 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {} }) =
         {renderInput({ label: "Father's Name", name: 'fathersName', required: true })}
         {renderInput({ label: "Father's Occupation", name: 'fathersOccupation', required: true })}
         {renderInput({ label: "Father's Job Role", name: 'fathersJobRole' })}
-        {renderInput({ label: 'Department/Company', name: 'departmentOrCompany' })}
+        {renderInput({ label: 'Department/Company', name: 'fathersDepartmentOrCompany' })}
         {renderInput({ label: "Mother's Name", name: 'mothersName', required: true })}
         {renderInput({ label: "Guardian's Name", name: 'guardianName' })}
         {renderInput({ label: "Guardian's Relation", name: 'guardianRelation' })}
