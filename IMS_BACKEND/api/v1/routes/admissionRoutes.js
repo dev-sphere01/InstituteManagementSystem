@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const admissionController = require('../../../controllers/admissioncontroller');
 const { validateAdmission } = require('../../../middlewares/validateAdmission');
+const upload = require('./../../../middlewares/upload');
 
 // CREATE a new admission
 router.post('/', validateAdmission, admissionController.createAdmission);
@@ -23,5 +24,30 @@ router.patch('/:id', admissionController.patchAdmission);
 
 // DELETE admission by ID
 router.delete('/:id', admissionController.deleteAdmission);
+
+// Single file upload
+router.post('/upload/:id/:field', upload.single('file'), async (req, res) => {
+    try {
+      const { id, field } = req.params;
+      const filePath = req.file.path;
+  
+      const updated = await AdmissionDetails.findByIdAndUpdate(
+        id,
+        { [field]: filePath },
+        { new: true }
+      );
+  
+      if (!updated) return res.status(404).json({ message: 'Admission not found' });
+  
+      res.status(200).json({
+        message: `${field} uploaded successfully`,
+        path: filePath,
+        data: updated,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Upload failed' });
+    }
+  });
 
 module.exports = router;
