@@ -3,17 +3,25 @@ const router = express.Router();
 const admissionController = require('../../../controllers/admissioncontroller');
 const { validateAdmission } = require('../../../middlewares/validateAdmission');
 
-// Create
+// CREATE a new admission
 router.post('/', validateAdmission, admissionController.createAdmission);
 
-// Read
+// GET all admissions
 router.get('/', admissionController.getAllAdmissions);
+
+// SEARCH by query
+router.get('/search/query', admissionController.searchAdmission);
+
+// GET admission by ID
 router.get('/:id', admissionController.getAdmissionById);
 
-// Update
+// UPDATE an admission fully by ID
 router.put('/:id', validateAdmission, admissionController.updateAdmission);
 
-// Delete
+// PATCH admission (step update) by ID — ✅ FIXED PATH
+router.patch('/:id', admissionController.patchAdmission);
+
+// DELETE admission by ID
 router.delete('/:id', admissionController.deleteAdmission);
 
 module.exports = router;
