@@ -52,7 +52,7 @@ const admissionDetailsSchema = new mongoose.Schema({
   boardOrUniversity: { type: String, required: true },//text data
   yearOfPassing: { type: Number, required: true },//numeric data
   courseApplied: { type: String, required: true },//text data
-  subjectsStudied: { type: String, required: true },//array of subject names
+  subjectsStudied: { type: [String], required: true },//array of subject names
   preferredModeOfLearning: { type: String, required: true },//either offline or online
 
 

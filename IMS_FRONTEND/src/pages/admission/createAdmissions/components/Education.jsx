@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
 import API from '../../../../services/api';
+import { useNotification } from '../../../../services/NotificationService';
 
 const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-
+  const notify = useNotification();
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -42,36 +43,41 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
 
     setLoading(true);
     try {
+      const subjectsArray = Array.isArray(formData.subjectsStudied)
+        ? formData.subjectsStudied
+        : formData.subjectsStudied
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+
       const payload = {
         ...formData,
-        currentStep: 'education',
+        subjectsStudied: subjectsArray,
       };
 
-      if (formData._id) {
-        await API.put(`/admissions/${formData._id}`, payload);
-      } else {
-        const response = await API.post('/admissions', payload);
-        setFormData((prev) => ({ ...prev, _id: response._id }));
+      if (typeof onNext === 'function') {
+        await onNext(payload); // Send cleaned data to parent
+        notify('Education details saved successfully.', 'success');
       }
-
-      if (typeof onNext === 'function') onNext(payload);
     } catch (error) {
       console.error('Failed to save education step:', error);
+      notify('Failed to save education details.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
+
   const inputClass = (field) =>
-    `w-full px-4 py-2 border rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-      errors[field]
-        ? 'border-red-500 focus:ring-red-400'
-        : isDarkMode
+    `w-full px-4 py-2 border rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors[field]
+      ? 'border-red-500 focus:ring-red-400'
+      : isDarkMode
         ? 'border-gray-700 bg-[#23272f] text-white placeholder-gray-400 focus:bg-[#23272f]'
         : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white'
     }`;
 
-  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`;
+  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'
+    }`;
 
   const renderInput = ({
     label,
@@ -81,51 +87,56 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
     options = [],
     placeholder = '',
     required = false,
-  }) => (
-    <div>
-      <label className={labelClass}>
-        {label} {required && validationsEnabled && <span className="text-red-500">*</span>}
-      </label>
-      {isSelect ? (
-        <select
-          name={name}
-          value={formData[name] || ''}
-          onChange={handleChange}
-          className={inputClass(name)}
-        >
-          <option value="">Select Mode</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input
-          type={type}
-          name={name}
-          value={formData[name] || ''}
-          onChange={handleChange}
-          className={inputClass(name)}
-          placeholder={placeholder}
-        />
-      )}
-      {errors[name] && <p className="text-xs text-red-400 mt-1 font-medium">{errors[name]}</p>}
-    </div>
-  );
+  }) => {
+    const value =
+      name === 'subjectsStudied' && Array.isArray(formData[name])
+        ? formData[name].join(', ')
+        : formData[name] || '';
+
+    return (
+      <div>
+        <label className={labelClass}>
+          {label} {required && validationsEnabled && <span className="text-red-500">*</span>}
+        </label>
+        {isSelect ? (
+          <select
+            name={name}
+            value={formData[name] || ''}
+            onChange={handleChange}
+            className={inputClass(name)}
+          >
+            <option value="">Select Mode</option>
+            {options.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={type}
+            name={name}
+            value={value}
+            onChange={handleChange}
+            className={inputClass(name)}
+            placeholder={placeholder}
+          />
+        )}
+        {errors[name] && <p className="text-xs text-red-400 mt-1 font-medium">{errors[name]}</p>}
+      </div>
+    );
+  };
 
   return (
     <div
-      className={`w-full mt-8 rounded-2xl shadow-lg p-8 mx-auto ${
-        isDarkMode
-          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
-          : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
-      }`}
+      className={`w-full mt-8 rounded-2xl shadow-lg p-8 mx-auto ${isDarkMode
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
+        : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
+        }`}
     >
       <h2
-        className={`text-2xl font-bold mb-8 tracking-tight ${
-          isDarkMode ? 'text-white' : 'text-blue-900'
-        }`}
+        className={`text-2xl font-bold mb-8 tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'
+          }`}
       >
         Step 3: Education & Course Details
       </h2>
@@ -148,6 +159,7 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
           name: 'yearOfPassing',
           required: true,
           placeholder: 'e.g. 2023',
+          type: 'number',
         })}
         {renderInput({
           label: 'Subjects Studied',
@@ -166,7 +178,7 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
           name: 'preferredModeOfLearning',
           required: true,
           isSelect: true,
-          options: ['Online', 'Offline', 'Hybrid'],
+          options: ['online', 'offline', 'hybrid'],
         })}
       </div>
 
@@ -174,11 +186,10 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
         <button
           type="button"
           onClick={onBack}
-          className={`px-6 py-2 rounded-lg shadow font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-            isDarkMode
-              ? 'border border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700 hover:text-white'
-              : 'border border-gray-300 text-blue-700 bg-white hover:bg-blue-50 hover:text-blue-900'
-          }`}
+          className={`px-6 py-2 rounded-lg shadow font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isDarkMode
+            ? 'border border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700 hover:text-white'
+            : 'border border-gray-300 text-blue-700 bg-white hover:bg-blue-50 hover:text-blue-900'
+            }`}
         >
           Back
         </button>
@@ -186,11 +197,10 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
           type="button"
           onClick={handleNext}
           disabled={loading}
-          className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-            loading
-              ? 'bg-blue-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
-          }`}
+          className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading
+            ? 'bg-blue-400 cursor-not-allowed'
+            : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
+            }`}
         >
           {loading ? 'Saving...' : 'Next'}
         </button>
