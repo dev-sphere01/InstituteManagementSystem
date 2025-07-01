@@ -3,7 +3,7 @@ import { useThemeStore } from '../../../../store';
 import API from '../../../../services/api';
 import { useNotification } from '../../../../services/NotificationService';
 
-const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
+const Education = ({ formId,formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);

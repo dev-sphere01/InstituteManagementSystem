@@ -14,7 +14,7 @@ const fileFields = [
   { name: 'speciallyAbled', label: 'Disability Certificate (if applicable)' },
 ];
 
-const Documents = ({ formData, onNext, onBack, validationsEnabled }) => {
+const Documents = ({formId, formData, onNext, onBack, validationsEnabled }) => {
   const notify = useNotification();
   const [uploading, setUploading] = useState(false);
   const [localFiles, setLocalFiles] = useState({});
@@ -33,7 +33,7 @@ const Documents = ({ formData, onNext, onBack, validationsEnabled }) => {
     formDataObj.append('file', file);
 
     try {
-      const res = await API.post(`/admissions/upload/${formData._id}/${fieldName}`, formDataObj);
+      const res = await API.post(`/admissions/upload/${formId}/${fieldName}`, formDataObj);
       notify(`${fieldName} uploaded successfully`, 'success');
       return res.path;
     } catch (err) {
