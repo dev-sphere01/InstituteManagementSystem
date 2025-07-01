@@ -49,31 +49,48 @@ const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled
       ...(formData?.features || {}),
     },
   };
-
+  const accessOptions = [
+    'Home',
+    'Cyber Cafe',
+    'Institute Provided',
+    'No Access',
+    'Other',
+  ];
+  
   // 🔁 Load existing Extras data on mount
   useEffect(() => {
     const fetchData = async () => {
       if (!formData?._id || hasFetchedRef.current) return;
-
+    
       try {
         const response = await API.get(`/admissions/${formData._id}`);
-        const data = response?.data;
-
+        console.log("Raw response:", response);
+        console.log("Response data:", response?.data);
+        
+        const data = response;
+        console.log("Fetched Extras data:", data);
+    
         if (!data || typeof data !== 'object') {
-          // notify('Failed to load Extras: No valid data received.', 'info');
+          notify('Failed to load Extras: No valid data received.', 'info');
           return;
         }
-
-        setFormData((prev) => ({
-          ...prev,
+    
+        const updatedFormData = {
+          ...formData,
           referral: {
             referralSource: data.referralSource || '',
             referralSourceOther: data.referralSourceOther || '',
             referalName: data.referalName || '',
           },
           computerAccess: {
-            location: data.computerAccessOther || '',
-            otherLocation: data.computerAccessOther || '',
+            location: data.computerAccessOther
+              ? accessOptions.includes(data.computerAccessOther)
+                ? data.computerAccessOther
+                : 'Other'
+              : '',
+            otherLocation: accessOptions.includes(data.computerAccessOther)
+              ? ''
+              : data.computerAccessOther || '',
           },
           features: {
             tShirt: !!data.tShirt,
@@ -84,15 +101,17 @@ const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled
             python: !!data.python,
             iot: !!data.iot,
           },
-        }));
-
-        hasFetchedRef.current = true;
+        };
+    
+        setFormData(updatedFormData);
         notify('Extras data loaded successfully.', 'success');
+        hasFetchedRef.current = true;
       } catch (err) {
         console.error('Failed to fetch Extras data:', err);
         notify('Failed to load previous data for Extras.', 'error');
       }
     };
+    
 
     fetchData();
   }, [formData?._id]);
