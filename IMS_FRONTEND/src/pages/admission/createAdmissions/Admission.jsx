@@ -6,12 +6,14 @@ import Extras from './components/Extras/Extras';
 import Review from './components/Review';
 import Stepper from './components/Stepper';
 import API from './../../../services/api';
+import { useNotification } from './../../../services/NotificationService';
 
 const steps = ['basic', 'contact', 'education', 'extras', 'review'];
 
 const Admission = () => {
   const [currentStep, setCurrentStep] = useState('basic');
   const [completedSteps, setCompletedSteps] = useState([]);
+  const notify = useNotification();
   const [formData, setFormData] = useState({
     // Basic Info
     formNo: '',
@@ -183,19 +185,18 @@ const Admission = () => {
   const handleSubmit = async () => {
     const success = await saveStepData({}, 'review', true);
     if (success) {
-      alert('Form submitted successfully!');
+      notify('Form submitted successfully!','success');
       localStorage.removeItem('admissionFormId');
+      handleExit();
     }
   };
 
   const handleExit = () => {
-    if (confirm('Are you sure you want to exit this form?')) {
       setCurrentStep('basic');
       setFormData({});
       setFormId(null);
       setCompletedSteps([]);
       localStorage.removeItem('admissionFormId');
-    }
   };
 
   return (
