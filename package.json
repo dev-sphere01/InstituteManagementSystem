@@ -28,8 +28,6 @@
   "license": "ISC",
   "dependencies": {
     "@tanstack/react-table": "^8.21.3",
-    "express-validator": "^7.2.1",
-    "framer-motion": "^12.19.1",
-    "lucide-react": "^0.525.0"
+    "express-validator": "^7.2.1"
   }
 }
