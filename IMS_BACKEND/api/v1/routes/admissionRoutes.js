@@ -25,29 +25,45 @@ router.patch('/:id', admissionController.patchAdmission);
 // DELETE admission by ID
 router.delete('/:id', admissionController.deleteAdmission);
 
-// Single file upload
+
+// admissionRoutes.js or wherever your multer upload route is
 router.post('/upload/:id/:field', upload.single('file'), async (req, res) => {
-    try {
-      const { id, field } = req.params;
-      const filePath = req.file.path;
-  
-      const updated = await AdmissionDetails.findByIdAndUpdate(
-        id,
-        { [field]: filePath },
-        { new: true }
-      );
-  
-      if (!updated) return res.status(404).json({ message: 'Admission not found' });
-  
-      res.status(200).json({
-        message: `${field} uploaded successfully`,
-        path: filePath,
-        data: updated,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Upload failed' });
+  try {
+    const { id, field } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
     }
-  });
+
+    const filePath = `/uploads/${req.file.filename}`;
+
+    console.log('Uploading field:', field);
+    console.log('Generated filePath:', filePath);
+
+    const updated = await AdmissionDetails.findByIdAndUpdate(
+      id,
+      { [field]: filePath },
+      { new: true }
+    );
+
+    if (!updated) {
+      console.log('Document not found for ID:', id);
+      return res.status(404).json({ message: 'Admission not found' });
+    }
+
+    console.log('Successfully updated admission with new path for', field);
+    res.status(200).json({
+      message: `${field} uploaded successfully`,
+      path: filePath,
+      data: updated,
+    });
+  } catch (error) {
+    console.error('[UPLOAD ERROR]', error);
+    res.status(500).json({ message: 'Upload failed' });
+  }
+});
+
+
+
 
 module.exports = router;
