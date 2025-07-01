@@ -21,7 +21,10 @@ const sendToken = (user, statusCode, res) => {
         loginAttempts: user.loginAttempts,
         avatar: user.avatar,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
+        phone: user.phone,
+        address: user.address,
+        isPassNew: user.isPassNew // Add isPassNew to response
     };
 
     res.status(statusCode).cookie("token", token, options).json({

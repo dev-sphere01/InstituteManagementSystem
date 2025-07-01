@@ -77,7 +77,9 @@ exports.createUser = async (userData, options = {}) => {
     avatar: {
       public_id: userData.avatar?.public_id || "default_id",
       url: userData.avatar?.url || "default_url"
-    }
+    },
+    phone: userData.phone || '',
+    isPassNew: true // Mark as system-generated password
   });
 
   // Always send password to user (self-registration or admin creation)
@@ -304,6 +306,7 @@ exports.changePassword = async (userId, oldPassword, newPassword) => {
   }
 
   user.password = newPassword;
+  user.isPassNew = false; // Mark password as no longer new/system-generated
   await user.save();
 
   // Populate role data before returning

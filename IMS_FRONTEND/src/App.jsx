@@ -1,49 +1,49 @@
-import './App.css'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
-import ThemeProvider from './components/common/ThemeProvider'
-import NavigationGuard from './components/NavigationGuard'
-import { NotificationProvider } from './services/NotificationService'
+import "./App.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ThemeProvider from "./components/common/ThemeProvider";
+import NavigationGuard from "./components/NavigationGuard";
+import { NotificationProvider } from "./services/NotificationService";
 
 // Routes
-import AuthProtectedRoutes from './routes/AuthProtectedRoutes'
-import RoleBasedRoutes from './routes/RoleBasedRoutes'
+import AuthProtectedRoutes from "./routes/AuthProtectedRoutes";
+import RoleBasedRoutes from "./routes/RoleBasedRoutes";
 
 // Pages
-import Home from './pages/Home'
-import NotFound from './pages/NotFound'
-import DaisyUITest from './pages/DaisyUITest'
+import Home from "./pages/Home";
+import NotFound from "./pages/NotFound";
+import DaisyUITest from "./pages/DaisyUITest";
 
 // Enquiry Pages
-import EnquiryForm from './pages/enquiry/addEnquiry/EnquiryForm.jsx'
-import ViewEnquiry from './pages/enquiry/viewEnquiry/ViewEnquiry.jsx'
-import EnquiryDetails from './pages/enquiry/viewEnquiry/components/EnquiryDetails.jsx'
+import EnquiryForm from "./pages/enquiry/addEnquiry/EnquiryForm.jsx";
+import ViewEnquiry from "./pages/enquiry/viewEnquiry/ViewEnquiry.jsx";
+import EnquiryDetails from "./pages/enquiry/viewEnquiry/components/EnquiryDetails.jsx";
 
 // Auth Pages
-import Login from './pages/auth/Login.jsx'
-import Register from './pages/auth/Register.jsx'
-import ForgotPassword from './pages/auth/ForgotPassword.jsx'
-import ResetPassword from './pages/auth/ResetPassword.jsx'
-import AuthSuccess from './pages/auth/AuthSuccess.jsx'
-import AuthFailed from './pages/auth/AuthFailed.jsx'
+import Login from "./pages/auth/Login.jsx";
+import Register from "./pages/auth/Register.jsx";
+import ForgotPassword from "./pages/auth/ForgotPassword.jsx";
+import ResetPassword from "./pages/auth/ResetPassword.jsx";
+import AuthSuccess from "./pages/auth/AuthSuccess.jsx";
+import AuthFailed from "./pages/auth/AuthFailed.jsx";
 
 // Dashboard Pages
-import Dashboard from './pages/dashboard/Dashboard.jsx'
-import Reports from './pages/reports/Reports.jsx'
-import Settings from './pages/user/components/Settings.jsx'
+import Dashboard from "./pages/dashboard/Dashboard.jsx";
+import Reports from "./pages/reports/Reports.jsx";
+import Settings from "./pages/user/components/Settings.jsx";
+import ChangePassword from "./pages/user/components/ChangePassword.jsx";
 
 // Masters Pages
-import { User } from './pages/masters/user/User.jsx'
-import Role from './pages/masters/role/Role.jsx'
-import Courses from './pages/masters/courses/Courses.jsx'
-import Batch from './pages/masters/batch/Batch.jsx'
-import Session from './pages/masters/session/Session.jsx'
-import InstitutionType from './pages/masters/institutionType/InstitutionType.jsx';
+import { User } from "./pages/masters/user/User.jsx";
+import Role from "./pages/masters/role/Role.jsx";
+import Courses from "./pages/masters/courses/Courses.jsx";
+import Batch from "./pages/masters/batch/Batch.jsx";
+import Session from "./pages/masters/session/Session.jsx";
+import InstitutionType from "./pages/masters/institutionType/InstitutionType.jsx";
 
 // Student Pages
-import Student from './pages/student/Student.jsx'
-import Admission from './pages/admission/createAdmissions/Admission.jsx'
-
+import Student from "./pages/student/Student.jsx";
+import Admission from "./pages/admission/createAdmissions/Admission.jsx";
 
 function App() {
   return (
@@ -59,10 +59,14 @@ function App() {
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
                 <Route path="forgot-password" element={<ForgotPassword />} />
-                <Route path="reset-password/:token" element={<ResetPassword />} />
+                <Route
+                  path="reset-password/:token"
+                  element={<ResetPassword />}
+                />
                 <Route path="auth-success" element={<AuthSuccess />} />
                 <Route path="auth-failed" element={<AuthFailed />} />
                 <Route path="daisyui-test" element={<DaisyUITest />} />
+                {/* Removed change-password from here */}
               </Route>
 
               {/* Role-based protected routes */}
@@ -88,21 +92,26 @@ function App() {
                 {/* Enquiry Routes */}
                 <Route path="enquiry/create" element={<EnquiryForm />} />
                 <Route path="enquiry/view" element={<ViewEnquiry />} />
-                <Route path="enquiry/details/:id" element={<EnquiryDetails />} />
+                <Route
+                  path="enquiry/details/:id"
+                  element={<EnquiryDetails />}
+                />
 
                 {/* Admission Routes */}
                 <Route path="admission" element={<Admission />} />
+
+                {/* Change Password - now protected */}
               </Route>
 
               {/* 404 route */}
+                <Route path="change-password" element={<ChangePassword />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>
         </NotificationProvider>
       </AuthProvider>
-
     </ThemeProvider>
   );
 }
 
-export default App
+export default App;
