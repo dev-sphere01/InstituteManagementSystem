@@ -6,7 +6,7 @@ import { useThemeStore } from '../../../../../store';
 import API from './../../../../../services/api';
 import { useNotification } from './../../../../../services/NotificationService';
 
-const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
+const Extras = ({ formId,formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
   const notify = useNotification();
   const hasFetchedRef = useRef(false);
@@ -60,6 +60,7 @@ const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled
   // 🔁 Load existing Extras data on mount
   useEffect(() => {
     const fetchData = async () => {
+      console.log("Form data:", formData);
       if (!formData?._id || hasFetchedRef.current) return;
     
       try {

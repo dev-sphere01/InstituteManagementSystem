@@ -3,7 +3,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useThemeStore } from '../../../../store'; // update if needed
 
-const Review = ({ formData = {}, onBack, onSubmit }) => {
+const Review = ({formId, formData = {}, onBack, onSubmit }) => {
   const { isDarkMode } = useThemeStore();
 
   const featureKeys = ['tShirt', 'itTools', 'webDesigning', 'tally', 'gfxDtp', 'python', 'iot'];
