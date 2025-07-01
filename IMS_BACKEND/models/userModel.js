@@ -98,7 +98,24 @@ const userSchema = new mongoose.Schema({
         type: Date
     },
     resetPasswordToken: String,
-    resetPasswordExpire: Date
+    resetPasswordExpire: Date,
+
+    // Additional fields
+    phone: {
+        type: String,
+        required: false,
+        maxLength: 20
+    },
+    address: {
+        type: String,
+        required: false,
+        maxLength: 255
+    },
+    // Track if password is system-generated/new
+    isPassNew: {
+        type: Boolean,
+        default: false
+    }
 });
 
 // Hash password before saving the user

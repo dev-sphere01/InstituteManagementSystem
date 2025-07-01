@@ -35,8 +35,13 @@ const Login = () => {
         const loginResult = await login(response.user, response.token);
 
         if (loginResult.success) {
-          // Navigate to role-based dashboard
-          navigate(loginResult.redirectPath);
+          // If password is system-generated, redirect to change password page
+          if (response.user.isPassNew) {
+            navigate('/change-password');
+          } else {
+            // Navigate to role-based dashboard
+            navigate(loginResult.redirectPath);
+          }
         } else {
           setError(loginResult.error || 'Login failed');
         }

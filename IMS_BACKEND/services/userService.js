@@ -3,6 +3,7 @@ const Role = require('../models/roleModel');
 const ErrorHandler = require('../utils/ErrorHandler');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
+const generatePassword = require('./generatePassword');
 
 /**
  * Service layer for user-related operations
@@ -63,17 +64,28 @@ exports.createUser = async (userData, options = {}) => {
     roleId = await getDefaultStudentRole();
   }
 
+  // Always generate a password, ignore any password from frontend
+  const generatedPassword = generatePassword();
+  const passwordToUse = generatedPassword;
+
   // Business logic for user creation
   const user = await User.create({
     name: userData.name,
     email: userData.email,
-    password: userData.password,
+    password: passwordToUse, // pass plain password, let pre-save hook hash it
     role: roleId,
     avatar: {
       public_id: userData.avatar?.public_id || "default_id",
       url: userData.avatar?.url || "default_url"
-    }
+    },
+    phone: userData.phone || '',
+    isPassNew: true // Mark as system-generated password
   });
+
+  // Always send password to user (self-registration or admin creation)
+  const subject = 'Your Account Password';
+  const html = `<p>Welcome to the Institute Management System.<br>Your password is: <b>${generatedPassword}</b></p>`;
+  await sendEmail(user.email, subject, html);
 
   // Populate role data with permissions before returning
   await user.populate({
@@ -294,6 +306,7 @@ exports.changePassword = async (userId, oldPassword, newPassword) => {
   }
 
   user.password = newPassword;
+  user.isPassNew = false; // Mark password as no longer new/system-generated
   await user.save();
 
   // Populate role data before returning

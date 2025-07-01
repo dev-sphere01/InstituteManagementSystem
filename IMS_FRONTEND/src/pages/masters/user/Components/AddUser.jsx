@@ -11,8 +11,6 @@ const AddUser = ({ onBack, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: '',
-    confirmPassword: '',
     role: '',
     isActive: true,
     avatar: {
@@ -57,18 +55,6 @@ const AddUser = ({ onBack, onSuccess }) => {
       errors.email = 'Please enter a valid email address';
     }
 
-    if (!formData.password) {
-      errors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters long';
-    }
-
-    if (!formData.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    }
-
     if (!formData.role) {
       errors.role = 'Please select a role';
     }
@@ -90,7 +76,6 @@ const AddUser = ({ onBack, onSuccess }) => {
       const userData = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
-        password: formData.password,
         role: formData.role,
         isActive: formData.isActive,
         avatar: formData.avatar
@@ -221,66 +206,6 @@ const AddUser = ({ onBack, onSuccess }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Password */}
-          <div>
-            <label htmlFor="password" className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Password <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                validationErrors.password
-                  ? isDarkMode
-                    ? 'border-red-600 bg-gray-700 text-white'
-                    : 'border-red-300 bg-white text-gray-900'
-                  : isDarkMode
-                    ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400'
-                    : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Enter password"
-            />
-            {validationErrors.password && (
-              <p className="mt-1 text-sm text-red-500">{validationErrors.password}</p>
-            )}
-          </div>
-
-          {/* Confirm Password */}
-          <div>
-            <label htmlFor="confirmPassword" className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Confirm Password <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                validationErrors.confirmPassword
-                  ? isDarkMode
-                    ? 'border-red-600 bg-gray-700 text-white'
-                    : 'border-red-300 bg-white text-gray-900'
-                  : isDarkMode
-                    ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400'
-                    : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Confirm password"
-            />
-            {validationErrors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-500">{validationErrors.confirmPassword}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Role */}
           <div>
             <label htmlFor="role" className={`block text-sm font-medium mb-2 ${
@@ -375,6 +300,9 @@ const AddUser = ({ onBack, onSuccess }) => {
           </button>
         </div>
       </form>
+      <div className="mt-4 text-green-700 text-center text-sm">
+        After user creation, the password will be sent to the user's email address.
+      </div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 const winston = require('winston');
 const MongoDBTransport = require('./dbTransport');
+const sendEmail = require('./sendEmail');
 
 // Define log levels with custom priorities
 const customLevels = {
@@ -66,6 +67,30 @@ logger.stream = {
     // Only log HTTP requests at info level
     logger.info(message.trim());
   },
+};
+
+// Send critical error email
+async function notifyCriticalError(message, stack) {
+  try {
+    await sendEmail(
+      'shivom.verma.dev@gmail.com',
+      '[CRITICAL ERROR] IMS Backend',
+      `<pre>${message}</pre><pre>${stack || ''}</pre>`
+    );
+  } catch (e) {
+    // Fallback: log to console if email fails
+    console.error('Failed to send critical error email:', e.message);
+  }
+}
+
+// Patch logger to email on critical errors
+const origError = logger.error;
+logger.error = function (...args) {
+  origError.apply(logger, args);
+  // If error is a string and looks critical, send email
+  if (args[0] && typeof args[0] === 'string' && args[0].toLowerCase().includes('critical')) {
+    notifyCriticalError(args[0], args[1]);
+  }
 };
 
 module.exports = logger;

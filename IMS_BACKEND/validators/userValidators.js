@@ -15,27 +15,6 @@ const registerSchema = {
       type: 'string',
       isEmail: true
     },
-    password: {
-      required: true,
-      type: 'string',
-      minLength: 8,
-      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-      custom: (value) => {
-        if (!/[A-Z]/.test(value)) {
-          return 'Password must contain at least one uppercase letter';
-        }
-        if (!/[a-z]/.test(value)) {
-          return 'Password must contain at least one lowercase letter';
-        }
-        if (!/\d/.test(value)) {
-          return 'Password must contain at least one number';
-        }
-        if (!/[@$!%*?&]/.test(value)) {
-          return 'Password must contain at least one special character (@$!%*?&)';
-        }
-        return null;
-      }
-    },
     role: {
       type: 'string',
       enum: ['student', 'user', 'admin', 'manager']
