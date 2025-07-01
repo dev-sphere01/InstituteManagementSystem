@@ -9,8 +9,6 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: '',
-    confirmPassword: '',
     gender: 'male'
   });
 
@@ -43,21 +41,10 @@ const Register = () => {
   };
 
   const validateForm = () => {
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || !formData.email) {
       showNotification('Please fill in all required fields', 'error');
       return false;
     }
-
-    if (formData.password !== formData.confirmPassword) {
-      showNotification('Passwords do not match', 'error');
-      return false;
-    }
-
-    if (formData.password.length < 6) {
-      showNotification('Password must be at least 6 characters long', 'error');
-      return false;
-    }
-
     return true;
   };
 
@@ -74,7 +61,6 @@ const Register = () => {
       const requestBody = {
         name: formData.name,
         email: formData.email,
-        password: formData.password,
         avatar: {
           public_id: 'default',
           url: 'https://via.placeholder.com/150'
@@ -84,19 +70,11 @@ const Register = () => {
       const response = await API.auth.register(requestBody);
 
       if (response.success && response.user) {
-        showNotification('Registration successful!', 'success');
-
-        // Login the user with the returned data
-        const loginResult = await login(response.user, response.token);
-
-        if (loginResult.success) {
-          // Redirect after a short delay to show the success message
-          setTimeout(() => {
-            navigate(loginResult.redirectPath);
-          }, 1500);
-        } else {
-          showNotification(loginResult.error || 'Registration successful but login failed', 'error');
-        }
+        showNotification('Registration successful! Password has been sent to your email address.', 'success');
+        // Optionally redirect to login page after a delay
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       } else {
         showNotification(response.message || 'Registration failed', 'error');
       }
@@ -222,38 +200,6 @@ const Register = () => {
             onChange={handleChange}
             className={`w-full px-4 py-3 border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
             placeholder="you@example.com"
-            required
-          />
-        </div>
-
-        <div className="group">
-          <label htmlFor="password" className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className={`w-full px-4 py-3 border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            placeholder="••••••••"
-            required
-          />
-        </div>
-
-        <div className="group">
-          <label htmlFor="confirmPassword" className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-            Confirm Password
-          </label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            className={`w-full px-4 py-3 border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            placeholder="••••••••"
             required
           />
         </div>

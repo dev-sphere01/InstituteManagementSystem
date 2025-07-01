@@ -5,9 +5,7 @@ import { useAuth } from '../context/AuthContext';
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    email: ''
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -26,20 +24,14 @@ const Register = () => {
     setError('');
 
     // Simple validation
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || !formData.email) {
       setError('Please fill in all required fields');
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
+    // Show notification that password will be sent by email
+    setError('');
+    alert('Registration successful! Your password will be sent to your email address.');
 
     // For demo purposes, we'll accept any registration
     // In a real app, you would send this to a backend
@@ -100,41 +92,6 @@ const Register = () => {
           />
         </div>
 
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-            placeholder="••••••••"
-            required
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Password must be at least 6 characters long
-          </p>
-        </div>
-
-        <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-            Confirm Password
-          </label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-            placeholder="••••••••"
-            required
-          />
-        </div>
-
         <div className="flex items-center">
           <input
             id="terms"
@@ -157,6 +114,9 @@ const Register = () => {
           </button>
         </div>
       </form>
+      <div className="mt-4 text-green-700 text-center text-sm">
+        After registration, your password will be sent to your email address.
+      </div>
 
       <div className="mt-8 pt-5 border-t border-gray-200 text-center">
         <p className="text-sm text-gray-600">

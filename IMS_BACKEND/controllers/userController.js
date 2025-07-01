@@ -40,6 +40,7 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   logCreate({
     userId: user._id.toString(),
     userEmail: user.email,
+    userRole: user.role.RoleName || (user.role.name ? user.role.name : user.role.toString()),
     action: "register",
     entity: "user",
     entityId: user._id.toString(),
@@ -52,7 +53,18 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     userAgent: req.auditContext?.userAgent,
   });
 
-  sendToken(user, 201, res);
+  // Instead of sending token, send a message
+  res.status(201).json({
+    success: true,
+    message: "User registered successfully. Password has been sent to your email.",
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive
+    }
+  });
 });
 
 // Create user (admin only)
@@ -64,6 +76,7 @@ exports.createUserAdmin = catchAsyncErrors(async (req, res, next) => {
   logCreate({
     userId: req.user.id,
     userEmail: req.user.email,
+    userRole: req.user.role?.RoleName || (req.user.role?.name ? req.user.role.name : req.user.role?.toString()),
     action: "create-user",
     entity: "user",
     entityId: user._id.toString(),

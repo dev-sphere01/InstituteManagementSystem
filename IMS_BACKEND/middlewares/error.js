@@ -11,7 +11,7 @@ module.exports = (err, req, res, next) => {
 
     // Log the error
     if (err.statusCode >= 500) {
-        logger.error(`${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
+        logger.error(`[CRITICAL] ${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
         logger.error(err.stack);
     } else {
         logger.warn(`${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
