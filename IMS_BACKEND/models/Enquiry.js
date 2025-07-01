@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 
 const enquirySchema = new mongoose.Schema({
   registrationInfo: {
-    centerCode: { type: String, required: true },
-    employeeId: { type: String, required: true },
+    // centerCode: { type: String, required: true },
+    // employeeId: { type: String, required: true },
     otherInfo: { type: String }
   },
   personalInfo: {
@@ -17,7 +17,7 @@ const enquirySchema = new mongoose.Schema({
   contactInfo: {
     contactNumber: { type: String, match: /^[6-9]\d{9}$/, required: true },
     alternateContactNumber: { type: String, match: /^[6-9]\d{9}$/ },
-    email: { type: String, required: true },
+    email: { type: String, required: false },
     address: { type: String },
     pinCode: { type: String }
   },

@@ -1,0 +1,95 @@
+const Course = require('../models/courses');
+const ErrorHandler = require('../utils/ErrorHandler');
+
+// Create Course
+exports.createCourse = async (req, res, next) => {
+  try {
+    const course = await Course.create(req.body);
+    res.status(201).json({ success: true, data: course });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get All Courses (with search, filter, pagination)
+exports.getAllCourses = async (req, res, next) => {
+  try {
+    const {
+      search = '',
+      level = '',
+      isActive = '',
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = req.query;
+
+    const query = {};
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { code: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (level) query.level = level;
+    if (isActive !== '') query.isActive = isActive === 'true';
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+
+    const [courses, total] = await Promise.all([
+      Course.find(query)
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Course.countDocuments(query),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: courses,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get Single Course
+exports.getCourseById = async (req, res, next) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) return next(new ErrorHandler('Course not found', 404));
+    res.status(200).json({ success: true, data: course });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update Course
+exports.updateCourse = async (req, res, next) => {
+  try {
+    const updatedCourse = await Course.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedCourse) return next(new ErrorHandler('Course not found', 404));
+    res.status(200).json({ success: true, data: updatedCourse });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete Course
+exports.deleteCourse = async (req, res, next) => {
+  try {
+    const deleted = await Course.findByIdAndDelete(req.params.id);
+    if (!deleted) return next(new ErrorHandler('Course not found', 404));
+    res.status(204).json({ success: true, message: "Deleted" });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,165 +1,234 @@
-import React from 'react';
-import { useThemeStore } from '../../store';
-import Cards from './components/Cards';
-import Graphs from './components/Graphs';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  FaUsers,
+  FaCheckCircle,
+  FaCalendarAlt,
+  FaQuestionCircle,
+  FaRupeeSign,
+  FaPlusCircle,
+  FaLayerGroup,
+  FaFileAlt,
+  FaPhoneAlt,
+  FaPrint,
+} from "react-icons/fa";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
-const Dashboard = () => {
-  const { isDarkMode } = useThemeStore();
+const statCards = [
+  { label: "Total Students", value: 420, icon: <FaUsers />, color: "bg-blue-500" },
+  { label: "Total Admissions", value: 350, icon: <FaCheckCircle />, color: "bg-green-500" },
+  { label: "Active Batches", value: 12, icon: <FaCalendarAlt />, color: "bg-purple-500" },
+  { label: "Pending Enquiries", value: 34, icon: <FaQuestionCircle />, color: "bg-orange-400" },
+  { label: "Fee Collected", value: "₹2,56,000", icon: <FaRupeeSign />, color: "bg-green-600" },
+];
+
+const quickLinks = [
+  { label: "Add New Student", icon: <FaPlusCircle /> },
+  { label: "Create New Batch", icon: <FaLayerGroup /> },
+  { label: "Define Fee Structure", icon: <FaFileAlt /> },
+  { label: "Follow-Up Enquiries", icon: <FaPhoneAlt /> },
+  { label: "Generate Fee Receipt", icon: <FaPrint /> },
+];
+
+const todaysEnquiries = [
+  { name: "Ravi Kumar", course: "O'Level", phone: "9876543210", time: "10:30 AM" },
+  { name: "Anjali Singh", course: "Advance Excel", phone: "9988776655", time: "11:15 AM" },
+];
+
+const latestAdmissions = [
+  { name: "Sourabh Sharma", course: "CCC", date: "2025-06-18" },
+  { name: "Neha Gupta", course: "O'Level", date: "2025-06-17" },
+];
+
+const admissionData = [
+  { name: "Week 1", count: 20 },
+  { name: "Week 2", count: 40 },
+  { name: "Week 3", count: 35 },
+  { name: "Week 4", count: 25 },
+];
+
+const courseCount = [
+  { name: "O'Level", count: 5 },
+  { name: "CCC", count: 3 },
+  { name: "Advance Excel", count: 4 },
+  { name: "Scratch", count: 2 },
+  { name: "Python", count: 1 },
+  { name: "Web Development", count: 2 },
+  { name: "Data Science", count: 3 },
+  { name: "Graphic Design", count: 2 },
+  { name: "Tally", count: 1 },
+  { name: "GFX & DTP", count: 2 },
+  { name: "Python", count: 3 },
+];
+
+const paymentStatus = [
+  { name: "Full Payment", value: 280 },
+  { name: "EMI", value: 110 },
+  { name: "Defaulters", value: 30 },
+];
+
+const pieColors = ["#22c55e", "#3b82f6", "#ef4444"];
+
+export default function Dashboard() {
+  const [filter, setFilter] = useState("month");
 
   return (
-    <div>
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className={`text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'} transition-colors duration-300`}>
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
-            Dashboard
-          </span>
-        </h1>
-        <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} transition-colors duration-300`}>
-          Welcome to your dashboard. Here's an overview of your key metrics.
-        </p>
+    <div className="p-4 space-y-6">
+      <h1 className="text-3xl font-bold">Institute Management Dashboard</h1>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {statCards.map((card, idx) => (
+          <motion.div
+            key={idx}
+            whileHover={{ scale: 1.05 }}
+            className={`p-4 text-white rounded-xl shadow-md ${card.color}`}
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-3xl">{card.icon}</div>
+              <div>
+                <div className="text-lg font-semibold">{card.label}</div>
+                <div className="text-2xl font-bold">{card.value}</div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Stats Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        {/* Users Card */}
-        <div className={`group relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-blue-900/50 to-blue-800/30 border border-blue-700/50 shadow-lg'
-            : 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 shadow-md'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-blue-800/50' : 'bg-blue-200'} transition-colors duration-300`}>
-              <svg className={`w-6 h-6 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-              </svg>
-            </div>
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>+12%</span>
-          </div>
-          <h2 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} transition-colors duration-300`}>
-            Total Users
-          </h2>
-          <p className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} transition-colors duration-300`}>
-            1,234
-          </p>
-          <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            Active this month
-          </p>
+      <div className="flex flex-wrap justify-center gap-4">
+        {quickLinks.map((link, idx) => (
+          <motion.button
+            key={idx}
+            whileHover={{ translateX: -2, translateY: -2 }}
+            className="w-52 px-4 py-2 text-sm font-medium text-[#2563eb] bg-white-100 border border-[#2563eb] rounded shadow-[3px_3px_0px_0px_#2563eb] hover:bg-[#2563eb] transition-all duration-200 flex items-center justify-start"
+          >
+            <span className="text-lg mr-2">{link.icon}</span>
+            {link.label}
+          </motion.button>
+        ))}
+      </div>
+
+
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Today's Enquiries */}
+        <div className="bg-white rounded-xl p-4 shadow-md overflow-x-auto">
+          <h2 className="text-xl font-semibold mb-2">Today’s Enquiries</h2>
+          <table className="table w-full">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Course</th>
+                <th>Phone</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {todaysEnquiries.map((e, idx) => (
+                <tr key={idx}>
+                  <td>{e.name}</td>
+                  <td>{e.course}</td>
+                  <td>{e.phone}</td>
+                  <td>{e.time}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        {/* Revenue Card */}
-        <div className={`group relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-green-900/50 to-green-800/30 border border-green-700/50 shadow-lg'
-            : 'bg-gradient-to-br from-green-50 to-green-100 border border-green-200 shadow-md'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-green-800/50' : 'bg-green-200'} transition-colors duration-300`}>
-              <svg className={`w-6 h-6 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div>
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-green-300' : 'text-green-600'}`}>+8%</span>
-          </div>
-          <h2 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} transition-colors duration-300`}>
-            Revenue
-          </h2>
-          <p className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} transition-colors duration-300`}>
-            $5,678
-          </p>
-          <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            This month
-          </p>
-        </div>
-
-        {/* Orders Card */}
-        <div className={`group relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-purple-900/50 to-purple-800/30 border border-purple-700/50 shadow-lg'
-            : 'bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 shadow-md'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-purple-800/50' : 'bg-purple-200'} transition-colors duration-300`}>
-              <svg className={`w-6 h-6 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-            </div>
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`}>+15%</span>
-          </div>
-          <h2 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} transition-colors duration-300`}>
-            Orders
-          </h2>
-          <p className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} transition-colors duration-300`}>
-            9,012
-          </p>
-          <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            Total orders
-          </p>
+        {/* Latest Admissions */}
+        <div className="bg-white rounded-xl p-4 shadow-md">
+          <h2 className="text-xl font-semibold mb-2">Latest Admissions</h2>
+          <ul className="space-y-2">
+            {latestAdmissions.map((a, idx) => (
+              <li key={idx} className="flex justify-between border-b pb-2">
+                <div>
+                  <div className="font-medium">{a.name}</div>
+                  <div className="text-sm text-gray-500">{a.course}</div>
+                </div>
+                <div className="text-sm text-gray-600">{a.date}</div>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      {/* Quick Actions Section */}
-      <div className="mt-12">
-        <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-800'} transition-colors duration-300`}>
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button className={`p-4 rounded-lg border transition-all duration-300 hover:scale-105 ${
-            isDarkMode
-              ? 'bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700'
-              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-          }`}>
-            <div className="text-center">
-              <svg className={`w-8 h-8 mx-auto mb-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span className="text-sm font-medium">Add User</span>
-            </div>
-          </button>
-
-          <button className={`p-4 rounded-lg border transition-all duration-300 hover:scale-105 ${
-            isDarkMode
-              ? 'bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700'
-              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-          }`}>
-            <div className="text-center">
-              <svg className={`w-8 h-8 mx-auto mb-2 ${isDarkMode ? 'text-green-400' : 'text-green-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              <span className="text-sm font-medium">View Reports</span>
-            </div>
-          </button>
-
-          <button className={`p-4 rounded-lg border transition-all duration-300 hover:scale-105 ${
-            isDarkMode
-              ? 'bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700'
-              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-          }`}>
-            <div className="text-center">
-              <svg className={`w-8 h-8 mx-auto mb-2 ${isDarkMode ? 'text-purple-400' : 'text-purple-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span className="text-sm font-medium">Settings</span>
-            </div>
-          </button>
-
-          <button className={`p-4 rounded-lg border transition-all duration-300 hover:scale-105 ${
-            isDarkMode
-              ? 'bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700'
-              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-          }`}>
-            <div className="text-center">
-              <svg className={`w-8 h-8 mx-auto mb-2 ${isDarkMode ? 'text-orange-400' : 'text-orange-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-sm font-medium">Help</span>
-            </div>
-          </button>
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Line Chart - Admissions */}
+        <div className="bg-white rounded-xl p-4 shadow-md lg:col-span-8">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-semibold">Admissions Over Time</h2>
+            <select
+              className="select select-bordered select-sm"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="week">Last Week</option>
+              <option value="month">Last Month</option>
+              <option value="six">Last 6 Months</option>
+            </select>
+          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={admissionData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="count" stroke="#4f46e5" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
+
+        {/* Pie Chart - Payment Status */}
+        <div className="bg-white rounded-xl p-4 shadow-md lg:col-span-4">
+          <h2 className="text-xl font-semibold mb-4">Payment Status Breakdown</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={paymentStatus} cx="50%" cy="50%" outerRadius={100} dataKey="value" label>
+                {paymentStatus.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+                ))}
+              </Pie>
+              <Legend />
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+
+      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      </div> */}
+
+
+      {/* Bar Chart - Course Count */}
+      <div className="bg-white rounded-xl p-4 shadow-md">
+        <h2 className="text-xl font-semibold mb-2">Available Course Count</h2>
+        <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={courseCount}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="count" fill="#10b981" />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

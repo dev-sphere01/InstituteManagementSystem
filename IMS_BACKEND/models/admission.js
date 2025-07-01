@@ -52,7 +52,7 @@ const admissionDetailsSchema = new mongoose.Schema({
   courseApplied: { type: String, required: true },
   preferredModeOfLearning: { type: String, required: true },
 
-  // Course Options
+  // Features Options
   tShirt: { type: Boolean, default: false },
   itTools: { type: Boolean, default: false },
   webDesigning: { type: Boolean, default: false },
@@ -70,25 +70,24 @@ const admissionDetailsSchema = new mongoose.Schema({
   computerAccess: { type: String },
   computerAccessOther: { type: String },
 
-
   // Status and Registration
   status: { type: String, default: 'Pending' },
   regNo: { type: String, required: true },
   month: { type: String, required: true },
 
   // Monthly fee tracking (if needed)
-  january: { type: Number, default: 0 },
-  february: { type: Number, default: 0 },
-  march: { type: Number, default: 0 },
-  april: { type: Number, default: 0 },
-  may: { type: Number, default: 0 },
-  june: { type: Number, default: 0 },
-  july: { type: Number, default: 0 },
-  august: { type: Number, default: 0 },
-  september: { type: Number, default: 0 },
-  october: { type: Number, default: 0 },
-  november: { type: Number, default: 0 },
-  december: { type: Number, default: 0 }
+  // january: { type: Number, default: 0 },
+  // february: { type: Number, default: 0 },
+  // march: { type: Number, default: 0 },
+  // april: { type: Number, default: 0 },
+  // may: { type: Number, default: 0 },
+  // june: { type: Number, default: 0 },
+  // july: { type: Number, default: 0 },
+  // august: { type: Number, default: 0 },
+  // september: { type: Number, default: 0 },
+  // october: { type: Number, default: 0 },
+  // november: { type: Number, default: 0 },
+  // december: { type: Number, default: 0 }
 }, {
   timestamps: true // Adds createdAt and updatedAt fields
 });

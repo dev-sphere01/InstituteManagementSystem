@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { useThemeStore } from '../../../../store'
-import API from '../../../../services/API'
+import React, { useState, useEffect, useMemo } from 'react';
+import { useThemeStore } from '../../../../store';
+import API from '../../../../services/API';
+import TableService from '../../../../services/TableService';
 
 const AllRoles = ({ onEditRole }) => {
   const { isDarkMode } = useThemeStore()
@@ -69,13 +70,12 @@ const AllRoles = ({ onEditRole }) => {
           setPagination(response.pagination)
         }
       } else {
-        setError('Failed to fetch roles')
+        setError('Failed to fetch roles');
       }
     } catch (err) {
-      console.error('Error fetching roles:', err)
-      setError(err.response?.data?.message || 'Failed to fetch roles')
+      setError(err.response?.data?.message || 'Failed to fetch roles');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -112,26 +112,22 @@ const AllRoles = ({ onEditRole }) => {
   }
 
   const handleDeleteRole = async (roleId, roleName) => {
-    if (!window.confirm(`Are you sure you want to delete the role "${roleName}"? This action cannot be undone.`)) {
-      return
-    }
+    if (!window.confirm(`Are you sure you want to delete the role "${roleName}"? This action cannot be undone.`)) return;
 
     try {
-      setDeleteLoading(roleId)
-      const response = await API.roles.delete(roleId)
-
+      setDeleteLoading(roleId);
+      const response = await API.roles.delete(roleId);
       if (response.success) {
-        setRoles(prev => prev.filter(role => role._id !== roleId))
+        setRoles(prev => prev.filter(role => role._id !== roleId));
       } else {
-        setError('Failed to delete role')
+        setError('Failed to delete role');
       }
     } catch (err) {
-      console.error('Error deleting role:', err)
-      setError(err.response?.data?.message || 'Failed to delete role')
+      setError(err.response?.data?.message || 'Failed to delete role');
     } finally {
-      setDeleteLoading(null)
+      setDeleteLoading(null);
     }
-  }
+  };
 
 
 
@@ -219,18 +215,11 @@ const AllRoles = ({ onEditRole }) => {
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
-        <div className="p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
-          <div className="flex items-center">
-            <span className="mr-2">❌</span>
-            {error}
-            <button
-              onClick={() => setError('')}
-              className="ml-auto text-red-500 hover:text-red-700"
-            >
-              ×
-            </button>
+        <div className="p-4 bg-red-100 border-l-4 border-red-500 text-red-700 mb-4">
+          <div className="flex items-center justify-between">
+            <span>❌ {error}</span>
+            <button onClick={() => setError('')} className="text-red-600 font-bold">×</button>
           </div>
         </div>
       )}
@@ -551,7 +540,7 @@ const AllRoles = ({ onEditRole }) => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default AllRoles
+export default AllRoles;
