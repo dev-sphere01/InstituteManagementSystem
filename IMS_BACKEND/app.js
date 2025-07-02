@@ -69,6 +69,9 @@ const apiV1Routes = require("./api/v1/routes");
 app.use("/api/v1", apiV1Routes);
 // app.use('/api/v1/enquiry', enquiryRoutes);
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Serve frontend static files
 // Set static folder - update path to point to Vite's output directory
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
