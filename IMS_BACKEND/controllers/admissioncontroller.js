@@ -158,35 +158,28 @@ exports.patchAdmission = async (req, res) => {
 // Upload a file and update admission document
 exports.uploadAdmissionFile = async (req, res) => {
   try {
-    const { id, field } = req.params;
-
+    const id = req.params.id;
+    const field = req.params.field;
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-
-    const filePath = `/uploads/${req.file.filename}`;
-
-    // Debug logging
-    console.log('Updating admission:', id, field, filePath);
-    
+    // Build relative path to store in DB
+    const folderName = id.slice(-8);
+    const filePath = `uploads/${folderName}/${folderName}_${field}${require('path').extname(req.file.originalname)}`;
+    // Update the admission document with the file path
+    const update = {};
+    update[field] = filePath;
     const updated = await AdmissionDetails.findByIdAndUpdate(
       id,
-      { [field]: filePath },
+      { $set: update },
       { new: true }
     );
-    console.log('Updated doc:', updated);
-
     if (!updated) {
       return res.status(404).json({ message: 'Admission not found' });
     }
-
-    res.status(200).json({
-      message: `${field} uploaded successfully`,
-      path: filePath,
-      data: updated,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Upload failed' });
+    res.status(200).json({ message: 'File uploaded', path: filePath, admission: updated });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ message: 'Server error during file upload' });
   }
 };
-

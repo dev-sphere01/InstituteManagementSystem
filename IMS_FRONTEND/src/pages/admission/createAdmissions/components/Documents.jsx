@@ -21,7 +21,7 @@ const fileFields = {
   ],
 };
 
-const Documents = ({ formId, formData, onNext, onBack, validationsEnabled }) => {
+const Documents = ({ formId, formData, setFormData, onNext, onBack, validationsEnabled }) => {
   const { isDarkMode } = useThemeStore();
   const notify = useNotification();
   const [uploading, setUploading] = useState(false);
@@ -30,24 +30,28 @@ const Documents = ({ formId, formData, onNext, onBack, validationsEnabled }) => 
   const handleFileChange = (e, field) => {
     setLocalFiles((prev) => ({
       ...prev,
-      [field]: e.target.files[0],
+      [field]: e.target.files[0], // Only allow one file per field
     }));
   };
 
+  // Upload a single file for a field
   const uploadFile = async (fieldName, file) => {
     if (!file) return formData[fieldName] || '';
     const formDataObj = new FormData();
     formDataObj.append('file', file);
-
     try {
       const res = await API.post(`/admissions/upload/${formId}/${fieldName}`, formDataObj, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-
-      notify(`${fieldName} uploaded successfully`, 'success');
-      return res.data.path; // ✅ FIX: extract path from response
+      if (res && res.path) {
+        notify(`${fieldName} uploaded successfully`, 'success');
+        return res.path;
+      } else {
+        notify(`Failed to upload ${fieldName}`, 'error');
+        return '';
+      }
     } catch (err) {
       console.error(err);
       notify(`Failed to upload ${fieldName}`, 'error');
@@ -58,6 +62,7 @@ const Documents = ({ formId, formData, onNext, onBack, validationsEnabled }) => 
   const handleSubmit = async () => {
     setUploading(true);
     try {
+      console.log('Files to upload:', localFiles); // Debug: see what files are selected
       const updatedData = { ...formData };
       const allFields = [
         ...fileFields.candidate,
@@ -69,6 +74,7 @@ const Documents = ({ formId, formData, onNext, onBack, validationsEnabled }) => 
         const uploadedPath = await uploadFile(name, localFiles[name]);
         if (uploadedPath) {
           updatedData[name] = uploadedPath;
+          setFormData((prev) => ({ ...prev, [name]: uploadedPath }));
         }
       }
 

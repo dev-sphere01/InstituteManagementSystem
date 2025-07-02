@@ -147,7 +147,7 @@ const Admission = () => {
     try {
       let response;
       if (formId) {
-        response = await API.patch(`/admissions/${formId}`, payload);
+        response = await API.put(`/admissions/${formId}`, payload);
       } else {
         response = await API.post('/admissions', payload);
         setFormId(response._id);
