@@ -3,6 +3,9 @@ node_modules/
 /IMS_FRONTEND/node_modules
 /IMS_BACKEND/node_modules
 
+#uploads
+/IMS_BACKEND/uploads
+
 #db backup data
 dump/
 

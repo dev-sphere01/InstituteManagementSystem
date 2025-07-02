@@ -3,7 +3,7 @@ import { useThemeStore } from '../../../../store';
 import API from '../../../../services/api';
 import { useNotification } from '../../../../services/NotificationService';
 
-const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
+const Education = ({ formId,formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -39,24 +39,26 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
   };
 
   const handleNext = async () => {
-    if (!validate()) return;
-
+    if (validationsEnabled && !validate()) return;
+  
     setLoading(true);
     try {
-      const subjectsArray = Array.isArray(formData.subjectsStudied)
-        ? formData.subjectsStudied
-        : formData.subjectsStudied
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
-
+      const subjectsArray = formData.subjectsStudied
+        ? Array.isArray(formData.subjectsStudied)
+          ? formData.subjectsStudied
+          : formData.subjectsStudied
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+        : [];
+  
       const payload = {
         ...formData,
         subjectsStudied: subjectsArray,
       };
-
+  
       if (typeof onNext === 'function') {
-        await onNext(payload); // Send cleaned data to parent
+        await onNext(payload);
         notify('Education details saved successfully.', 'success');
       }
     } catch (error) {
@@ -66,7 +68,7 @@ const Education = ({ formData = {}, setFormData, onNext, onBack, validationsEnab
       setLoading(false);
     }
   };
-
+  
 
   const inputClass = (field) =>
     `w-full px-4 py-2 border rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors[field]

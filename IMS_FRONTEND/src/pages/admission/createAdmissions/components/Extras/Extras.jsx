@@ -6,7 +6,7 @@ import { useThemeStore } from '../../../../../store';
 import API from './../../../../../services/api';
 import { useNotification } from './../../../../../services/NotificationService';
 
-const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
+const Extras = ({ formId ,formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
   const notify = useNotification();
   const hasFetchedRef = useRef(false);
@@ -60,10 +60,11 @@ const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled
   // 🔁 Load existing Extras data on mount
   useEffect(() => {
     const fetchData = async () => {
+      console.log("Form data:", formData);
       if (!formData?._id || hasFetchedRef.current) return;
     
       try {
-        const response = await API.get(`/admissions/${formData._id}`);
+        const response = await API.get(`/admissions/${formId}`);
         console.log("Raw response:", response);
         console.log("Response data:", response?.data);
         
@@ -146,14 +147,14 @@ const Extras = ({ formData = {}, setFormData, onNext, onBack, validationsEnabled
       iot: features.iot,
     };
 
-    if (!formData?._id) {
+    if (!formData) {
       notify('Form ID missing. Cannot save Extras.', 'error');
       return;
     }
 
     try {
       setLoading(true);
-      await API.put(`/admissions/${formData._id}`, flattenedData);
+      await API.put(`/admissions/${formId}`, flattenedData);
       notify('Extras saved successfully.', 'success');
 
       if (typeof onNext === 'function') {

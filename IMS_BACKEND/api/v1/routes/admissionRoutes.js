@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const admissionController = require('../../../controllers/admissioncontroller');
 const { validateAdmission } = require('../../../middlewares/validateAdmission');
+const upload = require('./../../../middlewares/upload');
+// const AdmissionDetails = require('./../../../models/admissionDetails');
 
 // CREATE a new admission
 router.post('/', validateAdmission, admissionController.createAdmission);
@@ -23,5 +25,8 @@ router.patch('/:id', admissionController.patchAdmission);
 
 // DELETE admission by ID
 router.delete('/:id', admissionController.deleteAdmission);
+
+// admissionRoutes.js or wherever your multer upload route is
+router.post('/upload/:id/:field', upload.single('file'), admissionController.uploadAdmissionFile);
 
 module.exports = router;

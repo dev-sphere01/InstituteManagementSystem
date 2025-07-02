@@ -155,3 +155,38 @@ exports.patchAdmission = async (req, res) => {
   }
 };
 
+// Upload a file and update admission document
+exports.uploadAdmissionFile = async (req, res) => {
+  try {
+    const { id, field } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const filePath = `/uploads/${req.file.filename}`;
+
+    // Debug logging
+    console.log('Updating admission:', id, field, filePath);
+    
+    const updated = await AdmissionDetails.findByIdAndUpdate(
+      id,
+      { [field]: filePath },
+      { new: true }
+    );
+    console.log('Updated doc:', updated);
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Admission not found' });
+    }
+
+    res.status(200).json({
+      message: `${field} uploaded successfully`,
+      path: filePath,
+      data: updated,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Upload failed' });
+  }
+};
+

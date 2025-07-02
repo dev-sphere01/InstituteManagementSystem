@@ -3,12 +3,14 @@ import BasicInfo from './components/BasicInfo';
 import Contact from './components/Contact';
 import Education from './components/Education';
 import Extras from './components/Extras/Extras';
+import Documents from './components/Documents';
 import Review from './components/Review';
 import Stepper from './components/Stepper';
 import API from './../../../services/api';
 import { useNotification } from './../../../services/NotificationService';
 
-const steps = ['basic', 'contact', 'education', 'extras', 'review'];
+const steps = ['basic', 'contact', 'education', 'extras', 'documents', 'review'];
+
 
 const Admission = () => {
   const [currentStep, setCurrentStep] = useState('basic');
@@ -185,18 +187,18 @@ const Admission = () => {
   const handleSubmit = async () => {
     const success = await saveStepData({}, 'review', true);
     if (success) {
-      notify('Form submitted successfully!','success');
+      notify('Form submitted successfully!', 'success');
       localStorage.removeItem('admissionFormId');
       handleExit();
     }
   };
 
   const handleExit = () => {
-      setCurrentStep('basic');
-      setFormData({});
-      setFormId(null);
-      setCompletedSteps([]);
-      localStorage.removeItem('admissionFormId');
+    setCurrentStep('basic');
+    setFormData({});
+    setFormId(null);
+    setCompletedSteps([]);
+    localStorage.removeItem('admissionFormId');
   };
 
   return (
@@ -253,6 +255,7 @@ const Admission = () => {
         )}
         {currentStep === 'extras' && (
           <Extras
+            formId={formId}
             formData={formData}
             setFormData={setFormData}
             onNext={handleNext}
@@ -260,8 +263,19 @@ const Admission = () => {
             validationsEnabled={validationsEnabled}
           />
         )}
+        {currentStep === 'documents' && (
+          <Documents
+            formData={formData}
+            setFormData={setFormData}
+            formId={formId}
+            onNext={handleNext}
+            onBack={handleBack}
+            validationsEnabled={validationsEnabled}
+          />
+        )}
         {currentStep === 'review' && (
           <Review
+            formId={formId}
             formData={formData}
             onBack={handleBack}
             onSubmit={handleSubmit}

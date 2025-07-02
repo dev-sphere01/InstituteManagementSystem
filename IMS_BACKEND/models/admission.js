@@ -43,8 +43,8 @@ const admissionDetailsSchema = new mongoose.Schema({
   apaarId: { type: Number },//12 digit optional numeric data
   tenthMarksheet: { type: String },// for now base64 , later url
   twelfthMarksheet: { type: String },// for now base64 , later url
-  exServicemen: { type: Boolean, default: false },//only Yes or No
-  speciallyAbled: { type: Boolean, default: false },//only Yes or No
+  exServicemen: { type: String },//url , to be stored in root folder
+  speciallyAbled: { type: String },//url , to be stored in root folder
   incomeCertificate: { type: String },//add income certificate url if EWS enabled
 
   // Education & Course
@@ -77,7 +77,7 @@ const admissionDetailsSchema = new mongoose.Schema({
 
   // Status and Registration
   status: { type: String, default: 'Pending' },
-  regNo: { type: String, required: true },
+  // regNo: { type: String, required: true },//not sure about this one
   month: { type: String, required: true },
 
   //Track Step wise data and completed status
