@@ -73,7 +73,7 @@ exports.createUser = async (userData, options = {}) => {
     name: userData.name,
     email: userData.email,
     password: passwordToUse, // pass plain password, let pre-save hook hash it
-    role: roleId,
+    role: roleId ,
     avatar: {
       public_id: userData.avatar?.public_id || "default_id",
       url: userData.avatar?.url || "default_url"

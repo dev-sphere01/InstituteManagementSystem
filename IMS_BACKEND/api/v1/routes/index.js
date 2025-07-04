@@ -16,6 +16,8 @@ const stateAndCityRoutes = require('./stateAndCitiesRoutes');
 const sessionRoutes = require('./sessionRoutes');
 const coursesRoutes  = require('./coursesRoutes')
 const additionalThingsRoutes = require('./additionalThingsRoute');
+const examDetailsRoutes = require('./examDetailsRoutes');
+const performanceRoutes = require('./performanceRoutes');
 
 // Mount routes
 router.use('/users', userRoutes);
@@ -32,5 +34,7 @@ router.use('/state-and-city', stateAndCityRoutes);
 router.use('/sessions', sessionRoutes);
 router.use('/courses', coursesRoutes);
 router.use('/additional-things', additionalThingsRoutes);
+router.use('/exam-details', examDetailsRoutes);
+router.use('/performance', performanceRoutes);
 
 module.exports = router;
