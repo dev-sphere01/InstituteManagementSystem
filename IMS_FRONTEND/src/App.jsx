@@ -44,6 +44,9 @@ import InstitutionType from "./pages/masters/institutionType/InstitutionType.jsx
 // Student Pages
 import Student from "./pages/student/Student.jsx";
 import Admission from "./pages/admission/createAdmissions/Admission.jsx";
+import StudentDetails from "./pages/student/StudentDetails.jsx";
+import ExamDetails from "./pages/student/ExamDetails.jsx";
+import StudentPerformance from "./pages/student/StudentPerformance.jsx";
 
 function App() {
   return (
@@ -101,10 +104,20 @@ function App() {
                 <Route path="admission" element={<Admission />} />
 
                 {/* Change Password - now protected */}
+                <Route path="change-password" element={<ChangePassword />} />
+
+                {/* Student Details Table */}
+                <Route path="student-details" element={<StudentDetails />} />
+
+                {/* Exam Details and Student Performance */}
+                <Route path="exam-details/:studentId" element={<ExamDetails />} />
+                <Route
+                  path="student-performance/:studentId"
+                  element={<StudentPerformance />}
+                />
               </Route>
 
               {/* 404 route */}
-                <Route path="change-password" element={<ChangePassword />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>
