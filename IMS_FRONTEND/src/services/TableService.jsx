@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -6,8 +6,8 @@ import {
   getSortedRowModel,
   getPaginationRowModel,
   flexRender,
-} from '@tanstack/react-table';
-import { useThemeStore } from '../store';
+} from "@tanstack/react-table";
+import { useThemeStore } from "../store";
 
 /**
  * TableService supports both client and server (backend) pagination.
@@ -23,14 +23,17 @@ const TableService = ({
   loading = false,
 }) => {
   const { isDarkMode } = useThemeStore();
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: initialPageSize });
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: initialPageSize,
+  });
 
   // If using server pagination, call onPaginationChange when pagination changes
   useEffect(() => {
-    if (serverPagination && typeof onPaginationChange === 'function') {
+    if (serverPagination && typeof onPaginationChange === "function") {
       onPaginationChange(pagination);
     }
     // eslint-disable-next-line
@@ -59,11 +62,11 @@ const TableService = ({
   });
 
   // Theme classes
-  const tableBg = isDarkMode ? 'bg-gray-900' : 'bg-white';
-  const tableText = isDarkMode ? 'text-gray-100' : 'text-gray-900';
-  const headerBg = isDarkMode ? 'bg-gray-800' : 'bg-gray-100';
-  const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
-  const rowHover = isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-blue-50';
+  const tableBg = isDarkMode ? "bg-gray-900" : "bg-white";
+  const tableText = isDarkMode ? "text-gray-100" : "text-gray-900";
+  const headerBg = isDarkMode ? "bg-gray-800" : "bg-gray-100";
+  const borderColor = isDarkMode ? "border-gray-700" : "border-gray-200";
+  const rowHover = isDarkMode ? "hover:bg-gray-800" : "hover:bg-blue-50";
 
   return (
     <div className="w-full overflow-x-auto">
@@ -71,43 +74,62 @@ const TableService = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
         <input
           type="text"
-          value={globalFilter ?? ''}
-          onChange={e => setGlobalFilter(e.target.value)}
+          value={globalFilter ?? ""}
+          onChange={(e) => setGlobalFilter(e.target.value)}
           placeholder="Search..."
-          className={`px-3 py-2 rounded border ${borderColor} ${tableText} ${isDarkMode ? 'bg-gray-800' : 'bg-white'} focus:outline-none focus:ring-2 focus:ring-blue-400`}
+          className={`px-3 py-2 rounded border ${borderColor} ${tableText} ${
+            isDarkMode ? "bg-gray-800" : "bg-white"
+          } focus:outline-none focus:ring-2 focus:ring-blue-400`}
           style={{ minWidth: 200 }}
         />
         {/* Page size selector */}
         <div className="flex items-center gap-2">
           <span>Rows per page:</span>
           <select
-            className={`px-2 py-1 rounded border ${borderColor} ${tableText} ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
+            className={`px-2 py-1 rounded border ${borderColor} ${tableText} ${
+              isDarkMode ? "bg-gray-800" : "bg-white"
+            }`}
             value={table.getState().pagination.pageSize}
-            onChange={e => table.setPageSize(Number(e.target.value))}
+            onChange={(e) => table.setPageSize(Number(e.target.value))}
           >
-            {[5, 10, 20, 50, 100].map(size => (
-              <option key={size} value={size}>{size}</option>
+            {[5, 10, 20, 50, 100].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
             ))}
           </select>
         </div>
       </div>
-      <table className={`min-w-full ${tableBg} ${tableText} border ${borderColor} rounded-lg shadow-sm`}>
+      <table
+        className={`min-w-full ${tableBg} ${tableText} border ${borderColor} rounded-lg shadow-sm`}
+      >
         <thead>
-          {table.getHeaderGroups().map(headerGroup => (
+          {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
+              {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
                   colSpan={header.colSpan}
                   className={`px-3 py-2 ${headerBg} ${borderColor} border-b text-left font-semibold select-none cursor-pointer`}
-                  onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
+                  onClick={
+                    header.column.getCanSort()
+                      ? header.column.getToggleSortingHandler()
+                      : undefined
+                  }
                 >
                   <div className="flex items-center gap-1">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                     {/* Sort indicator */}
                     {header.column.getCanSort() && (
                       <span>
-                        {header.column.getIsSorted() === 'asc' ? '▲' : header.column.getIsSorted() === 'desc' ? '▼' : ''}
+                        {header.column.getIsSorted() === "asc"
+                          ? "▲"
+                          : header.column.getIsSorted() === "desc"
+                          ? "▼"
+                          : ""}
                       </span>
                     )}
                   </div>
@@ -115,10 +137,14 @@ const TableService = ({
                   {header.column.getCanFilter() && (
                     <input
                       type="text"
-                      value={header.column.getFilterValue() ?? ''}
-                      onChange={e => header.column.setFilterValue(e.target.value)}
+                      value={header.column.getFilterValue() ?? ""}
+                      onChange={(e) =>
+                        header.column.setFilterValue(e.target.value)
+                      }
                       placeholder={`Filter...`}
-                      className={`mt-1 px-2 py-1 rounded border ${borderColor} ${tableText} ${isDarkMode ? 'bg-gray-700' : 'bg-white'} w-full text-xs`}
+                      className={`mt-1 px-2 py-1 rounded border ${borderColor} ${tableText} ${
+                        isDarkMode ? "bg-gray-700" : "bg-white"
+                      } w-full text-xs`}
                     />
                   )}
                 </th>
@@ -129,21 +155,30 @@ const TableService = ({
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan={columns.length} className="text-center py-6 text-blue-400 animate-pulse">
+              <td
+                colSpan={columns.length}
+                className="text-center py-6 text-blue-400 animate-pulse"
+              >
                 Loading...
               </td>
             </tr>
           ) : table.getRowModel().rows.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="text-center py-6 text-gray-400">
+              <td
+                colSpan={columns.length}
+                className="text-center py-6 text-gray-400"
+              >
                 No data found.
               </td>
             </tr>
           ) : (
-            table.getRowModel().rows.map(row => (
+            table.getRowModel().rows.map((row) => (
               <tr key={row.id} className={`${rowHover} transition-colors`}>
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className={`px-3 py-2 border-b ${borderColor} align-middle`}>
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className={`px-3 py-2 border-b ${borderColor} align-middle`}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -160,19 +195,22 @@ const TableService = ({
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
           >
-            {'<<'}
+            {"<<"}
           </button>
           <button
             className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            {'<'}
+            {"<"}
           </button>
           <span>
-            Page{' '}
+            Page{" "}
             <strong>
-              {table.getState().pagination.pageIndex + 1} of {serverPagination && controlledPageCount ? controlledPageCount : table.getPageCount()}
+              {table.getState().pagination.pageIndex + 1} of{" "}
+              {serverPagination && controlledPageCount
+                ? controlledPageCount
+                : table.getPageCount()}
             </strong>
           </span>
           <button
@@ -180,28 +218,38 @@ const TableService = ({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            {'>'}
+            {">"}
           </button>
           <button
             className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50"
-            onClick={() => table.setPageIndex((serverPagination && controlledPageCount ? controlledPageCount : table.getPageCount()) - 1)}
+            onClick={() =>
+              table.setPageIndex(
+                (serverPagination && controlledPageCount
+                  ? controlledPageCount
+                  : table.getPageCount()) - 1
+              )
+            }
             disabled={!table.getCanNextPage()}
           >
-            {'>>'}
+            {">>"}
           </button>
         </div>
         <div>
-          Go to page:{' '}
+          Go to page:{" "}
           <input
             type="number"
             min={1}
-            max={serverPagination && controlledPageCount ? controlledPageCount : table.getPageCount()}
+            max={
+              serverPagination && controlledPageCount
+                ? controlledPageCount
+                : table.getPageCount()
+            }
             value={table.getState().pagination.pageIndex + 1}
-            onChange={e => {
+            onChange={(e) => {
               const page = e.target.value ? Number(e.target.value) - 1 : 0;
               table.setPageIndex(page);
             }}
-            className="w-16 px-2 py-1 rounded border border-gray-300"
+            className="w-16 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>

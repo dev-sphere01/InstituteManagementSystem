@@ -62,7 +62,7 @@ const BoardMaster = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-1">
       {/* Page Header */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold">
