@@ -6,7 +6,7 @@ import Extras from './components/Extras/Extras';
 import Documents from './components/Documents';
 import Review from './components/Review';
 import Stepper from './components/Stepper';
-import API from './../../../services/api';
+import API from './../../../services/API';
 import { useNotification } from './../../../services/NotificationService';
 
 const steps = ['basic', 'contact', 'education', 'extras', 'documents', 'review'];

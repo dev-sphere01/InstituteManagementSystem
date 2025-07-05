@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useThemeStore } from '../../../../store';
-import API from '../../../../services/api';
+import API from '../../../../services/API';
 import { useNotification } from '../../../../services/NotificationService';
 
 const Education = ({ formId,formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
