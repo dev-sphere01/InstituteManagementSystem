@@ -3,7 +3,7 @@ import Referral from './components/Referral';
 import ComputerAccess from './components/ComputerAccess';
 import Features from './components/Features';
 import { useThemeStore } from '../../../../../store';
-import API from './../../../../../services/api';
+import API from './../../../../../services/API';
 import { useNotification } from './../../../../../services/NotificationService';
 
 const Extras = ({ formId ,formData = {}, setFormData, onNext, onBack, validationsEnabled = true }) => {
