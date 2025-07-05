@@ -115,7 +115,9 @@ const Documents = ({ formId, formData, setFormData, onNext, onBack, validationsE
             />
             {formData[name] && (
               <a
-                href={formData[name]}
+                href={
+                  `${import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v\d+\/?$/, '')}/${formData[name]}`
+                }
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
