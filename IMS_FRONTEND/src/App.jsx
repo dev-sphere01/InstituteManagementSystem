@@ -40,6 +40,7 @@ import Courses from "./pages/masters/courses/Courses.jsx";
 import Batch from "./pages/masters/batch/Batch.jsx";
 import Session from "./pages/masters/session/Session.jsx";
 import InstitutionType from "./pages/masters/institutionType/InstitutionType.jsx";
+import CenterCode from "./pages/masters/centerCode/CenterCode.jsx";
 
 // Student Pages
 import Student from "./pages/student/Student.jsx";
@@ -89,6 +90,7 @@ function App() {
                 <Route path="roles" element={<Role />} />
                 <Route path="courses" element={<Courses />} />
                 <Route path="batches" element={<Batch />} />
+                <Route path="center-code" element={<CenterCode />} />
                 <Route path="sessions" element={<Session />} />
                 <Route path="institution-type" element={<InstitutionType />} />
 

@@ -5,7 +5,11 @@ import EditCenterCode from './components/EditCenterCode'
 
 const CenterCode = () => {
   return (
-    <div>CenterCode</div>
+    <>
+        <AddCenterCode />
+        <AllCenterCode />
+        <EditCenterCode />
+    </>
   )
 }
 
