@@ -23,6 +23,7 @@ const PrimarySideBar = () => {
     { path: '/dashboard/roles', icon: 'shield', label: 'Roles' },
     { path: '/dashboard/courses', icon: 'book', label: 'Courses' },
     { path: '/dashboard/center-code', icon: 'collection', label: 'Center Code' },
+    { path: '/dashboard/additional-features', icon: 'collection', label: 'Additional Features' },
     { path: '/dashboard/batches', icon: 'collection', label: 'Batches' },
     { path: '/dashboard/sessions', icon: 'calendar', label: 'Sessions' },
     { path: '/dashboard/institution-type', icon: 'collection', label: 'Institution Type' },

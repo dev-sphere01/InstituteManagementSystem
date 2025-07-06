@@ -48,6 +48,7 @@ import Admission from "./pages/admission/createAdmissions/Admission.jsx";
 import StudentDetails from "./pages/student/StudentDetails.jsx";
 import ExamDetails from "./pages/student/ExamDetails.jsx";
 import StudentPerformance from "./pages/student/StudentPerformance.jsx";
+import AddistionalFeatures from "./pages/masters/additionalFeatures/AddistionalFeatures.jsx";
 
 function App() {
   return (
@@ -93,6 +94,7 @@ function App() {
                 <Route path="center-code" element={<CenterCode />} />
                 <Route path="sessions" element={<Session />} />
                 <Route path="institution-type" element={<InstitutionType />} />
+                <Route path="additional-features" element={<AddistionalFeatures />} />
 
                 {/* Enquiry Routes */}
                 <Route path="enquiry/create" element={<EnquiryForm />} />
