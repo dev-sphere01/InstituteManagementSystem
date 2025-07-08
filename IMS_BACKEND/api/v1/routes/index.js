@@ -14,8 +14,10 @@ const batchRoutes = require('./batchRoutes');
 const goalsRoutes = require('./goalsRoutes');
 const stateAndCityRoutes = require('./stateAndCitiesRoutes');
 const sessionRoutes = require('./sessionRoutes');
-const coursesRoutes  = require('./coursesRoutes')
+const coursesRoutes  = require('./coursesRoutes');
 const additionalThingsRoutes = require('./additionalThingsRoute');
+const emailVerificationRoutes = require('./emailVerificationRoutes');
+//const otpRoutes = require('./otpRoutes');
 
 // Mount routes
 router.use('/users', userRoutes);
@@ -23,6 +25,7 @@ router.use('/logs', logRoutes);
 router.use('/roles', roleRoutes);
 router.use('/enquiry', enquiryRoutes);
 router.use('/admissions', admissionRoutes);
+router.use('/email', emailVerificationRoutes);
 router.use('/centre-codes', centreCodeRoutes);
 router.use('/boards', boardsRoutes);
 router.use('/universities', universityRoutes);
@@ -32,5 +35,6 @@ router.use('/state-and-city', stateAndCityRoutes);
 router.use('/sessions', sessionRoutes);
 router.use('/courses', coursesRoutes);
 router.use('/additional-things', additionalThingsRoutes);
+//router.use('/otp', otpRoutes);
 
 module.exports = router;

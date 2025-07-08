@@ -1,9 +1,18 @@
-const Course = require('../models/courses');
-const ErrorHandler = require('../utils/ErrorHandler');
+const Course = require("../models/courses");
+const ErrorHandler = require("../utils/ErrorHandler");
 
 // Create Course
 exports.createCourse = async (req, res, next) => {
   try {
+    // Convert subjects string to array if necessary
+    if (typeof req.body.subjects === "string") {
+      req.body.subjects = req.body.subjects
+        .split(",")
+        .map((sub) => sub.trim())
+        .filter(Boolean);
+      req.body.fee = Number(req.body.fee);
+    }
+
     const course = await Course.create(req.body);
     res.status(201).json({ success: true, data: course });
   } catch (error) {
@@ -11,37 +20,36 @@ exports.createCourse = async (req, res, next) => {
   }
 };
 
-// Get All Courses (with search, filter, pagination)
+// Get All Courses (Search, Filter, Pagination, Sort)
 exports.getAllCourses = async (req, res, next) => {
   try {
     const {
-      search = '',
-      level = '',
-      isActive = '',
+      search = "",
+      level = "",
+      isActive = "",
       page = 1,
       limit = 10,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
+      sortBy = "createdAt",
+      sortOrder = "desc",
     } = req.query;
 
     const query = {};
+
     if (search) {
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { code: { $regex: search, $options: 'i' } },
+        { courseName: { $regex: search, $options: "i" } },
+        { courseCode: { $regex: search, $options: "i" } },
       ];
     }
+
     if (level) query.level = level;
-    if (isActive !== '') query.isActive = isActive === 'true';
+    if (isActive !== "") query.isActive = isActive === "true";
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+    const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
     const [courses, total] = await Promise.all([
-      Course.find(query)
-        .sort(sort)
-        .skip(skip)
-        .limit(parseInt(limit)),
+      Course.find(query).sort(sort).skip(skip).limit(parseInt(limit)),
       Course.countDocuments(query),
     ]);
 
@@ -57,11 +65,11 @@ exports.getAllCourses = async (req, res, next) => {
   }
 };
 
-// Get Single Course
+// Get Course by ID
 exports.getCourseById = async (req, res, next) => {
   try {
     const course = await Course.findById(req.params.id);
-    if (!course) return next(new ErrorHandler('Course not found', 404));
+    if (!course) return next(new ErrorHandler("Course not found", 404));
     res.status(200).json({ success: true, data: course });
   } catch (error) {
     next(error);
@@ -71,12 +79,21 @@ exports.getCourseById = async (req, res, next) => {
 // Update Course
 exports.updateCourse = async (req, res, next) => {
   try {
+    if (typeof req.body.subjects === "string") {
+      req.body.subjects = req.body.subjects
+        .split(",")
+        .map((sub) => sub.trim())
+        .filter(Boolean);
+    }
+    req.body.fee = Number(req.body.fee);
+
     const updatedCourse = await Course.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     );
-    if (!updatedCourse) return next(new ErrorHandler('Course not found', 404));
+
+    if (!updatedCourse) return next(new ErrorHandler("Course not found", 404));
     res.status(200).json({ success: true, data: updatedCourse });
   } catch (error) {
     next(error);
@@ -87,7 +104,7 @@ exports.updateCourse = async (req, res, next) => {
 exports.deleteCourse = async (req, res, next) => {
   try {
     const deleted = await Course.findByIdAndDelete(req.params.id);
-    if (!deleted) return next(new ErrorHandler('Course not found', 404));
+    if (!deleted) return next(new ErrorHandler("Course not found", 404));
     res.status(204).json({ success: true, message: "Deleted" });
   } catch (error) {
     next(error);
