@@ -138,7 +138,7 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
               <option value="">Select Centre</option>
               {centres?.map((centre) => (
                 <option key={centre._id} value={centre._id}>
-                  {centre.centreCode}
+                  {centre.name} ({centre.centreCode})
                 </option>
               ))}
             </select>
