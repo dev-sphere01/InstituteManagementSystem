@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useThemeStore } from "../../../../store";
 import API from "../../../../services/API";
 import { useNotification } from "../../../../services/NotificationService";
@@ -9,7 +9,7 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
 
   const [form, setForm] = useState({
     courseCode: "",
-    centreCode: "",
+    centreCode: "", // This will hold the centre ID
     courseName: "",
     subjects: "",
     description: "",
@@ -21,6 +21,20 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [centres, setCentres] = useState([]);
+
+  useEffect(() => {
+    const fetchCentres = async () => {
+      try {
+        const response = await API.get("/centre-codes");
+        setCentres(response.data);
+      } catch (error) {
+        notify("Failed to fetch centres", "error");
+      }
+    };
+
+    fetchCentres();
+  }, []);
 
   const validate = () => {
     const errs = {};
@@ -78,8 +92,8 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
       </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Course Code */}
           <div>
+            {/* Course Code */}
             <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
               Course Code <span className="text-red-500">*</span>
             </label>
@@ -103,17 +117,15 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
             )}
           </div>
 
-          {/* Centre Code */}
           <div>
+            {/* Centre Code */}
             <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
               Centre Code <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
+            <select
               name="centreCode"
               value={form.centreCode}
               onChange={handleChange}
-              placeholder="Enter centre code"
               className={`block w-full px-3 py-2 border rounded-md shadow-sm ${
                 errors.centreCode
                   ? "border-red-500"
@@ -122,14 +134,21 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
                   : "border-gray-300 bg-white text-gray-900"
               }`}
               disabled={isSubmitting || parentLoading}
-            />
+            >
+              <option value="">Select Centre</option>
+              {centres?.map((centre) => (
+                <option key={centre._id} value={centre._id}>
+                  {centre.centreCode}
+                </option>
+              ))}
+            </select>
             {errors.centreCode && (
               <p className="mt-1 text-sm text-red-500">{errors.centreCode}</p>
             )}
           </div>
 
-          {/* Course Name */}
           <div>
+            {/* Course Name */}
             <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
               Course Name <span className="text-red-500">*</span>
             </label>
@@ -153,8 +172,8 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
             )}
           </div>
 
-          {/* Fee */}
           <div>
+            {/* Fee */}
             <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
               Fee <span className="text-red-500">*</span>
             </label>
@@ -164,8 +183,7 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
               value={form.fee}
               onChange={handleChange}
               placeholder="e.g., 5000"
-              className={`block w-full px-3 py-2 border rounded-md shadow-sm ${
-                errors.fee
+              className={`block w-full px-3 py-2 border rounded-md shadow-sm ${errors.fee
                   ? "border-red-500"
                   : isDarkMode
                   ? "border-gray-600 bg-gray-700 text-white"
@@ -177,9 +195,9 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
           </div>
         </div>
 
-        {/* Duration & Level */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
+            {/* Duration & Level */}
             <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
               Duration
             </label>
@@ -220,8 +238,8 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
           </div>
         </div>
 
-        {/* Subjects */}
         <div>
+          {/* Subjects */}
           <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
             Subjects
           </label>
@@ -240,8 +258,8 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
           />
         </div>
 
-        {/* Description */}
         <div>
+          {/* Description */}
           <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
             Description
           </label>
@@ -260,8 +278,8 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
           />
         </div>
 
-        {/* Active */}
         <div className="flex items-center mt-2">
+          {/* Active */}
           <input
             type="checkbox"
             name="isActive"
@@ -275,8 +293,8 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
           </label>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
+          {/* Actions */}
           <button
             type="button"
             onClick={onCancel}

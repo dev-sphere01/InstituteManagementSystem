@@ -13,9 +13,16 @@ exports.createCourse = async (req, res, next) => {
       req.body.fee = Number(req.body.fee);
     }
     console.log(req.body);
+    // Verify centreCode exists
+    const centre = await require('../models/centreCode').findById(req.body.centreCode);
+    if (!centre) {
+      return next(new ErrorHandler("Invalid Centre Code", 400));
+    }
+
     const course = await Course.create(req.body);
     res.status(201).json({ success: true, data: course });
   } catch (error) {
+    console.log(error);
     next(error);
   }
 };
@@ -49,7 +56,11 @@ exports.getAllCourses = async (req, res, next) => {
     const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
     const [courses, total] = await Promise.all([
-      Course.find(query).sort(sort).skip(skip).limit(parseInt(limit)),
+      Course.find(query)
+        .populate('centreCode') // Populate centreCode with all centre data
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit)),
       Course.countDocuments(query),
     ]);
 
@@ -86,6 +97,14 @@ exports.updateCourse = async (req, res, next) => {
         .filter(Boolean);
     }
     req.body.fee = Number(req.body.fee);
+
+    // Verify centreCode exists
+    if (req.body.centreCode) {
+      const centre = await require('../models/centreCode').findById(req.body.centreCode);
+      if (!centre) {
+        return next(new ErrorHandler("Invalid Centre Code", 400));
+      }
+    }
 
     const updatedCourse = await Course.findByIdAndUpdate(
       req.params.id,

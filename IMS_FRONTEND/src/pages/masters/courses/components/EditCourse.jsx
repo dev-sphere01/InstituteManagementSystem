@@ -1,18 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import API from "../../../../services/API";
 
-const EditCourse = ({ course, onCourseUpdated, onCancel, loading }) => {
+const EditCourse = ({ course, onCourseUpdated, onCancel, loading: parentLoading }) => {
   const [form, setForm] = useState({
-    ...course,
+    courseCode: course.courseCode || "",
+    centreCode: course.centreCode?._id || "",
+    courseName: course.courseName || "",
     subjects: Array.isArray(course.subjects) ? course.subjects.join(", ") : "",
+    description: course.description || "",
+    duration: course.duration || "",
+    fee: course.fee || 0,
+    level: course.level || "beginner",
+    isActive: course.isActive || true,
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [centres, setCentres] = useState([]);
+
+  useEffect(() => {
+    const fetchCentres = async () => {
+      try {
+        const response = await API.get("/centre-codes");
+        console.log("Fetched Centres:", response.data);
+        setCentres(response.data);
+      } catch (error) {
+        console.error("Failed to fetch centres:", error);
+        // Optionally, display an error notification to the user
+      }
+    };
+
+    fetchCentres();
+  }, []);
 
   const validate = () => {
     const errs = {};
-    if (!form.code.trim()) errs.code = "Course code is required";
-    if (!form.name.trim()) errs.name = "Course name is required";
+    if (!form.courseCode.trim()) errs.courseCode = "Course code is required";
+    if (!form.courseName.trim()) errs.courseName = "Course name is required";
+    if (!form.centreCode) errs.centreCode = "Centre code is required";
+    if (form.fee <= 0) errs.fee = "Fee must be greater than 0";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -28,7 +54,7 @@ const EditCourse = ({ course, onCourseUpdated, onCancel, loading }) => {
     if (!validate()) return;
     setIsSubmitting(true);
     try {
-      await onCourseUpdated(form); // Send as-is (string), backend will convert
+      await onCourseUpdated({...form, _id: course._id}); // Send as-is (string), backend will convert
     } finally {
       setIsSubmitting(false);
     }
@@ -48,46 +74,86 @@ const EditCourse = ({ course, onCourseUpdated, onCancel, loading }) => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Code */}
+          {/* Course Code */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Code <span className="text-red-500">*</span>
+              Course Code <span className="text-red-500">*</span>
             </label>
             <input
-              name="code"
-              value={form.code}
+              name="courseCode"
+              value={form.courseCode}
               onChange={handleChange}
               placeholder="Enter course code"
               className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.code
+                errors.courseCode
                   ? "border-red-600"
                   : "border-gray-300 dark:border-gray-600"
               } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
             />
-            {errors.code && (
-              <p className="mt-1 text-sm text-red-600">{errors.code}</p>
+            {errors.courseCode && (
+              <p className="mt-1 text-sm text-red-600">{errors.courseCode}</p>
             )}
           </div>
 
-          {/* Name */}
+          {/* Course Name */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Name <span className="text-red-500">*</span>
+              Course Name <span className="text-red-500">*</span>
             </label>
             <input
-              name="name"
-              value={form.name}
+              name="courseName"
+              value={form.courseName}
               onChange={handleChange}
               placeholder="Enter course name"
               className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.name
+                errors.courseName
                   ? "border-red-600"
                   : "border-gray-300 dark:border-gray-600"
               } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
             />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+            {errors.courseName && (
+              <p className="mt-1 text-sm text-red-600">{errors.courseName}</p>
             )}
+          </div>
+
+          {/* Centre Code */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Centre Code <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="centreCode"
+              value={form.centreCode}
+              onChange={handleChange}
+              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.centreCode
+                  ? "border-red-600"
+                  : "border-gray-300 dark:border-gray-600"
+              } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+            >
+              <option value="">Select Centre</option>
+              {centres.map((centre) => (
+                <option key={centre._id} value={centre._id}>
+                  {centre.name} ({centre.centreCode})
+                </option>
+              ))}
+            </select>
+            {errors.centreCode && (
+              <p className="mt-1 text-sm text-red-600">{errors.centreCode}</p>
+            )}
+          </div>
+          {/* Fee */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Fee
+            </label>
+            <input
+              name="fee"
+              value={form.fee}
+              onChange={handleChange}
+              placeholder="Enter course fee"
+              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
           </div>
         </div>
 
@@ -178,12 +244,12 @@ const EditCourse = ({ course, onCourseUpdated, onCancel, loading }) => {
           </button>
           <button
             type="submit"
-            disabled={isSubmitting || loading}
+            disabled={isSubmitting || parentLoading}
             className={`px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
-              isSubmitting || loading ? "opacity-50 cursor-not-allowed" : ""
+              isSubmitting || parentLoading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {isSubmitting || loading ? "Updating..." : "Update Course"}
+            {isSubmitting || parentLoading ? "Updating..." : "Update Course"}
           </button>
         </div>
       </form>

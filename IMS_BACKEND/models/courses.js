@@ -10,7 +10,8 @@ const courseSchema = new mongoose.Schema({
   centreCode: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    trim: true
+    trim: true,
+    ref: 'CentreCode'  // Reference to the CentreCode model
   },
   courseName: {
     type: String,
