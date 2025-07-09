@@ -308,7 +308,7 @@ export default function Dashboard() {
                 contentStyle={{
                   backgroundColor: isDarkMode ? "#1f2937" : "#ffffff",
                   borderColor: isDarkMode ? "#374151" : "#e5e7eb",
-                  color: isDarkMode ? "#f3f4f6" : "#111827",
+                  color: isDarkMode ? "#f3f4f6" : "##ffff",
                 }}
               />
             </PieChart>

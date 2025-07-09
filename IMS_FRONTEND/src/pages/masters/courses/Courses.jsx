@@ -47,14 +47,20 @@ const Courses = () => {
     try {
       setLoading(true);
       const res = await API.put(`/courses/${updatedCourse._id}`, updatedCourse);
-      setCourses(courses.map((c) => (c._id === updatedCourse._id ? res.data.data : c)));
-      setEditingCourse(null);
-      setActiveTab('all');
-      notify('Course updated successfully', 'success');
+      console.log('Updated Course:', res.success);
+      if (res.success) {
+        setCourses([...courses.map((c) => (c._id === updatedCourse._id ? res.data.data : c))]); // Create a new array
+        setEditingCourse(null);
+        setActiveTab('all');
+        notify('Course updated successfully', 'success');
+      } else {
+        notify(res?.data?.message || 'Failed to update course', 'error');
+      }
     } catch (err) {
-      notify(err.response?.data?.message || 'Failed to update course', 'error');
+      notify(err?.response?.data?.message || 'Failed to update course', 'error'); // Check if err.response is defined
     } finally {
       setLoading(false);
+      fetchCourses();
     }
   };
 
@@ -141,7 +147,7 @@ const Courses = () => {
           <EditCourse
             course={editingCourse}
             onCourseUpdated={handleCourseUpdated}
-            onClose={handleCloseEdit}
+            onCancel={handleCloseEdit} // Changed onClose to onCancel
             loading={loading}
           />
         )}
