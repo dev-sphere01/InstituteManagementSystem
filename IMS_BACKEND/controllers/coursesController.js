@@ -12,7 +12,7 @@ exports.createCourse = async (req, res, next) => {
         .filter(Boolean);
       req.body.fee = Number(req.body.fee);
     }
-
+    console.log(req.body);
     const course = await Course.create(req.body);
     res.status(201).json({ success: true, data: course });
   } catch (error) {
