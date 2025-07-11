@@ -19,7 +19,8 @@ const StudentDetails = () => {
     setLoading(true);
     try {
       const response = await API.get('/admissions');
-      const admissions = response.data;
+      const admissions = response;
+      console.log('admissions:', admissions);
       
       // Transform admission data to student format for the table
       const transformedStudents = admissions.map(admission => ({
@@ -36,6 +37,7 @@ const StudentDetails = () => {
         preferredModeOfLearning: admission.preferredModeOfLearning
       }));
       
+      console.log('transformedStudents:', transformedStudents);
       setAllStudents(transformedStudents);
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -51,7 +53,7 @@ const StudentDetails = () => {
     let baseFee = 45000; // Default base fee
     
     // Adjust base fee based on course
-    const course = admission.courseApplied?.toLowerCase() || '';
+    const course = typeof admission.courseApplied === 'string' ? admission.courseApplied.toLowerCase() : '';
     if (course.includes('computer science') || course.includes('bca') || course.includes('mca')) {
       baseFee = 55000;
     } else if (course.includes('engineering') || course.includes('b.tech')) {
@@ -82,11 +84,11 @@ const StudentDetails = () => {
   useEffect(() => {
     // Filter and sort students based on search and sort criteria
     let filtered = allStudents.filter(s =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.studentId.toLowerCase().includes(search.toLowerCase()) ||
-      s.course.toLowerCase().includes(search.toLowerCase()) ||
+      (typeof s.name === 'string' && s.name.toLowerCase().includes(search.toLowerCase())) ||
+      (typeof s.studentId === 'string' && s.studentId.toLowerCase().includes(search.toLowerCase())) ||
+      (typeof s.course === 'string' && s.course.toLowerCase().includes(search.toLowerCase())) ||
       (s.contactNumber && s.contactNumber.includes(search)) ||
-      (s.emailAddress && s.emailAddress.toLowerCase().includes(search.toLowerCase()))
+      (typeof s.emailAddress === 'string' && s.emailAddress.toLowerCase().includes(search.toLowerCase()))
     );
     
     filtered = filtered.sort((a, b) => {
@@ -98,8 +100,8 @@ const StudentDetails = () => {
         aVal = Number(aVal) || 0;
         bVal = Number(bVal) || 0;
       } else {
-        aVal = String(aVal || '').toLowerCase();
-        bVal = String(bVal || '').toLowerCase();
+        aVal = typeof aVal === 'string' ? aVal.toLowerCase() : String(aVal);
+        bVal = typeof bVal === 'string' ? bVal.toLowerCase() : String(bVal);
       }
       
       if (sortOrder === 'asc') {

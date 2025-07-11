@@ -65,7 +65,6 @@ const Extras = ({ formId ,formData = {}, setFormData, onNext, onBack, validation
     
       try {
         const response = await API.get(`/admissions/${formId}`);
-        console.log("Raw response:", response);
         console.log("Response data:", response?.data);
         
         const data = response;

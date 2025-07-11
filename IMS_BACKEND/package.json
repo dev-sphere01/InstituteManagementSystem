@@ -10,7 +10,7 @@
     "build": "cd frontend && npm install && npm run build",
     "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend && npm run build --prefix frontend"
   },
-  "author": "",
+  "author": "Kilo Code",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",

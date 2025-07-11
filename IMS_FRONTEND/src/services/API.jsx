@@ -22,7 +22,9 @@ instance.interceptors.request.use(
 
 // Response interceptor
 instance.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    return response.data;
+  },
   (error) => {
     if (error.response?.status === 401) {
       // Clear local storage and cookies
