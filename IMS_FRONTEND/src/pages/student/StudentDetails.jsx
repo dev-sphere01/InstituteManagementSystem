@@ -125,9 +125,9 @@ const StudentDetails = () => {
 
   const handleAction = (action, student) => {
     if (action === 'Exam Details') {
-      navigate(`/dashboard/exam-details/${student.studentId}`);
+      navigate(`/dashboard/exam-details/${student._id}`);
     } else if (action === 'Student Performance') {
-      navigate(`/dashboard/student-performance/${student.studentId}`);
+      navigate(`/dashboard/student-performance/${student._id}`);
     } else if (action === 'View Details') {
       navigate(`/dashboard/student-profile/${student._id}`);
     }

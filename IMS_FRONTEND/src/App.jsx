@@ -48,6 +48,7 @@ import Admission from "./pages/admission/createAdmissions/Admission.jsx";
 import StudentDetails from "./pages/student/StudentDetails.jsx";
 import ExamDetails from "./pages/student/ExamDetails.jsx";
 import StudentPerformance from "./pages/student/StudentPerformance.jsx";
+import StudentProfile from "./pages/student/StudentProfile.jsx";
 import AddistionalFeatures from "./pages/masters/additionalFeatures/AdditionalFeatures.jsx";
 
 function App() {
@@ -118,6 +119,10 @@ function App() {
                 <Route
                   path="student-performance/:studentId"
                   element={<StudentPerformance />}
+                />
+                <Route
+                  path="student-profile/:id"
+                  element={<StudentProfile />}
                 />
               </Route>
 
