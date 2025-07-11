@@ -14,22 +14,34 @@ const AllAdditionalFeatures = ({ features = [], loading, error, onEdit, onDelete
     {
       header: 'Feature',
       accessorKey: 'additionalFeatures',
-      cell: info => info?.getValue?.() ?? '-',
+      cell: ({ getValue }) => {
+        const value = getValue();
+        return value || '-';
+      },
     },
     {
       header: 'Type',
       accessorKey: 'type',
-      cell: info => info?.getValue?.() ?? '-',
+      cell: ({ getValue }) => {
+        const value = getValue();
+        return value || '-';
+      },
     },
     {
       header: 'Status',
       accessorKey: 'status',
-      cell: info => info?.getValue?.() ?? '-',
+      cell: ({ getValue }) => {
+        const value = getValue();
+        return value || '-';
+      },
     },
     {
       header: 'Description',
       accessorKey: 'description',
-      cell: info => info?.getValue?.() || '-',
+      cell: ({ getValue }) => {
+        const value = getValue();
+        return value || '-';
+      },
     },
     {
       header: 'Actions',
