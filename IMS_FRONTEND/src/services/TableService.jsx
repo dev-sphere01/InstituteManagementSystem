@@ -69,7 +69,7 @@ const TableService = ({
   const rowHover = isDarkMode ? "hover:bg-gray-800" : "hover:bg-blue-50";
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto mt-2">
       {/* Global Search */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
         <input
