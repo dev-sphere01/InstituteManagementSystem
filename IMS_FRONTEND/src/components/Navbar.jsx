@@ -16,6 +16,9 @@ const Navbar = ({ className = '' }) => {
   // We're not using isDarkMode here as the navbar is permanently dark
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('admissionFormId');
     logout();
     navigate('/login');
   };

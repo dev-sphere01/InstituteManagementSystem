@@ -18,6 +18,26 @@ const centreCodeSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
+  },
+  name:{
+    type: String,
+    required: true,
+    trim: true
+  },
+  address:{
+    type: String,
+    unique: true,
+    trim: true
+  },
+  phone:{
+    type: Number,
+    unique: true,
+    trim: true
+  },
+  email:{
+    type: String,
+    unique: true,
+    trim: true
   }
 }, {
   timestamps: true
