@@ -10,37 +10,64 @@ const AllAdditionalFeatures = ({ features = [], loading, error, onEdit, onDelete
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Filter out any undefined, null, or invalid data entries
+  const validFeatures = useMemo(() => {
+    return Array.isArray(features)
+      ? features.filter(feature => feature && typeof feature === 'object' && feature._id)
+      : [];
+  }, [features]);
+
   const columns = useMemo(() => [
     {
       header: 'Feature',
       accessorKey: 'additionalFeatures',
-      cell: ({ getValue }) => {
-        const value = getValue();
-        return value || '-';
+      cell: ({ getValue, row }) => {
+        try {
+          const value = getValue();
+          return value || '-';
+        } catch (error) {
+          console.warn('Error accessing additionalFeatures:', error);
+          return '-';
+        }
       },
     },
     {
       header: 'Type',
       accessorKey: 'type',
-      cell: ({ getValue }) => {
-        const value = getValue();
-        return value || '-';
+      cell: ({ getValue, row }) => {
+        try {
+          const value = getValue();
+          return value || '-';
+        } catch (error) {
+          console.warn('Error accessing type:', error);
+          return '-';
+        }
       },
     },
     {
       header: 'Status',
       accessorKey: 'status',
-      cell: ({ getValue }) => {
-        const value = getValue();
-        return value || '-';
+      cell: ({ getValue, row }) => {
+        try {
+          const value = getValue();
+          return value || '-';
+        } catch (error) {
+          console.warn('Error accessing status:', error);
+          return '-';
+        }
       },
     },
     {
       header: 'Description',
       accessorKey: 'description',
-      cell: ({ getValue }) => {
-        const value = getValue();
-        return value || '-';
+      cell: ({ getValue, row }) => {
+        try {
+          const value = getValue();
+          return value || '-';
+        } catch (error) {
+          console.warn('Error accessing description:', error);
+          return '-';
+        }
       },
     },
     {
@@ -49,7 +76,7 @@ const AllAdditionalFeatures = ({ features = [], loading, error, onEdit, onDelete
       enableSorting: false,
       cell: ({ row }) => {
         const feature = row?.original;
-        if (!feature) return null;
+        if (!feature || !feature._id) return null;
 
         return (
           <div className="text-sm text-right space-x-2">
@@ -91,7 +118,7 @@ const AllAdditionalFeatures = ({ features = [], loading, error, onEdit, onDelete
 
   return (
     <div>
-      <TableService columns={columns} data={features || []} loading={loading} />
+      <TableService columns={columns} data={validFeatures} loading={loading} />
 
       <ConfirmationModal
         isOpen={confirmOpen}
