@@ -1,20 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const stateAndCitiesController = require('../../../controllers/stateAndCitiesController');
+const countryStateCityController = require('../../../controllers/countryStateCityController');
 
-// Create State and Cities
-router.post('/', stateAndCitiesController.createStateAndCity);
+// POST    /api/country-state-city         ➝ Create new country with states & cities
+router.post('/', countryStateCityController.createCountry);
 
-// Get All States and Cities
-router.get('/', stateAndCitiesController.getAllStatesAndCities);
+// GET     /api/country-state-city         ➝ Get all countries (with optional filters)
+router.get('/', countryStateCityController.getAllCountries);
 
-// Get Single State and Cities by ID
-router.get('/:id', stateAndCitiesController.getStateAndCityById);
+// GET     /api/country-state-city/:id     ➝ Get one country by ID
+router.get('/:id', countryStateCityController.getCountryById);
 
-// Update State and Cities
-router.put('/:id', stateAndCitiesController.updateStateAndCity);
+// PUT     /api/country-state-city/:id     ➝ Update country
+router.put('/:id', countryStateCityController.updateCountry);
 
-// Delete State and Cities
-router.delete('/:id', stateAndCitiesController.deleteStateAndCity);
+// DELETE  /api/country-state-city/:id     ➝ Delete country
+router.delete('/:id', countryStateCityController.deleteCountry);
 
 module.exports = router;

@@ -14,7 +14,7 @@ const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
   const fetchAvailableFeatures = async () => {
     setLoading(true);
     try {
-      const res = await API.get('/additional-features?status=active&type=feature');
+      const res = await API.get('/additional-features?status=active');
       setAvailableFeatures(res?.data || []);
     } catch (err) {
       notify('Failed to fetch features from server', 'error');
@@ -22,7 +22,7 @@ const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
       setLoading(false);
     }
   };
-
+  console.log(availableFeatures);
   useEffect(() => {
     fetchAvailableFeatures();
   }, []);
