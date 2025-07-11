@@ -31,19 +31,19 @@ const AllAdditionalFeatures = ({ features = [], loading, error, onEdit, onDelete
         }
       },
     },
-    {
-      header: 'Type',
-      accessorKey: 'type',
-      cell: ({ getValue, row }) => {
-        try {
-          const value = getValue();
-          return value || '-';
-        } catch (error) {
-          console.warn('Error accessing type:', error);
-          return '-';
-        }
-      },
-    },
+    // {
+    //   header: 'Type',
+    //   accessorKey: 'type',
+    //   cell: ({ getValue, row }) => {
+    //     try {
+    //       const value = getValue();
+    //       return value || '-';
+    //     } catch (error) {
+    //       console.warn('Error accessing type:', error);
+    //       return '-';
+    //     }
+    //   },
+    // },
     {
       header: 'Status',
       accessorKey: 'status',
