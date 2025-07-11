@@ -50,6 +50,6 @@ const countryStateCitySchema = new mongoose.Schema(
 countryStateCitySchema.index({ countryName: 1 });
 
 module.exports = mongoose.model(
-  'CountryStateCity',
+  'countryStateCity',
   countryStateCitySchema
 );

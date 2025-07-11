@@ -1,20 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const countryStateCityController = require('../../../controllers/countryStateCityController');
+const controller = require('../../../controllers/countryStateCityController');
 
-// POST    /api/country-state-city         ➝ Create new country with states & cities
-router.post('/', countryStateCityController.createCountry);
+// POST    ➝ Create new country
+router.post('/', controller.createCountry);
 
-// GET     /api/country-state-city         ➝ Get all countries (with optional filters)
-router.get('/', countryStateCityController.getAllCountries);
+// GET     ➝ Get all countries
+router.get('/', controller.getAllCountries);
 
-// GET     /api/country-state-city/:id     ➝ Get one country by ID
-router.get('/:id', countryStateCityController.getCountryById);
+// GET     ➝ Get all states of first country (for dropdown)
+router.get('/states/all', controller.getStates);
 
-// PUT     /api/country-state-city/:id     ➝ Update country
-router.put('/:id', countryStateCityController.updateCountry);
+// GET     ➝ Get cities of selected state
+router.get('/cities/:stateName', controller.getCitiesByState);
 
-// DELETE  /api/country-state-city/:id     ➝ Delete country
-router.delete('/:id', countryStateCityController.deleteCountry);
+// GET     ➝ Get one country by ID
+router.get('/:id', controller.getCountryById);
+
+// PUT     ➝ Update country
+router.put('/:id', controller.updateCountry);
+
+// DELETE  ➝ Delete country
+router.delete('/:id', controller.deleteCountry);
 
 module.exports = router;
