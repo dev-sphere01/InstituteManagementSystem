@@ -1,19 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useThemeStore } from '../../../../../../store';
+import { useNotification } from '../../../../../../services/NotificationService';
+import API from '../../../../../../services/API';
 
 const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = true }) => {
   const { isDarkMode } = useThemeStore();
-  const features = formData.features || {};
+  const notify = useNotification();
 
-  const featureList = [
-    { key: 'tShirt', label: 'T-Shirt' },
-    { key: 'itTools', label: 'IT Tools' },
-    { key: 'webDesigning', label: 'Web Designing' },
-    { key: 'tally', label: 'Tally' },
-    { key: 'gfxDtp', label: 'Graphics/DTP' },
-    { key: 'python', label: 'Python' },
-    { key: 'iot', label: 'IoT' },
-  ];
+  const features = formData.features || {};
+  const [availableFeatures, setAvailableFeatures] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchAvailableFeatures = async () => {
+    setLoading(true);
+    try {
+      const res = await API.get('/additional-features?status=active&type=feature');
+      setAvailableFeatures(res?.data || []);
+    } catch (err) {
+      notify('Failed to fetch features from server', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableFeatures();
+  }, []);
 
   const handleCheckboxChange = (key) => {
     setFormData((prev) => ({
@@ -35,28 +47,34 @@ const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
     >
       <h3 className="text-xl font-bold mb-6">Additional Features</h3>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {featureList.map(({ key, label }) => (
-          <label
-            key={key}
-            className={`flex items-center gap-3 text-sm font-medium ${
-              isDarkMode ? 'text-gray-200' : 'text-gray-800'
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={!!features[key]}
-              onChange={() => handleCheckboxChange(key)}
-              className={`w-4 h-4 rounded border focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
-                isDarkMode
-                  ? 'bg-gray-700 border-gray-600 text-blue-400 focus:ring-offset-gray-900'
-                  : 'bg-white border-gray-300 text-blue-600 focus:ring-offset-white'
+      {loading ? (
+        <p className="text-blue-400 animate-pulse">Loading features...</p>
+      ) : availableFeatures.length === 0 ? (
+        <p className="text-gray-400">No active features available.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {availableFeatures.map(({ _id, additionalFeatures }) => (
+            <label
+              key={_id}
+              className={`flex items-center gap-3 text-sm font-medium ${
+                isDarkMode ? 'text-gray-200' : 'text-gray-800'
               }`}
-            />
-            {label}
-          </label>
-        ))}
-      </div>
+            >
+              <input
+                type="checkbox"
+                checked={!!features[_id]}
+                onChange={() => handleCheckboxChange(_id)}
+                className={`w-4 h-4 rounded border focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
+                  isDarkMode
+                    ? 'bg-gray-700 border-gray-600 text-blue-400 focus:ring-offset-gray-900'
+                    : 'bg-white border-gray-300 text-blue-600 focus:ring-offset-white'
+                }`}
+              />
+              {additionalFeatures}
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
