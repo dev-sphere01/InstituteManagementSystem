@@ -70,7 +70,7 @@ app.use("/api/v1", apiV1Routes);
 // app.use('/api/v1/enquiry', enquiryRoutes);
 
 // Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 // Serve frontend static files
 // Set static folder - update path to point to Vite's output directory
@@ -85,9 +85,9 @@ app.get("/", swaggerUi.setup(swaggerSpec, {
 }));
 
 // Serve index.html for any route not matching API routes or Swagger UI
-app.get("*", (_, res) => {
-  res.sendFile(path.resolve(__dirname, "../frontend/dist/index.html"));
-});
+// app.get("*", (_, res) => {
+//   res.sendFile(path.resolve(__dirname, "../frontend/dist/index.html"));
+// });
 
 // Middleware for handling errors
 app.use(errorMiddleware); // Use error handling middleware to catch and handle errors

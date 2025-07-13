@@ -79,7 +79,7 @@ const UniversityMaster = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-1">
       {/* Header */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold">
@@ -93,34 +93,36 @@ const UniversityMaster = () => {
       </div>
 
       {/* Tabs */}
-      <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex space-x-6 text-sm font-medium`}>
-        <button
-          className={`flex items-center gap-1 py-2 px-2 border-b-2 ${
-            activeTab === 'all'
-              ? 'border-blue-500 text-blue-400'
-              : 'border-transparent text-gray-400 hover:text-white'
-          }`}
-          onClick={() => {
-            setEditingUniversity(null);
-            setActiveTab('all');
-          }}
-        >
-          📋 All Universities
-        </button>
-        <button
-          className={`flex items-center gap-1 py-2 px-2 border-b-2 ${
-            activeTab === 'add'
-              ? 'border-purple-500 text-purple-400'
-              : 'border-transparent text-gray-400 hover:text-white'
-          }`}
-          onClick={() => {
-            setEditingUniversity(null);
-            setActiveTab('add');
-          }}
-        >
-          ➕ Add University
-        </button>
-      </div>
+<div className="border-b border-gray-200 dark:border-gray-700 flex space-x-6 text-sm font-medium">
+  <button
+    className={`flex items-center gap-1 py-2 px-2 border-b-2 transition-colors duration-200
+      ${activeTab === 'all'
+        ? 'border-blue-500 text-blue-500 dark:border-blue-400 dark:text-blue-400'
+        : 'border-transparent text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white'
+      }`}
+    onClick={() => {
+      setEditingUniversity(null);
+      setActiveTab('all');
+    }}
+  >
+    📋 All Universities
+  </button>
+
+  <button
+    className={`flex items-center gap-1 py-2 px-2 border-b-2 transition-colors duration-200
+      ${activeTab === 'add'
+        ? 'border-purple-500 text-purple-500 dark:border-purple-400 dark:text-purple-400'
+        : 'border-transparent text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white'
+      }`}
+    onClick={() => {
+      setEditingUniversity(null);
+      setActiveTab('add');
+    }}
+  >
+    ➕ Add University
+  </button>
+</div>
+
 
       {/* Content Area */}
       <div>

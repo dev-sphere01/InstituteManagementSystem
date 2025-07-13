@@ -1,20 +1,25 @@
 const mongoose = require('mongoose');
 
 const courseSchema = new mongoose.Schema({
-  Code: {
+  courseCode: {
     type: String,
     required: true,
     unique: true,
     trim: true
   },
   centreCode: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    trim: true,
+    ref: 'CentreCode'  // Reference to the CentreCode model
+  },
+  courseName: {
     type: String,
     required: true,
     trim: true
   },
-  name: {
-    type: String,
-    required: true,
+  subjects: {
+    type: [String],
     trim: true
   },
   description: {
