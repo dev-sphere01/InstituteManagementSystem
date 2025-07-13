@@ -12,7 +12,6 @@ import RoleBasedRoutes from "./routes/RoleBasedRoutes";
 // Pages
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
-import DaisyUITest from "./pages/DaisyUITest";
 
 // Enquiry Pages
 import EnquiryForm from "./pages/enquiry/addEnquiry/EnquiryForm.jsx";
@@ -44,6 +43,7 @@ import InstitutionType from "./pages/masters/institutionType/InstitutionType.jsx
 // Student Pages
 import Student from "./pages/student/Student.jsx";
 import Admission from "./pages/admission/createAdmissions/Admission.jsx";
+import Fee from "./pages/fee/Fee.jsx";
 
 function App() {
   return (
@@ -65,7 +65,6 @@ function App() {
                 />
                 <Route path="auth-success" element={<AuthSuccess />} />
                 <Route path="auth-failed" element={<AuthFailed />} />
-                <Route path="daisyui-test" element={<DaisyUITest />} />
                 {/* Removed change-password from here */}
               </Route>
 
@@ -99,6 +98,9 @@ function App() {
 
                 {/* Admission Routes */}
                 <Route path="admission" element={<Admission />} />
+
+                {/* Fee Routes */}
+                <Route path="Fee" element={<Fee />} />
 
                 {/* Change Password - now protected */}
               </Route>
