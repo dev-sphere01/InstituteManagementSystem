@@ -49,7 +49,7 @@ import Fee from "./pages/fee/Fee.jsx";
 
 import StudentDetails from "./pages/student/StudentDetails.jsx";
 import ExamDetails from "./pages/student/examDetails/ExamDetails.jsx";
-import StudentPerformance from "./pages/student/StudentPerformance.jsx";
+import StudentPerformance from "./pages/student/examDetails/components/StudentPerformance.jsx";
 import AddistionalFeatures from "./pages/masters/additionalFeatures/AdditionalFeatures.jsx";
 
 
@@ -117,6 +117,8 @@ function App() {
 
                 {/* Student Details Table */}
                 <Route path="student-details" element={<StudentDetails />} />
+
+
 
                 {/* Exam Details and Student Performance */}
                 <Route path="exam-details/:studentId" element={<ExamDetails />} />
