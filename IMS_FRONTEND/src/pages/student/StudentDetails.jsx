@@ -1,18 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../services/API';
+import TableService from '../../services/TableService';
 
 const StudentDetails = () => {
   const navigate = useNavigate();
   const [students, setStudents] = useState([]);
   const [allStudents, setAllStudents] = useState([]);
-  const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [serverPagination, setServerPagination] = useState(true);
+  const [pageIndex, setPageIndex] = useState(0);
 
   // Fetch real student data from admission API
   const fetchStudents = async () => {
@@ -21,7 +19,7 @@ const StudentDetails = () => {
       const response = await API.get('/admissions');
       const admissions = response;
       console.log('admissions:', admissions);
-      
+
       // Transform admission data to student format for the table
       const transformedStudents = admissions.map(admission => ({
         _id: admission._id,
@@ -36,13 +34,17 @@ const StudentDetails = () => {
         category: admission.category,
         preferredModeOfLearning: admission.preferredModeOfLearning
       }));
-      
+
       console.log('transformedStudents:', transformedStudents);
       setAllStudents(transformedStudents);
+      setTotal(transformedStudents.length);
+      setStudents(transformedStudents);
     } catch (error) {
       console.error('Error fetching students:', error);
       // Fallback to empty array if API fails
       setAllStudents([]);
+      setTotal(0);
+      setStudents([]);
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ const StudentDetails = () => {
   // Calculate fee based on course and selected extras
   const calculateFee = (admission) => {
     let baseFee = 45000; // Default base fee
-    
+
     // Adjust base fee based on course
     const course = typeof admission.courseApplied === 'string' ? admission.courseApplied.toLowerCase() : '';
     if (course.includes('computer science') || course.includes('bca') || course.includes('mca')) {
@@ -79,49 +81,7 @@ const StudentDetails = () => {
 
   useEffect(() => {
     fetchStudents();
-  }, []);
-
-  useEffect(() => {
-    // Filter and sort students based on search and sort criteria
-    let filtered = allStudents.filter(s =>
-      (typeof s.name === 'string' && s.name.toLowerCase().includes(search.toLowerCase())) ||
-      (typeof s.studentId === 'string' && s.studentId.toLowerCase().includes(search.toLowerCase())) ||
-      (typeof s.course === 'string' && s.course.toLowerCase().includes(search.toLowerCase())) ||
-      (s.contactNumber && s.contactNumber.includes(search)) ||
-      (typeof s.emailAddress === 'string' && s.emailAddress.toLowerCase().includes(search.toLowerCase()))
-    );
-    
-    filtered = filtered.sort((a, b) => {
-      let aVal = a[sortKey];
-      let bVal = b[sortKey];
-      
-      // Handle different data types
-      if (sortKey === 'totalFee') {
-        aVal = Number(aVal) || 0;
-        bVal = Number(bVal) || 0;
-      } else {
-        aVal = typeof aVal === 'string' ? aVal.toLowerCase() : String(aVal);
-        bVal = typeof bVal === 'string' ? bVal.toLowerCase() : String(bVal);
-      }
-      
-      if (sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      }
-      return aVal < bVal ? 1 : -1;
-    });
-    
-    setTotal(filtered.length);
-    setStudents(filtered.slice((page - 1) * pageSize, page * pageSize));
-  }, [allStudents, search, sortKey, sortOrder, page, pageSize]);
-
-  const handleSort = (key) => {
-    if (sortKey === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortOrder('asc');
-    }
-  };
+  }, [pageIndex]);
 
   const handleAction = (action, student) => {
     if (action === 'Exam Details') {
@@ -132,6 +92,49 @@ const StudentDetails = () => {
       navigate(`/dashboard/student-profile/${student._id}`);
     }
   };
+
+  const columns = useMemo(() => [
+    {
+      header: 'Student ID',
+      accessorKey: 'studentId',
+    },
+    {
+      header: 'Name',
+      accessorKey: 'name',
+    },
+    {
+      header: 'Course Applied',
+      accessorKey: 'course',
+    },
+    {
+      header: 'Status',
+      accessorKey: 'status',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 rounded text-xs font-medium ${
+          row.original.status === 'Submitted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+          row.original.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+          'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+        }`}>
+          {row.original.status}
+        </span>
+      ),
+    },
+    {
+      header: 'Total Fee',
+      accessorKey: 'totalFee',
+      cell: ({ row }) => `₹${row.original.totalFee.toLocaleString()}`,
+    },
+    {
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className="space-x-1 text-center">
+          <button onClick={() => handleAction('View Details', row.original)} className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded transition text-xs">View Details</button>
+          <button onClick={() => handleAction('Exam Details', row.original)} className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition text-xs">Exam Details</button>
+          <button onClick={() => handleAction('Student Performance', row.original)} className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition text-xs">Performance</button>
+        </div>
+      ),
+    },
+  ], [handleAction]);
 
   return (
     <div className="p-6 text-gray-800 dark:text-gray-100 transition-colors">
@@ -163,96 +166,16 @@ const StudentDetails = () => {
         </div>
       </div>
 
-      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <input
-          type="text"
-          placeholder="Search by name, ID, course, contact, or email..."
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1); }}
-          className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded px-3 py-2 w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      <div className="overflow-x-auto rounded shadow">
-        <table className="min-w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-gray-800">
-              <th className="p-2 cursor-pointer select-none text-center" onClick={() => handleSort('studentId')}>Student ID{sortKey === 'studentId' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}</th>
-              <th className="p-2 cursor-pointer select-none text-center" onClick={() => handleSort('name')}>Name{sortKey === 'name' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}</th>
-              <th className="p-2 cursor-pointer select-none text-center" onClick={() => handleSort('course')}>Course Applied{sortKey === 'course' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}</th>
-              <th className="p-2 cursor-pointer select-none text-center" onClick={() => handleSort('status')}>Status{sortKey === 'status' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}</th>
-              <th className="p-2 cursor-pointer select-none text-center" onClick={() => handleSort('totalFee')}>Total Fee{sortKey === 'totalFee' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}</th>
-              <th className="p-2 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="text-center p-4">Loading...</td>
-              </tr>
-            ) : students.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center p-4">No students found.</td>
-              </tr>
-            ) : students.map(student => (
-              <tr key={student._id} className="border-t border-gray-200 dark:border-gray-700">
-                <td className="p-2 text-center">{student.studentId}</td>
-                <td className="p-2 text-center">{student.name}</td>
-                <td className="p-2 text-center">{student.course}</td>
-                <td className="p-2 text-center">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    student.status === 'Submitted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                    student.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                    'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                  }`}>
-                    {student.status}
-                  </span>
-                </td>
-                <td className="p-2 text-center">₹{student.totalFee.toLocaleString()}</td>
-                <td className="p-2 space-x-1 text-center">
-                  <button onClick={() => handleAction('View Details', student)} className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded transition text-xs">View Details</button>
-                  <button onClick={() => handleAction('Exam Details', student)} className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition text-xs">Exam Details</button>
-                  <button onClick={() => handleAction('Student Performance', student)} className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition text-xs">Performance</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4">
-        <div>
-          Page {page} of {Math.ceil(total / pageSize) || 1}
-        </div>
-
-        <div className="space-x-2">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <button
-            disabled={page * pageSize >= total}
-            onClick={() => setPage(page + 1)}
-            className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-
-        <select
-          value={pageSize}
-          onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-          className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded px-2 py-1"
-        >
-          {[10, 20, 50].map(size => (
-            <option key={size} value={size}>{size} / page</option>
-          ))}
-        </select>
-      </div>
+      <TableService
+        columns={columns}
+        data={allStudents}
+        loading={loading}
+        serverPagination={serverPagination}
+        pageCount={Math.ceil(total / 10)}
+        onPaginationChange={({ pageIndex }) => {
+          setPageIndex(pageIndex);
+        }}
+      />
     </div>
   );
 };

@@ -1,35 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-
-const DUMMY_PERFORMANCE = {
-  'STU001': { grade: 'A', attendance: 95, participation: 90, discipline: 98 },
-  'STU002': { grade: 'B', attendance: 88, participation: 85, discipline: 92 },
-  'STU003': { grade: 'A+', attendance: 98, participation: 95, discipline: 99 },
-  'STU004': { grade: 'B+', attendance: 90, participation: 88, discipline: 95 },
-  'STU005': { grade: 'A', attendance: 93, participation: 91, discipline: 97 },
-};
-
-const DUMMY_STUDENTS = [
-  { studentId: 'STU001', name: 'Alice Johnson', course: 'B.Sc Computer Science' },
-  { studentId: 'STU002', name: 'Bob Smith', course: 'B.A Economics' },
-  { studentId: 'STU003', name: 'Charlie Lee', course: 'B.Com' },
-  { studentId: 'STU004', name: 'Diana Patel', course: 'B.Sc Mathematics' },
-  { studentId: 'STU005', name: 'Ethan Brown', course: 'BBA' },
-];
+import API from '../../services/API';
 
 const StudentPerformance = () => {
   const { studentId } = useParams();
   const navigate = useNavigate();
-  const student = DUMMY_STUDENTS.find(s => s.studentId === studentId);
-  const perf = DUMMY_PERFORMANCE[studentId];
+  const [student, setStudent] = useState(null);
+  const [perf, setPerf] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [editMode, setEditMode] = React.useState(!perf);
-  const [form, setForm] = React.useState(perf || {
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState({
     grade: '',
     attendance: '',
     participation: '',
     discipline: ''
   });
+
+  useEffect(() => {
+    const fetchStudentPerformance = async () => {
+      setLoading(true);
+      try {
+        const response = await API.get(`/student-performance/${studentId}`);
+        console.log('API Response:', response);
+
+        if (response.studentPerformance) {
+          setPerf(response.studentPerformance);
+        }
+
+        // Fetch student details separately (assuming you have a student details endpoint)
+        const studentDetailsResponse = await API.get(`/admissions/${studentId}`); // Replace with your actual endpoint
+        setStudent(studentDetailsResponse);
+      } catch (error) {
+        console.error('Error fetching student performance:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentPerformance();
+  }, [studentId]);
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -40,6 +50,7 @@ const StudentPerformance = () => {
     setEditMode(false);
   };
 
+  if (loading) return <div className="p-6 text-gray-800 dark:text-gray-100">Loading...</div>;
   if (!student) return <div className="p-6 text-gray-800 dark:text-gray-100">Student not found.</div>;
 
   return (
@@ -48,12 +59,12 @@ const StudentPerformance = () => {
         &larr; Back
       </button>
 
-      <h2 className="text-xl font-bold mb-4">Performance for {student.name}</h2>
+      <h2 className="text-xl font-bold mb-4">Performance for {student.fullName}</h2>
 
       <div className="bg-white dark:bg-gray-800 rounded shadow p-4 mb-4 border border-gray-200 dark:border-gray-700">
-        <div><b>Registration No:</b> {student.studentId}</div>
-        <div><b>Name:</b> {student.name}</div>
-        <div><b>Course:</b> {student.course}</div>
+        <div><b>Registration No:</b> {student.generatedRegNo || student.formNo}</div>
+        <div><b>Name:</b> {student.fullName}</div>
+        <div><b>Course:</b> {student.courseApplied}</div>
       </div>
 
       {editMode ? (
