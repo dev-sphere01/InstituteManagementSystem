@@ -11,6 +11,7 @@ const PrimarySideBar = () => {
   const mainNavItems = [
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
     { path: '/dashboard/admission', icon: 'document-add', label: 'Admission' },
+    { path: '/dashboard/fee', icon: 'document-add', label: 'Fee' },
     { path: '/dashboard/student-details', icon: 'users', label: 'Student Details' },
     { path: '/dashboard/reports', icon: 'document', label: 'Reports' },
     { path: '/dashboard/settings', icon: 'settings', label: 'Settings' },
@@ -149,7 +150,7 @@ const PrimarySideBar = () => {
 
   return (
     <aside
-      className={`bg-gray-900 text-white transition-all text-sm duration-300 ease-in-out ${isPrimarySidebarOpen ? 'w-50 ' : 'w-0 md:w-16'} overflow-hidden h-full fixed md:static z-50 top-16 md:top-0 left-0 bottom-0`}
+      className={`bg-gray-900 text-white transition-all text-sm duration-300 ease-in-out ${isPrimarySidebarOpen ? 'w-60' : 'w-0 md:w-16'} overflow-hidden h-full fixed md:static z-50 top-16 md:top-0 left-0 bottom-0`}
     >
       <div className="h-full flex flex-col">
         {/* Sidebar header */}

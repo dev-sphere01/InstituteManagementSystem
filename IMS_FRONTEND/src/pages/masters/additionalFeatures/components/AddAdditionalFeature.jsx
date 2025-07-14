@@ -19,7 +19,7 @@ const AddAdditionalFeature = ({ onSubmit, onCancel, loading }) => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.additionalFeatures.trim()) newErrors.additionalFeatures = 'Feature name is required';
-    if (!formData.type) newErrors.type = 'Type is required';
+    // if (!formData.type) newErrors.type = 'Type is required';//removed from model
     if (!formData.status) newErrors.status = 'Status is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -71,7 +71,7 @@ const AddAdditionalFeature = ({ onSubmit, onCancel, loading }) => {
           </div>
 
           {/* Type */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium">Type *</label>
             <select
               name="type"
@@ -86,7 +86,7 @@ const AddAdditionalFeature = ({ onSubmit, onCancel, loading }) => {
               <option value="upgrade">Upgrade</option>
             </select>
             {errors.type && <p className={errorClasses}>{errors.type}</p>}
-          </div>
+          </div> */}
 
           {/* Status */}
           <div>
