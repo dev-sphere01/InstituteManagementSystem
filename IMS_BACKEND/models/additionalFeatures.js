@@ -13,15 +13,15 @@ const AdditionalFeaturesSchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, 'Description cannot exceed 100 characters']
   },
-  type: {
-    type: String,
-    required: [true, 'Type is required'],
-    trim: true,
-    enum: {
-      values: ['feature', 'addon', 'service', 'upgrade'],
-      message: 'Type must be one of: feature, addon, service, upgrade'
-    }
-  },
+  // type: {
+  //   type: String,
+  //   required: [true, 'Type is required'],
+  //   trim: true,
+  //   enum: {
+  //     values: ['feature', 'addon', 'service', 'upgrade'],
+  //     message: 'Type must be one of: feature, addon, service, upgrade'
+  //   }
+  // },
   status: {
     type: String,
     required: [true, 'Status is required'],

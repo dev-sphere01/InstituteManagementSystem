@@ -30,7 +30,7 @@ router.use('/boards', boardsRoutes);
 router.use('/universities', universityRoutes);
 router.use('/batches', batchRoutes);
 router.use('/goals', goalsRoutes);
-router.use('/state-and-city', stateAndCityRoutes);
+router.use('/country-state-city', stateAndCityRoutes);
 router.use('/sessions', sessionRoutes);
 router.use('/courses', coursesRoutes);
 router.use('/additional-Features', additionalFeaturesRoutes);

@@ -28,7 +28,7 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  
+
   // OTP related states
   const [otpModal, setOtpModal] = useState(false);
   const [otp, setOtp] = useState('');
@@ -36,6 +36,32 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
   const [resendTimer, setResendTimer] = useState(0);
   const [emailVerified, setEmailVerified] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
+
+  // States to manage state and cities
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
+  
+  useEffect(() => {
+    fetchStatesAndCities();
+  }, []);
+
+  // Fetching states and cities
+  const fetchStatesAndCities = async () => {
+    try {
+      const res = await API.get('/country-state-city'); // Don't forget the `/` at start if needed
+      const countryData = res?.data;
+      console.log(countryData[0])
+      if (countryData?.states) {
+        setStates(countryData.states.map((state) => state.stateName));
+        setCities(countryData.states); // Save full state object for future city lookup
+        console.log("All States:", countryData.states.map(s => s.stateName));
+        console.log("Full Data:", countryData.states);
+      }
+    } catch (error) {
+      console.error("Failed to fetch country, states, and cities", error);
+    }
+  };
+
 
   useEffect(() => {
     setForm((prev) => ({ ...prev, ...formData }));
@@ -91,7 +117,7 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
-    
+
     // Reset email verification if email is changed
     if (name === 'emailAddress' && emailVerified) {
       setEmailVerified(false);
@@ -168,7 +194,7 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
 
   const handleResendOtp = async () => {
     if (resendTimer > 0) return;
-    
+
     setResendTimer(120); // Reset timer
     await handleSendOtp();
   };
@@ -192,17 +218,15 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
   };
 
   const inputClass = (field) =>
-    `w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
-      errors[field]
-        ? 'border-red-500 focus:ring-red-400'
-        : isDarkMode
+    `w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${errors[field]
+      ? 'border-red-500 focus:ring-red-400'
+      : isDarkMode
         ? 'border-gray-700 bg-[#23272f] text-white placeholder-gray-400'
         : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400'
     } ${field === 'emailAddress' && emailVerified ? 'bg-green-50 border-green-300' : ''}`;
 
-  const labelClass = `block text-sm font-semibold mb-1 ${
-    isDarkMode ? 'text-gray-200' : 'text-gray-800'
-  }`;
+  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'
+    }`;
 
   const renderInput = ({ label, name, required = false, type = 'text', isTextArea = false }) => (
     <div>
@@ -249,15 +273,14 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
           type="button"
           onClick={handleSendOtp}
           disabled={sendingOtp || emailVerified}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-            emailVerified
-              ? 'bg-green-500 text-white cursor-not-allowed'
-              : sendingOtp
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${emailVerified
+            ? 'bg-green-500 text-white cursor-not-allowed'
+            : sendingOtp
               ? 'bg-blue-400 text-white cursor-not-allowed'
               : isDarkMode
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-          }`}
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
         >
           {emailVerified ? 'Verified' : sendingOtp ? 'Sending...' : 'Send OTP'}
         </button>
@@ -276,11 +299,10 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
     <>
       <form
         onSubmit={handleSubmit}
-        className={`w-full mt-8 rounded-2xl shadow-lg p-8 mx-auto ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
-            : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
-        }`}
+        className={`w-full mt-8 rounded-2xl shadow-lg p-8 mx-auto ${isDarkMode
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
+          : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
+          }`}
       >
         <h2 className={`text-2xl font-bold mb-8 tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>
           Step 2: Contact Details
@@ -310,11 +332,10 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
           <button
             type="button"
             onClick={onBack}
-            className={`px-6 py-2 rounded-lg shadow font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-              isDarkMode
-                ? 'border border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700 hover:text-white'
-                : 'border border-gray-300 text-blue-700 bg-white hover:bg-blue-50 hover:text-blue-900'
-            }`}
+            className={`px-6 py-2 rounded-lg shadow font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isDarkMode
+              ? 'border border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700 hover:text-white'
+              : 'border border-gray-300 text-blue-700 bg-white hover:bg-blue-50 hover:text-blue-900'
+              }`}
             disabled={loading}
           >
             Back
@@ -322,11 +343,10 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
           <button
             type="submit"
             disabled={loading}
-            className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-              loading
-                ? 'bg-blue-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
-            }`}
+            className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading
+              ? 'bg-blue-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
+              }`}
           >
             {loading ? 'Saving...' : 'Next'}
           </button>
@@ -336,24 +356,22 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
       {/* OTP Modal */}
       {otpModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`bg-white rounded-lg p-6 w-full max-w-md mx-4 ${
-            isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-          }`}>
+          <div className={`bg-white rounded-lg p-6 w-full max-w-md mx-4 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+            }`}>
             <h3 className="text-lg font-semibold mb-4">Verify Email</h3>
             <p className="text-sm mb-4 text-gray-600 dark:text-gray-400">
               Enter the OTP sent to {form.emailAddress}
             </p>
-            
+
             <input
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               placeholder="Enter OTP"
-              className={`w-full px-4 py-2 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isDarkMode
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                  : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
+              className={`w-full px-4 py-2 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode
+                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
               maxLength={6}
             />
 
@@ -362,11 +380,10 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
                 type="button"
                 onClick={handleResendOtp}
                 disabled={resendTimer > 0}
-                className={`text-sm ${
-                  resendTimer > 0
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-blue-500 hover:text-blue-600 cursor-pointer'
-                }`}
+                className={`text-sm ${resendTimer > 0
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-blue-500 hover:text-blue-600 cursor-pointer'
+                  }`}
               >
                 {resendTimer > 0 ? `Resend in ${formatTime(resendTimer)}` : 'Resend OTP'}
               </button>
@@ -379,11 +396,10 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
                   setOtpModal(false);
                   setOtp('');
                 }}
-                className={`flex-1 px-4 py-2 rounded-lg border transition-all duration-200 ${
-                  isDarkMode
-                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
+                className={`flex-1 px-4 py-2 rounded-lg border transition-all duration-200 ${isDarkMode
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
               >
                 Cancel
               </button>
@@ -391,11 +407,10 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
                 type="button"
                 onClick={handleVerifyOtp}
                 disabled={otpLoading || !otp.trim()}
-                className={`flex-1 px-4 py-2 rounded-lg text-white transition-all duration-200 ${
-                  otpLoading || !otp.trim()
-                    ? 'bg-blue-400 cursor-not-allowed'
-                    : 'bg-blue-500 hover:bg-blue-600'
-                }`}
+                className={`flex-1 px-4 py-2 rounded-lg text-white transition-all duration-200 ${otpLoading || !otp.trim()
+                  ? 'bg-blue-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+                  }`}
               >
                 {otpLoading ? 'Verifying...' : 'Verify'}
               </button>
