@@ -46,7 +46,7 @@ import CenterCode from "./pages/masters/centerCode/CenterCode.jsx";
 import Student from "./pages/student/Student.jsx";
 import Admission from "./pages/admission/createAdmissions/Admission.jsx";
 import StudentDetails from "./pages/student/StudentDetails.jsx";
-import ExamDetails from "./pages/student/ExamDetails.jsx";
+import ExamDetails from "./pages/student/examDetails/ExamDetails.jsx";
 import StudentPerformance from "./pages/student/StudentPerformance.jsx";
 import AddistionalFeatures from "./pages/masters/additionalFeatures/AdditionalFeatures.jsx";
 
