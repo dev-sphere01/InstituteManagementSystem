@@ -44,9 +44,7 @@ import CenterCode from "./pages/masters/centerCode/CenterCode.jsx";
 // Student Pages
 import Student from "./pages/student/Student.jsx";
 import Admission from "./pages/admission/createAdmissions/Admission.jsx";
-
 import Fee from "./pages/fee/Fee.jsx";
-
 import StudentDetails from "./pages/student/StudentDetails.jsx";
 import ExamDetails from "./pages/student/examDetails/ExamDetails.jsx";
 import StudentPerformance from "./pages/student/examDetails/components/StudentPerformance.jsx";
@@ -117,8 +115,6 @@ function App() {
 
                 {/* Student Details Table */}
                 <Route path="student-details" element={<StudentDetails />} />
-
-
 
                 {/* Exam Details and Student Performance */}
                 <Route path="exam-details/:studentId" element={<ExamDetails />} />
