@@ -44,7 +44,6 @@ import CenterCode from "./pages/masters/centerCode/CenterCode.jsx";
 // Student Pages
 import Student from "./pages/student/Student.jsx";
 import Admission from "./pages/admission/createAdmissions/Admission.jsx";
-
 import Fee from "./pages/fee/Fee.jsx";
 
 import StudentDetails from "./pages/student/AllStudents/StudentDetails.jsx";

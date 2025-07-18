@@ -138,7 +138,10 @@ const API = {
     getById: (id) => instance.get(`/logs/${id}`),
     delete: (id) => instance.delete(`/logs/${id}`),
     export: (params = {}) => instance.get('/logs/export', { params, responseType: 'blob' })
-  }
+  },
+
+
+  
 };
 
 export default API;

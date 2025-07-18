@@ -20,11 +20,12 @@ const OuterLayout = () => {
           <div className="w-full lg:w-1/2 hidden lg:block">
             <div className="pr-8">
               <h1 className={`text-4xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-800'} transition-colors duration-300`}>
-                Welcome to Our <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">Futuristic Platform</span>
+                Welcome to <br/><span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">Institute Management System</span><br/>
+                By <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">DevSphere</span>
               </h1>
               <p className={`text-xl mb-8 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} transition-colors duration-300`}>
                 Join thousands of users who trust our platform for their daily needs.
-                Get started today and experience the difference.
+                Get started today and experience the difference. 
               </p>
               <div className="space-y-4">
                 <div className="flex items-start">
