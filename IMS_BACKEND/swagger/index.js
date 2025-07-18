@@ -663,7 +663,7 @@ This API uses cookies for authentication. Follow these steps:
             fathersName: { type: 'string' },
             fathersOccupation: {type: 'string'},
             fathersJobRole: { type: 'string' },
-            departmentOrCompany: { type: 'string' },
+            fathersDepartmentOrCompany: { type: 'string' },
             mothersName: { type: 'string' },
             guardianName: { type: 'string' },
             guardianRelation: { type: 'string' },
