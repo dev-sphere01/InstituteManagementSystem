@@ -314,7 +314,7 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
           className={`${inputClass(name)} resize-none`}
         />
       ) : (
-        <input
+        <input  
           type={type}
           name={name}
           value={form[name]}
@@ -468,8 +468,8 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {renderInput({ label: 'Contact Number', name: 'contactNumber', required: true })}
-          {renderInput({ label: 'Alternate Contact Number', name: 'alternateContactNumber' })}
+          {renderInput({ label: 'Contact Number', name: 'contactNumber', required: true,type:'number' })}
+          {renderInput({ label: 'Alternate Contact Number', name: 'alternateContactNumber',type:'number' })}
           {renderEmailInput()}
           {renderStateDropdown()}
           {renderCityDropdown()}
