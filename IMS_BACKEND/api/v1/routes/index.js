@@ -17,6 +17,7 @@ const sessionRoutes = require('./sessionRoutes');
 const coursesRoutes  = require('./coursesRoutes')
 const additionalFeaturesRoutes = require('./additionalFeaturesRoute');
 const emailVerificationRoutes = require('./emailVerificationRoutes');
+const studentRoutes = require('./studentRoutes');
 //const otpRoutes = require('./otpRoutes');
 // Mount routes
 router.use('/users', userRoutes);
@@ -34,6 +35,7 @@ router.use('/country-state-city', stateAndCityRoutes);
 router.use('/sessions', sessionRoutes);
 router.use('/courses', coursesRoutes);
 router.use('/additional-Features', additionalFeaturesRoutes);
+router.use('/dashboard', studentRoutes);
 
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const AdmissionDetails = require('../models/admission');
+const ApiFeatures = require("../utils/ApiFeatures"); 
 
 // Create a new admission
 exports.createAdmission = async (req, res) => {
@@ -15,8 +16,25 @@ exports.createAdmission = async (req, res) => {
 // Get all admissions
 exports.getAllAdmissions = async (req, res) => {
   try {
-    const admissions = await AdmissionDetails.find();
-    res.status(200).json(admissions);
+    const resultPerPage = Number(req.query.limit) || 10; // dynamic limit from API
+    const apiFeature = new ApiFeatures(AdmissionDetails.find(), req.query)
+      .search()
+      .filter()
+      .paginate(resultPerPage);
+
+    const admissions = await apiFeature.query;
+
+    // Optional: Total count for frontend pagination control
+    const totalCount = await AdmissionDetails.countDocuments();
+
+    res.status(200).json({
+      success: true,
+      count: admissions.length,
+      totalCount,
+      page: Number(req.query.page) || 1,
+      limit: resultPerPage,
+      admissions,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

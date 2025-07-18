@@ -11,8 +11,8 @@ router.post('/', validateAdmission, admissionController.createAdmission);
 // GET all admissions
 router.get('/', admissionController.getAllAdmissions);
 
-// SEARCH by query
-router.get('/search/query', admissionController.searchAdmission);
+// SEARCH by query - no need as in all data also allowed to search
+// router.get('/search/query', admissionController.searchAdmission);
 
 // GET admission by ID
 router.get('/:id', admissionController.getAdmissionById);

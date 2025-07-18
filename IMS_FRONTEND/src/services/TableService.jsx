@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -21,9 +21,10 @@ const TableService = ({
   pageCount: controlledPageCount,
   onPaginationChange,
   loading = false,
+  globalFilter, // <-- controlled input
+  onGlobalFilterChange, // <-- controlled updater
 }) => {
   const { isDarkMode } = useThemeStore();
-  const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [pagination, setPagination] = useState({
@@ -31,7 +32,6 @@ const TableService = ({
     pageSize: initialPageSize,
   });
 
-  // If using server pagination, call onPaginationChange when pagination changes
   useEffect(() => {
     if (serverPagination && typeof onPaginationChange === "function") {
       onPaginationChange(pagination);
@@ -48,7 +48,7 @@ const TableService = ({
       columnFilters,
       pagination,
     },
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
@@ -61,21 +61,35 @@ const TableService = ({
     debugTable: false,
   });
 
-  // Theme classes
   const tableBg = isDarkMode ? "bg-gray-900" : "bg-white";
   const tableText = isDarkMode ? "text-gray-100" : "text-gray-900";
   const headerBg = isDarkMode ? "bg-gray-800" : "bg-gray-100";
   const borderColor = isDarkMode ? "border-gray-700" : "border-gray-200";
   const rowHover = isDarkMode ? "hover:bg-gray-800" : "hover:bg-blue-50";
 
+  // Debounced global search
+  const [searchValue, setSearchValue] = useState(globalFilter ?? "");
+  useEffect(() => {
+    setSearchValue(globalFilter ?? "");
+  }, [globalFilter]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchValue !== globalFilter) {
+        onGlobalFilterChange?.(searchValue);
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchValue]);
+
   return (
     <div className="w-full overflow-x-auto mt-2">
       {/* Global Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 m-1">
         <input
           type="text"
-          value={globalFilter ?? ""}
-          onChange={(e) => setGlobalFilter(e.target.value)}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Search..."
           className={`px-3 py-2 rounded border ${borderColor} ${tableText} ${
             isDarkMode ? "bg-gray-800" : "bg-white"
@@ -100,6 +114,7 @@ const TableService = ({
           </select>
         </div>
       </div>
+
       <table
         className={`min-w-full ${tableBg} ${tableText} border ${borderColor} rounded-lg shadow-sm`}
       >
@@ -122,7 +137,6 @@ const TableService = ({
                       header.column.columnDef.header,
                       header.getContext()
                     )}
-                    {/* Sort indicator */}
                     {header.column.getCanSort() && (
                       <span>
                         {header.column.getIsSorted() === "asc"
@@ -187,7 +201,8 @@ const TableService = ({
           )}
         </tbody>
       </table>
-      {/* Pagination Controls */}
+
+      {/* Pagination */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3">
         <div className="flex items-center gap-2">
           <button

@@ -48,7 +48,6 @@ const AddSession = ({ onSessionCreated, onCancel, loading: parentLoading }) => {
       delete payload.__v;
       console.log("About to post:", payload);
       const res = await API.post('/sessions', payload);
-      console.log("API response:", res);
       if (typeof onSessionCreated === 'function') onSessionCreated(res.data.data);
       notify('Session added successfully', 'success');
       if (onCancel) onCancel();
