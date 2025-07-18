@@ -47,7 +47,7 @@ import Admission from "./pages/admission/createAdmissions/Admission.jsx";
 
 import Fee from "./pages/fee/Fee.jsx";
 
-import StudentDetails from "./pages/student/StudentDetails.jsx";
+import StudentDetails from "./pages/student/AllStudents/StudentDetails.jsx";
 import ExamDetails from "./pages/student/ExamDetails.jsx";
 import StudentPerformance from "./pages/student/StudentPerformance.jsx";
 import StudentProfile from "./pages/student/StudentProfile.jsx";
@@ -126,7 +126,7 @@ function App() {
                   element={<StudentPerformance />}
                 />
                 <Route
-                  path="student-profile/:id"
+                  path="student-details/:id"
                   element={<StudentProfile />}
                 />
               </Route>
