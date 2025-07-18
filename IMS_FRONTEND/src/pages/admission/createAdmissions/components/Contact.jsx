@@ -3,7 +3,6 @@ import { useThemeStore } from '../../../../store';
 import { useNotification } from '../../../../services/NotificationService';
 import API from '../../../../services/API';
 
-
 const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, admissionFormid = '' }) => {
   const { isDarkMode } = useThemeStore();
   const notify = useNotification();
@@ -13,7 +12,7 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
     alternateContactNumber: '',
     emailAddress: '',
     state: '',
-    district: '',
+    district: '', // This will be renamed to city
     address: '',
     pinCode: '',
     fathersName: '',
@@ -37,10 +36,16 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
   const [emailVerified, setEmailVerified] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
 
-  // States to manage state and cities
-  const [states, setStates] = useState([]);
-  const [cities, setCities] = useState([]);
+  // States and cities data
+  const [statesData, setStatesData] = useState([]);
+  const [availableCities, setAvailableCities] = useState([]);
   
+  // Dropdown states
+  const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const [stateSearch, setStateSearch] = useState('');
+  const [citySearch, setCitySearch] = useState('');
+
   useEffect(() => {
     fetchStatesAndCities();
   }, []);
@@ -48,20 +53,39 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
   // Fetching states and cities
   const fetchStatesAndCities = async () => {
     try {
-      const res = await API.get('/country-state-city'); // Don't forget the `/` at start if needed
-      const countryData = res?.data;
-      console.log(countryData[0])
-      if (countryData?.states) {
-        setStates(countryData.states.map((state) => state.stateName));
-        setCities(countryData.states); // Save full state object for future city lookup
-        console.log("All States:", countryData.states.map(s => s.stateName));
-        console.log("Full Data:", countryData.states);
+      const res = await API.get('/country-state-city');
+      console.log("Full API Response:", res);
+      
+      // Handle different possible response structures
+      let countryData;
+      if (res?.data) {
+        countryData = res.data;
+      } else if (res) {
+        countryData = res;
+      }
+      
+      console.log("Country Data:", countryData);
+      
+      // Check if countryData is an array (multiple countries) or single object
+      if (Array.isArray(countryData)) {
+        // If it's an array, get the first country (assuming India)
+        const indiaData = countryData.find(country => 
+          country.countryName === 'India' || country.name === 'India'
+        ) || countryData[0];
+        
+        if (indiaData?.states) {
+          setStatesData(indiaData.states);
+          console.log("States from array:", indiaData.states);
+        }
+      } else if (countryData?.states) {
+        // Single country object
+        setStatesData(countryData.states);
+        console.log("States from single object:", countryData.states);
       }
     } catch (error) {
       console.error("Failed to fetch country, states, and cities", error);
     }
   };
-
 
   useEffect(() => {
     setForm((prev) => ({ ...prev, ...formData }));
@@ -77,6 +101,46 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
     }
     return () => clearInterval(interval);
   }, [resendTimer]);
+
+  // Filter states based on search
+  const filteredStates = statesData.filter(state =>
+    state.name && state.name.toLowerCase().includes(stateSearch.toLowerCase())
+  );
+
+  // Filter cities based on search
+  const filteredCities = availableCities.filter(city =>
+    city.name && city.name.toLowerCase().includes(citySearch.toLowerCase())
+  );
+
+  // Handle state selection
+  const handleStateSelect = (selectedState) => {
+    setForm(prev => ({ 
+      ...prev, 
+      state: selectedState.name,
+      district: '' // Reset city when state changes
+    }));
+    setAvailableCities(selectedState.cities || []);
+    setStateSearch('');
+    setStateDropdownOpen(false);
+    setCitySearch('');
+    
+    // Clear state error if exists
+    if (errors.state) {
+      setErrors(prev => ({ ...prev, state: '' }));
+    }
+  };
+
+  // Handle city selection
+  const handleCitySelect = (selectedCity) => {
+    setForm(prev => ({ ...prev, district: selectedCity.name }));
+    setCitySearch('');
+    setCityDropdownOpen(false);
+    
+    // Clear city error if exists
+    if (errors.district) {
+      setErrors(prev => ({ ...prev, district: '' }));
+    }
+  };
 
   const validate = () => {
     if (!validationsEnabled) {
@@ -139,7 +203,6 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
 
     setSendingOtp(true);
     try {
-      // Replace with your actual API endpoint
       const response = await API.post('/email/send-otp', {
         email: form.emailAddress,
         formid: admissionFormid,
@@ -147,7 +210,7 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
 
       if (response.ok) {
         setOtpModal(true);
-        setResendTimer(120); // 2 minutes
+        setResendTimer(120);
         notify('OTP sent successfully to your email', 'success');
       } else {
         throw new Error('Failed to send OTP');
@@ -168,7 +231,6 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
 
     setOtpLoading(true);
     try {
-      // Replace with your actual API endpoint
       const response = await API.post('/email/verify-otp', {
         email: form.emailAddress,
         otp: otp,
@@ -194,8 +256,7 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
 
   const handleResendOtp = async () => {
     if (resendTimer > 0) return;
-
-    setResendTimer(120); // Reset timer
+    setResendTimer(120);
     await handleSendOtp();
   };
 
@@ -225,8 +286,19 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
         : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400'
     } ${field === 'emailAddress' && emailVerified ? 'bg-green-50 border-green-300' : ''}`;
 
-  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'
-    }`;
+  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`;
+
+  const dropdownClass = `absolute top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto border rounded-lg shadow-lg z-50 ${
+    isDarkMode 
+      ? 'bg-gray-800 border-gray-600' 
+      : 'bg-white border-gray-300'
+  }`;
+
+  const dropdownItemClass = `px-4 py-2 cursor-pointer transition-colors duration-150 ${
+    isDarkMode
+      ? 'hover:bg-gray-700 text-white'
+      : 'hover:bg-gray-100 text-gray-900'
+  }`;
 
   const renderInput = ({ label, name, required = false, type = 'text', isTextArea = false }) => (
     <div>
@@ -252,6 +324,93 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
         />
       )}
       {errors[name] && <p className="text-xs text-red-400 mt-1 font-medium">{errors[name]}</p>}
+    </div>
+  );
+
+  const renderStateDropdown = () => (
+    <div className="relative">
+      <label className={labelClass}>
+        State <span className="text-red-500">*</span>
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={stateDropdownOpen ? stateSearch : form.state}
+          onChange={(e) => setStateSearch(e.target.value)}
+          onFocus={() => setStateDropdownOpen(true)}
+          onBlur={() => setTimeout(() => setStateDropdownOpen(false), 200)}
+          placeholder="Search and select state..."
+          className={inputClass('state')}
+        />
+        {stateDropdownOpen && (
+          <div className={dropdownClass}>
+            {statesData.length === 0 ? (
+              <div className={`px-4 py-2 text-gray-500 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Loading states...
+              </div>
+            ) : filteredStates.length > 0 ? (
+              filteredStates.map((state, index) => (
+                <div
+                  key={index}
+                  className={dropdownItemClass}
+                  onClick={() => handleStateSelect(state)}
+                >
+                  {state.name}
+                </div>
+              ))
+            ) : (
+              <div className={`px-4 py-2 text-gray-500 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                No states found
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      {errors.state && <p className="text-xs text-red-400 mt-1 font-medium">{errors.state}</p>}
+    </div>
+  );
+
+  const renderCityDropdown = () => (
+    <div className="relative">
+      <label className={labelClass}>
+        City <span className="text-red-500">*</span>
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={cityDropdownOpen ? citySearch : form.district}
+          onChange={(e) => setCitySearch(e.target.value)}
+          onFocus={() => setCityDropdownOpen(true)}
+          onBlur={() => setTimeout(() => setCityDropdownOpen(false), 200)}
+          placeholder={form.state ? "Search and select city..." : "Select state first"}
+          className={inputClass('district')}
+          disabled={!form.state}
+        />
+        {cityDropdownOpen && form.state && (
+          <div className={dropdownClass}>
+            {availableCities.length === 0 ? (
+              <div className={`px-4 py-2 text-gray-500 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                No cities available for this state
+              </div>
+            ) : filteredCities.length > 0 ? (
+              filteredCities.map((city, index) => (
+                <div
+                  key={index}
+                  className={dropdownItemClass}
+                  onClick={() => handleCitySelect(city)}
+                >
+                  {city.name}
+                </div>
+              ))
+            ) : (
+              <div className={`px-4 py-2 text-gray-500 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                No cities found
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      {errors.district && <p className="text-xs text-red-400 mt-1 font-medium">{errors.district}</p>}
     </div>
   );
 
@@ -312,8 +471,8 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
           {renderInput({ label: 'Contact Number', name: 'contactNumber', required: true })}
           {renderInput({ label: 'Alternate Contact Number', name: 'alternateContactNumber' })}
           {renderEmailInput()}
-          {renderInput({ label: 'State', name: 'state', required: true })}
-          {renderInput({ label: 'District', name: 'district', required: true })}
+          {renderStateDropdown()}
+          {renderCityDropdown()}
           {renderInput({ label: 'Pin Code', name: 'pinCode', required: true })}
           <div className="sm:col-span-2 lg:col-span-3">
             {renderInput({ label: 'Address', name: 'address', required: true, isTextArea: true })}
@@ -321,7 +480,7 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
           {renderInput({ label: "Father's Name", name: 'fathersName', required: true })}
           {renderInput({ label: "Father's Occupation", name: 'fathersOccupation', required: true })}
           {renderInput({ label: "Father's Job Role", name: 'fathersJobRole' })}
-          {renderInput({ label: 'Department/Company', name: 'fathersDepartmentOrCompany' })}
+          {renderInput({ label: 'Department/Company', name: 'departmentOrCompany' })}
           {renderInput({ label: "Mother's Name", name: 'mothersName', required: true })}
           {renderInput({ label: "Guardian's Name", name: 'guardianName' })}
           {renderInput({ label: "Guardian's Relation", name: 'guardianRelation' })}

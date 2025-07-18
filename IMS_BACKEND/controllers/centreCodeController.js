@@ -29,10 +29,10 @@ exports.createCentreCode = async (req, res, next) => {
     }
 
     const centre = await CentreCode.create(req.body);
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       message: 'Centre code created successfully',
-      data: centre 
+      data: centre
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -43,12 +43,12 @@ exports.createCentreCode = async (req, res, next) => {
   }
 };
 
-// Get All CentreCodes with pagination and filtering
+// Get All CentreCodes with optional pagination and filtering
 exports.getAllCentreCodes = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, State, City, search } = req.query;
-    
-    // Build filter object
+    const { page, limit, State, City, search } = req.query;
+
+    /* ---------- build dynamic filter ---------- */
     const filter = {};
     if (State) filter.State = new RegExp(State, 'i');
     if (City) filter.City = new RegExp(City, 'i');
@@ -61,34 +61,46 @@ exports.getAllCentreCodes = async (req, res, next) => {
       ];
     }
 
-    const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      sort: { createdAt: -1 }
-    };
+    /* ---------- choose paginated vs. full fetch ---------- */
+    let centres, total;
 
-    const centres = await CentreCode.find(filter)
-      .sort(options.sort)
-      .limit(options.limit * 1)
-      .skip((options.page - 1) * options.limit);
+    if (page && limit) {
+      // ▸ paginated
+      const p = parseInt(page);
+      const l = parseInt(limit);
+      centres = await CentreCode.find(filter)
+        .sort({ createdAt: -1 })
+        .limit(l)
+        .skip((p - 1) * l);
 
-    const total = await CentreCode.countDocuments(filter);
+      total = await CentreCode.countDocuments(filter);
 
-    res.status(200).json({ 
-      success: true, 
+      return res.status(200).json({
+        success: true,
+        data: centres,
+        pagination: {
+          currentPage: p,
+          totalPages: Math.ceil(total / l),
+          totalRecords: total,
+          hasNextPage: p < Math.ceil(total / l),
+          hasPrevPage: p > 1
+        }
+      });
+    }
+
+    // ▸ no page/limit → return *all* matching centres
+    centres = await CentreCode.find(filter).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
       data: centres,
-      pagination: {
-        currentPage: options.page,
-        totalPages: Math.ceil(total / options.limit),
-        totalRecords: total,
-        hasNextPage: options.page < Math.ceil(total / options.limit),
-        hasPrevPage: options.page > 1
-      }
+      totalRecords: centres.length
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 // Get Single CentreCode
 exports.getCentreCodeById = async (req, res, next) => {
@@ -105,9 +117,9 @@ exports.getCentreCodeById = async (req, res, next) => {
       return next(new ErrorHandler('Centre code not found', 404));
     }
 
-    res.status(200).json({ 
-      success: true, 
-      data: centre 
+    res.status(200).json({
+      success: true,
+      data: centre
     });
   } catch (error) {
     next(error);
@@ -118,15 +130,15 @@ exports.getCentreCodeById = async (req, res, next) => {
 exports.getCentreByCode = async (req, res, next) => {
   try {
     const { code } = req.params;
-    
+
     const centre = await CentreCode.findOne({ centreCode: code });
     if (!centre) {
       return next(new ErrorHandler('Centre code not found', 404));
     }
 
-    res.status(200).json({ 
-      success: true, 
-      data: centre 
+    res.status(200).json({
+      success: true,
+      data: centre
     });
   } catch (error) {
     next(error);
@@ -157,8 +169,8 @@ exports.updateCentreCode = async (req, res, next) => {
     const updatedCentre = await CentreCode.findByIdAndUpdate(
       id,
       req.body,
-      { 
-        new: true, 
+      {
+        new: true,
         runValidators: true,
         context: 'query'
       }
@@ -168,10 +180,10 @@ exports.updateCentreCode = async (req, res, next) => {
       return next(new ErrorHandler('Centre code not found', 404));
     }
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: 'Centre code updated successfully',
-      data: updatedCentre 
+      data: updatedCentre
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -197,9 +209,9 @@ exports.deleteCentreCode = async (req, res, next) => {
       return next(new ErrorHandler('Centre code not found', 404));
     }
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Centre code deleted successfully" 
+    res.status(200).json({
+      success: true,
+      message: "Centre code deleted successfully"
     });
   } catch (error) {
     next(error);
@@ -210,13 +222,13 @@ exports.deleteCentreCode = async (req, res, next) => {
 exports.getCentresByState = async (req, res, next) => {
   try {
     const { state } = req.params;
-    
-    const centres = await CentreCode.find({ 
-      State: new RegExp(state, 'i') 
+
+    const centres = await CentreCode.find({
+      State: new RegExp(state, 'i')
     }).sort({ City: 1, name: 1 });
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: centres,
       count: centres.length
     });
@@ -229,13 +241,13 @@ exports.getCentresByState = async (req, res, next) => {
 exports.getCentresByCity = async (req, res, next) => {
   try {
     const { city } = req.params;
-    
-    const centres = await CentreCode.find({ 
-      City: new RegExp(city, 'i') 
+
+    const centres = await CentreCode.find({
+      City: new RegExp(city, 'i')
     }).sort({ name: 1 });
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       data: centres,
       count: centres.length
     });
@@ -248,7 +260,7 @@ exports.getCentresByCity = async (req, res, next) => {
 exports.getCentreStats = async (req, res, next) => {
   try {
     const totalCentres = await CentreCode.countDocuments();
-    
+
     const stateStats = await CentreCode.aggregate([
       { $group: { _id: '$State', count: { $sum: 1 } } },
       { $sort: { count: -1 } }

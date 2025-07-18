@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useThemeStore } from '../../../../store';
 import { useNotification } from '../../../../services/NotificationService';
+import API from '../../../../services/API';
 
-const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsEnabled }) => {
+const BasicInfo = ({ formData = {}, setFormData = () => { }, onNext, validationsEnabled }) => {
   const notify = useNotification();
   const { isDarkMode } = useThemeStore();
 
@@ -22,6 +23,10 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [centres, setCentres] = useState([]);
+  const [centreDropdownOpen, setCentreDropdownOpen] = useState(false);
+  const [centreSearch, setCentreSearch] = useState('');
+
 
   // ✅ Single useEffect to hydrate and format DOB
   useEffect(() => {
@@ -31,6 +36,34 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
       dob: formattedDob,
     });
   }, [formData]);
+
+  const fetchAllCentres = async () => {
+    try {
+      const response = await API.get('/centre-codes');
+      setCentres(response?.data || []);
+    } catch (error) {
+      console.error('Error fetching centres:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllCentres();
+    console.log(centres);
+  }, []);
+
+  const filteredCentres = centres.filter(c =>
+    c.centreCode.toLowerCase().includes(centreSearch.toLowerCase())
+  );
+
+  const handleCentreSelect = (centre) => {
+    setForm(prev => ({ ...prev, centerCode: centre.centreCode }));
+    setCentreSearch('');
+    setCentreDropdownOpen(false);
+    if (errors.centerCode) {
+      setErrors(prev => ({ ...prev, centerCode: '' }));
+    }
+  };
+
 
   const requiredFields = [
     'formNo', 'centerCode', 'employeeId', 'generatedRegNo',
@@ -80,25 +113,22 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
   };
 
   const inputStyle = (field) =>
-    `block w-full px-4 py-2 border rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-      errors[field]
-        ? 'border-red-500 focus:ring-red-400'
-        : isDarkMode
+    `block w-full px-4 py-2 border rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors[field]
+      ? 'border-red-500 focus:ring-red-400'
+      : isDarkMode
         ? 'border-gray-700 bg-[#23272f] text-white placeholder-gray-400'
         : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400'
     }`;
 
-  const labelStyle = `block text-sm font-semibold mb-2 tracking-wide ${
-    isDarkMode ? 'text-gray-200' : 'text-gray-800'
-  }`;
+  const labelStyle = `block text-sm font-semibold mb-2 tracking-wide ${isDarkMode ? 'text-gray-200' : 'text-gray-800'
+    }`;
 
   return (
     <div
-      className={`rounded-2xl shadow-lg mt-8 p-8 w-full mx-auto ${
-        isDarkMode
-          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
-          : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
-      }`}
+      className={`rounded-2xl shadow-lg mt-8 p-8 w-full mx-auto ${isDarkMode
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700'
+        : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200'
+        }`}
     >
       <h2 className={`text-2xl font-bold mb-8 tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>
         Step 1: Basic Info
@@ -106,31 +136,151 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {[
-            { name: 'formNo', label: 'Form No' },
-            { name: 'centerCode', label: 'Center Code' },
-            { name: 'employeeId', label: 'Employee ID' },
-            { name: 'generatedRegNo', label: 'Generated Reg No' },
-            { name: 'fullName', label: 'Full Name' },
-            { name: 'aadharNo', label: 'Aadhar No' },
-            { name: 'religion', label: 'Religion' },
-            { name: 'dob', label: 'Date of Birth', type: 'date' },
-          ].map(({ name, label, type = 'text' }) => (
-            <div key={name}>
-              <label className={labelStyle}>
-                {label} {validationsEnabled && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                type={type}
-                name={name}
-                value={form[name] || ''}
-                onChange={handleChange}
-                className={inputStyle(name)}
-                autoComplete="off"
-              />
-              {errors[name] && <p className="text-xs text-red-400 mt-1">{errors[name]}</p>}
-            </div>
-          ))}
+          {/* Form No */}
+          <div>
+            <label className={labelStyle}>
+              Form No {validationsEnabled && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="text"
+              name="formNo"
+              value={form.formNo || ''}
+              onChange={handleChange}
+              className={inputStyle('formNo')}
+              autoComplete="off"
+            />
+            {errors.formNo && <p className="text-xs text-red-400 mt-1">{errors.formNo}</p>}
+          </div>
+
+          {/* Center Code - Searchable Dropdown */}
+          <div className="relative">
+            <label className={labelStyle}>
+              Center Code {validationsEnabled && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="text"
+              value={centreDropdownOpen ? centreSearch : form.centerCode}
+              onChange={(e) => setCentreSearch(e.target.value)}
+              onFocus={() => setCentreDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setCentreDropdownOpen(false), 200)}
+              placeholder="Search and select center code"
+              className={inputStyle('centerCode')}
+            />
+            {centreDropdownOpen && (
+              <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto border rounded-lg shadow-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                {filteredCentres.length > 0 ? (
+                  filteredCentres.map((centre, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-700 text-sm"
+                      onClick={() => handleCentreSelect(centre)}
+                    >
+                      {centre.centreCode}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-gray-500 dark:text-gray-400">No center found</div>
+                )}
+              </div>
+            )}
+            {errors.centerCode && <p className="text-xs text-red-400 mt-1">{errors.centerCode}</p>}
+          </div>
+
+          {/* Employee ID */}
+          <div>
+            <label className={labelStyle}>
+              Employee ID {validationsEnabled && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="text"
+              name="employeeId"
+              value={form.employeeId || ''}
+              onChange={handleChange}
+              className={inputStyle('employeeId')}
+              autoComplete="off"
+            />
+            {errors.employeeId && <p className="text-xs text-red-400 mt-1">{errors.employeeId}</p>}
+          </div>
+
+          {/* Generated Reg No */}
+          <div>
+            <label className={labelStyle}>
+              Generated Reg No {validationsEnabled && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="text"
+              name="generatedRegNo"
+              value={form.generatedRegNo || ''}
+              onChange={handleChange}
+              className={inputStyle('generatedRegNo')}
+              autoComplete="off"
+            />
+            {errors.generatedRegNo && <p className="text-xs text-red-400 mt-1">{errors.generatedRegNo}</p>}
+          </div>
+
+          {/* Full Name */}
+          <div>
+            <label className={labelStyle}>
+              Full Name {validationsEnabled && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="text"
+              name="fullName"
+              value={form.fullName || ''}
+              onChange={handleChange}
+              className={inputStyle('fullName')}
+              autoComplete="off"
+            />
+            {errors.fullName && <p className="text-xs text-red-400 mt-1">{errors.fullName}</p>}
+          </div>
+
+          {/* Aadhar No */}
+          <div>
+            <label className={labelStyle}>
+              Aadhar No {validationsEnabled && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="text"
+              name="aadharNo"
+              value={form.aadharNo || ''}
+              onChange={handleChange}
+              className={inputStyle('aadharNo')}
+              autoComplete="off"
+            />
+            {errors.aadharNo && <p className="text-xs text-red-400 mt-1">{errors.aadharNo}</p>}
+          </div>
+
+          {/* Religion */}
+          <div>
+            <label className={labelStyle}>
+              Religion {validationsEnabled && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="text"
+              name="religion"
+              value={form.religion || ''}
+              onChange={handleChange}
+              className={inputStyle('religion')}
+              autoComplete="off"
+            />
+            {errors.religion && <p className="text-xs text-red-400 mt-1">{errors.religion}</p>}
+          </div>
+
+          {/* DOB */}
+          <div>
+            <label className={labelStyle}>
+              Date of Birth {validationsEnabled && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="date"
+              name="dob"
+              value={form.dob || ''}
+              onChange={handleChange}
+              className={inputStyle('dob')}
+              autoComplete="off"
+            />
+            {errors.dob && <p className="text-xs text-red-400 mt-1">{errors.dob}</p>}
+          </div>
 
           {/* Gender */}
           <div>
@@ -185,11 +335,10 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-              isSubmitting
-                ? 'bg-blue-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
-            }`}
+            className={`px-6 py-2 rounded-lg shadow font-semibold text-sm text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSubmitting
+              ? 'bg-blue-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
+              }`}
           >
             {isSubmitting ? 'Saving...' : 'Next'}
           </button>
@@ -197,6 +346,7 @@ const BasicInfo = ({ formData = {}, setFormData = () => {}, onNext, validationsE
       </form>
     </div>
   );
+
 };
 
 export default BasicInfo;
