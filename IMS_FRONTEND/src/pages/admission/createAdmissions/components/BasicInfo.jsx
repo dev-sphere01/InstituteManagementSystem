@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useThemeStore } from '../../../../store';
 import { useNotification } from '../../../../services/NotificationService';
 import API from '../../../../services/API';
+import { useAuth } from '../../../../context/AuthContext';
 
 const BasicInfo = ({ formData = {}, setFormData = () => { }, onNext, validationsEnabled }) => {
   const notify = useNotification();
   const { isDarkMode } = useThemeStore();
+  const { user } = useAuth();
+
 
   const [form, setForm] = useState({
     formNo: '',
@@ -28,14 +31,15 @@ const BasicInfo = ({ formData = {}, setFormData = () => { }, onNext, validations
   const [centreSearch, setCentreSearch] = useState('');
 
 
-  // ✅ Single useEffect to hydrate and format DOB
   useEffect(() => {
     const formattedDob = formData.dob ? formData.dob.substring(0, 10) : '';
     setForm({
       ...formData,
       dob: formattedDob,
+      employeeId: user?._id || '', // inject employee ID here
     });
-  }, [formData]);
+  }, [formData, user]);
+
 
   const fetchAllCentres = async () => {
     try {
@@ -195,10 +199,11 @@ const BasicInfo = ({ formData = {}, setFormData = () => { }, onNext, validations
               type="text"
               name="employeeId"
               value={form.employeeId || ''}
-              onChange={handleChange}
+              readOnly // make it non-editable
+              disabled // optional: greyed-out and not focusable
               className={inputStyle('employeeId')}
-              autoComplete="off"
             />
+
             {errors.employeeId && <p className="text-xs text-red-400 mt-1">{errors.employeeId}</p>}
           </div>
 
