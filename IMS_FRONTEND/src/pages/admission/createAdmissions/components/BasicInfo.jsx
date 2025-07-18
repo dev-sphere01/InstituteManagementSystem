@@ -173,7 +173,7 @@ const BasicInfo = ({ formData = {}, setFormData = () => { }, onNext, validations
                     <div
                       key={index}
                       className="px-4 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-700 text-sm"
-                      onClick={() => handleCentreSelect(centre)}
+                      onMouseDown={() => handleCentreSelect(centre)}
                     >
                       {centre.centreCode}
                     </div>
