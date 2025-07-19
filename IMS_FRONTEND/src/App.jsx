@@ -47,7 +47,7 @@ import Admission from "./pages/admission/createAdmissions/Admission.jsx";
 import Fee from "./pages/fee/Fee.jsx";
 
 import StudentDetails from "./pages/student/AllStudents/StudentDetails.jsx";
-import ExamDetails from "./pages/student/ExamDetails.jsx";
+// import ExamDetails from "./pages/student/examDetails/ExamDetails.jsx";
 import StudentPerformance from "./pages/student/StudentPerformance.jsx";
 import StudentProfile from "./pages/student/StudentProfile.jsx";
 import AddistionalFeatures from "./pages/masters/additionalFeatures/AdditionalFeatures.jsx";
@@ -119,7 +119,7 @@ function App() {
                 <Route path="student-details" element={<StudentDetails />} />
 
                 {/* Exam Details and Student Performance */}
-                <Route path="exam-details/:studentId" element={<ExamDetails />} />
+                {/* <Route path="exam-details/:studentId" element={<ExamDetails />} /> */}
                 <Route
                   path="student-performance/:studentId"
                   element={<StudentPerformance />}
