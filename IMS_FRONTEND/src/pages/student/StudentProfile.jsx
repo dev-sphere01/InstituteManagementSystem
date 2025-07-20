@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import API from "../../services/API";
+import { User, GraduationCap, BookOpen, Wallet, FileText } from 'lucide-react';
 
 const StudentProfile = () => {
   const { id } = useParams();
@@ -70,12 +71,12 @@ const StudentProfile = () => {
   }
 
   const tabs = [
-    { key: "personal", label: "Personal Info", icon: "👤" },
-    { key: "academic", label: "Academic", icon: "🎓" },
-    { key: "course", label: "Course", icon: "📚" },
-    { key: "fee", label: "Fees", icon: "💰" },
-    { key: "documents", label: "Documents", icon: "📄" },
-  ];
+  { key: "personal", label: "Personal Info", icon: <User size={18} /> },
+  { key: "academic", label: "Academic", icon: <GraduationCap size={18} /> },
+  { key: "course", label: "Course", icon: <BookOpen size={18} /> },
+  { key: "fee", label: "Fees", icon: <Wallet size={18} /> },
+  { key: "documents", label: "Documents", icon: <FileText size={18} /> },
+];
 
   const InfoCard = ({
     title,
