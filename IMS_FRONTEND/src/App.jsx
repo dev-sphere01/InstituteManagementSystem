@@ -42,14 +42,12 @@ import InstitutionType from "./pages/masters/institutionType/InstitutionType.jsx
 import CenterCode from "./pages/masters/centerCode/CenterCode.jsx";
 
 // Student Pages
-import Student from "./pages/student/Student.jsx";
+import StudentDashboard from './pages/dashboard/StudentDashboard.jsx';
 import Admission from "./pages/admission/createAdmissions/Admission.jsx";
 import Fee from "./pages/fee/Fee.jsx";
 
 import StudentDetails from "./pages/student/AllStudents/StudentDetails.jsx";
-// import ExamDetails from "./pages/student/examDetails/ExamDetails.jsx";
-import StudentPerformance from "./pages/student/StudentPerformance.jsx";
-import StudentProfile from "./pages/student/StudentProfile.jsx";
+import StudentProfile from "./pages/student/StudentProfile/StudentProfile.jsx";
 import AddistionalFeatures from "./pages/masters/additionalFeatures/AdditionalFeatures.jsx";
 
 
@@ -82,7 +80,7 @@ function App() {
                 <Route index element={<Dashboard />} />
 
                 {/* Student Dashboard */}
-                <Route path="student" element={<Student />} />
+                <Route path="student" element={<StudentDashboard />} />
 
                 {/* Admin Routes */}
                 <Route path="reports" element={<Reports />} />
@@ -119,11 +117,6 @@ function App() {
                 <Route path="student-details" element={<StudentDetails />} />
 
                 {/* Exam Details and Student Performance */}
-                {/* <Route path="exam-details/:studentId" element={<ExamDetails />} /> */}
-                <Route
-                  path="student-performance/:studentId"
-                  element={<StudentPerformance />}
-                />
                 <Route
                   path="student-details/:id"
                   element={<StudentProfile />}
