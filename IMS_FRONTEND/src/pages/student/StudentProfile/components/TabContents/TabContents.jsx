@@ -6,7 +6,7 @@ import PersonalInfo from './tabs/PersonalInfo'
 import ExamDetails from './tabs/ExamDetails'
 
 
-const TabContents = ({ student, InfoCard, InfoRow, activeTab }) => {
+const TabContents = ({ student, InfoCard, InfoRow, activeTab,API,isDarkMode,id }) => {
     return (
         <div className="space-y-4">
             {activeTab === "personal" && (
@@ -28,7 +28,7 @@ const TabContents = ({ student, InfoCard, InfoRow, activeTab }) => {
                 <Fee student={student} InfoCard={InfoCard} InfoRow={InfoRow} />
             )}
             {activeTab === "exam" && (
-                <ExamDetails student={student} InfoCard={InfoCard} InfoRow={InfoRow} />
+                <ExamDetails student={student} InfoCard={InfoCard} InfoRow={InfoRow} API={API} isDarkMode={isDarkMode} id={id}  />
             )}
 
         </div>

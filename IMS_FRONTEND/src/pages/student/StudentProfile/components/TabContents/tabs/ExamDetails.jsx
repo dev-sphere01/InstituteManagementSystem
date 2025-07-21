@@ -1,9 +1,14 @@
 import React from 'react'
 
-const ExamDetails = () => {
-  return (
-    <div>ExamDetails</div>
-  )
+const ExamDetails = ({ student, InfoRow, InfoCard, API, isDarkMode, id }) => {
+
+    const studentId = id;
+
+    return (
+        <div>
+            <div className="text-blue-700">Student's Id - {studentId}</div>
+        </div>
+    )
 }
 
 export default ExamDetails

@@ -116,6 +116,9 @@ const StudentProfile = () => {
                 InfoCard={InfoCard}
                 InfoRow={InfoRow}
                 activeTab={activeTab}
+                isDarkMode={isDarkMode}
+                id={id}
+                API={API}
               />
             </div>
           </div>
