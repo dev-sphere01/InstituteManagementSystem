@@ -8,6 +8,8 @@ import InfoRow from "./components/TabContents/components/InfoRow";
 import Summary from "./components/Summary/Summary";
 import TabContents from "./components/TabContents/TabContents";
 import Navigation from "./components/Navigation/Navigation";
+import { PiExam } from "react-icons/pi";
+
 
 const StudentProfile = () => {
   const { id } = useParams();
@@ -87,9 +89,10 @@ const StudentProfile = () => {
   const tabs = [
     { key: "personal", label: "Personal Info", icon: <User size={18} /> },
     { key: "academic", label: "Academic", icon: <GraduationCap size={18} /> },
+    { key: "documents", label: "Documents", icon: <FileText size={18} /> },
     { key: "course", label: "Course", icon: <BookOpen size={18} /> },
     { key: "fee", label: "Fees", icon: <Wallet size={18} /> },
-    { key: "documents", label: "Documents", icon: <FileText size={18} /> },
+    { key: "exam", label: "Exam Details", icon: <PiExam size={18} /> },
   ];
 
   return (
