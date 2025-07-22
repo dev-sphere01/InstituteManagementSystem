@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Full-stack Institute Management System with React frontend and Node.js backend",
   "scripts": {
-    "dev": "concurrently --names \"api,ui\" --prefix-colors \"blue,green\" \"npm run backend\" \"npm run frontend\"",
+    "ems": "concurrently --names \"api,ui\" --prefix-colors \"blue,green\" \"npm run backend\" \"npm run frontend\"",
     "backend": "cd IMS_BACKEND && npm run dev",
     "frontend": "cd IMS_FRONTEND && npm run dev",
     "start": "concurrently --names \"api,ui\" --prefix-colors \"blue,green\" \"npm run backend:start\" \"npm run frontend:start\"",
