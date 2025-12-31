@@ -1,5 +1,5 @@
 const AdmissionDetails = require('../models/admission');
-const ApiFeatures = require("../utils/ApiFeatures"); 
+const ApiFeatures = require("../utils/apiFeatures"); 
 
 // Create a new admission
 exports.createAdmission = async (req, res) => {
