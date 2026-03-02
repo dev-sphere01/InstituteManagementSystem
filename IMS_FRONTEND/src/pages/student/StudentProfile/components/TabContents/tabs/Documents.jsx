@@ -1,6 +1,10 @@
 import React from 'react'
 
+const API_URL = import.meta.env.VITE_BACKEND_BASE_URL;
+
 const Documents = ({ student, InfoCard, InfoRow }) => {
+    
+    
     return (
         <div className="space-y-4">
             <InfoCard
@@ -82,7 +86,7 @@ const Documents = ({ student, InfoCard, InfoRow }) => {
 
                                 {student[key] ? (
                                     <a
-                                        href={`http://localhost:4000/${student[key]}`}
+                                        href={`${API_URL}/${student[key]}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors duration-200"
