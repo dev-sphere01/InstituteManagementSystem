@@ -17,7 +17,16 @@ const seedDatabase = async () => {
         const adminRoleData = {
             RoleName: 'admin',
             description: 'System Administrator',
-            permissions: ['*'], // Define appropriate permissions
+            permissions: [
+                'user.create', 'user.read', 'user.update', 'user.delete', 'user.export', 'user.import',
+                'role.create', 'role.read', 'role.update', 'role.delete', 'role.export',
+                'dashboard.read',
+                'admin.read',
+                'log.read', 'log.delete', 'log.export',
+                'settings.read', 'settings.update',
+                'reports.read', 'reports.create', 'reports.export',
+                'profile.read', 'profile.update'
+            ], // Full permissions generated from frontend modules.json
             level: 100,
             isSystem: true,
             isActive: true
