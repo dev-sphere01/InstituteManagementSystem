@@ -192,21 +192,49 @@ export const AuthProvider = ({ children }) => {
   const hasPermission = (permission) => {
     if (!user) return false;
     const userPermissions = user.role?.permissions || user.permissions || permissions || [];
-    return userPermissions.includes(permission);
+    if (userPermissions.includes('*')) return true;
+    return userPermissions.some((perm) => {
+      if (perm === permission) return true;
+      if (perm && perm.endsWith('.*')) {
+        const prefix = perm.slice(0, -2);
+        return permission.startsWith(prefix + '.');
+      }
+      return false;
+    });
   };
 
   // Check if user has any of the specified permissions
   const hasAnyPermission = (permissionList) => {
     if (!user || !Array.isArray(permissionList)) return false;
     const userPermissions = user.role?.permissions || user.permissions || permissions || [];
-    return permissionList.some(permission => userPermissions.includes(permission));
+    if (userPermissions.includes('*')) return true;
+    return permissionList.some(permission => {
+      return userPermissions.some((perm) => {
+        if (perm === permission) return true;
+        if (perm && perm.endsWith('.*')) {
+          const prefix = perm.slice(0, -2);
+          return permission.startsWith(prefix + '.');
+        }
+        return false;
+      });
+    });
   };
 
   // Check if user has all specified permissions
   const hasAllPermissions = (permissionList) => {
     if (!user || !Array.isArray(permissionList)) return false;
     const userPermissions = user.role?.permissions || user.permissions || permissions || [];
-    return permissionList.every(permission => userPermissions.includes(permission));
+    if (userPermissions.includes('*')) return true;
+    return permissionList.every(permission => {
+      return userPermissions.some((perm) => {
+        if (perm === permission) return true;
+        if (perm && perm.endsWith('.*')) {
+          const prefix = perm.slice(0, -2);
+          return permission.startsWith(prefix + '.');
+        }
+        return false;
+      });
+    });
   };
 
   // Check if user has specific role

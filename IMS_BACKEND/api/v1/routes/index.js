@@ -18,6 +18,11 @@ const coursesRoutes  = require('./coursesRoutes')
 const additionalFeaturesRoutes = require('./additionalFeaturesRoute');
 const emailVerificationRoutes = require('./emailVerificationRoutes');
 const studentRoutes = require('./studentRoutes');
+const callingFormRoutes = require('./callingFormRoutes');
+const formDataRoutes = require('./formDataRoutes');
+const workflowTemplateRoutes = require('./workflowTemplateRoutes');
+const workflowRoutes = require('./workflowRoutes');
+const taskRoutes = require('./taskRoutes');
 //const otpRoutes = require('./otpRoutes');
 // Mount routes
 router.use('/users', userRoutes);
@@ -36,6 +41,11 @@ router.use('/sessions', sessionRoutes);
 router.use('/courses', coursesRoutes);
 router.use('/additional-Features', additionalFeaturesRoutes);
 router.use('/dashboard', studentRoutes);
+router.use('/calling-forms', callingFormRoutes);
+router.use('/form-data', formDataRoutes);
+router.use('/workflow-templates', workflowTemplateRoutes);
+router.use('/workflows', workflowRoutes);
+router.use('/tasks', taskRoutes);
 
 
 module.exports = router;

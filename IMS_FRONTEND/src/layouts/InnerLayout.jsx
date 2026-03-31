@@ -49,7 +49,7 @@ const InnerLayout = () => {
       </div>
 
       {/* Footer - conditionally rendered - permanently dark */}
-      {isFooterVisible && <Footer className="flex-shrink-0" />}
+      {/* {isFooterVisible && <Footer className="flex-shrink-0" />} */}
     </div>
   );
 };

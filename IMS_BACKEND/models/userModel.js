@@ -157,8 +157,25 @@ userSchema.methods.hasPermission = async function(permissionName) {
     }
 
     // Check role permissions (permissions are stored as strings)
-    const hasRolePermission = this.role && this.role.permissions &&
-        this.role.permissions.includes(permissionName);
+    if (!this.role || !this.role.permissions) return false;
+
+    const permissions = this.role.permissions || [];
+
+    // Full wildcard access
+    if (permissions.includes('*')) return true;
+
+    // Exact match
+    if (permissions.includes(permissionName)) return true;
+
+    // Module wildcard match (e.g., 'role.*' matches 'role.read')
+    const matchesModuleWildcard = permissions.some((perm) => {
+        if (!perm || typeof perm !== 'string') return false;
+        if (!perm.endsWith('.*')) return false;
+        const prefix = perm.slice(0, -2);
+        return permissionName.startsWith(`${prefix}.`);
+    });
+
+    const hasRolePermission = matchesModuleWildcard;
 
     return hasRolePermission;
 };

@@ -39,5 +39,25 @@
     "ModuleDisplayName": "Profile Management",
     "module": "profile",
     "actions": ["read", "update"]
+  },
+  {
+    "ModuleDisplayName": "Applications Management",
+    "module": "applications",
+    "actions": ["read", "create", "update", "delete", "assign", "reassign", "bulk_assign", "view_details", "manage_status"]
+  },
+  {
+    "ModuleDisplayName": "Calling Management",
+    "module": "calling_admin",
+    "actions": ["read", "create", "update", "delete", "bulk_import", "assign_leads", "manage_staff", "view_reports", "manage_queue"]
+  },
+  {
+    "ModuleDisplayName": "My Calling Queue",
+    "module": "calling_employee",
+    "actions": ["read", "start_call", "end_call", "update_status", "add_notes", "view_history"]
+  },
+  {
+    "ModuleDisplayName": "My Application Queue",
+    "module": "applications_employee",
+    "actions": ["read", "start_call", "end_call", "update_status", "add_notes", "view_history", "view_details"]
   }
 ]

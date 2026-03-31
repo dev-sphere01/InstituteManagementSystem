@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const admissionController = require('../../../controllers/admissioncontroller');
+const studentStatusController = require('../../../controllers/studentStatusController');
 const { validateAdmission } = require('../../../middlewares/validateAdmission');
 const upload = require('./../../../middlewares/upload');
 // const AdmissionDetails = require('./../../../models/admissionDetails');
@@ -13,6 +14,11 @@ router.get('/', admissionController.getAllAdmissions);
 
 // SEARCH by query - no need as in all data also allowed to search
 // router.get('/search/query', admissionController.searchAdmission);
+
+// Student status routes (admission-linked)
+router.get('/:id/status', studentStatusController.getStatus);
+router.patch('/:id/status', studentStatusController.updateStatus);
+router.get('/:id/status/history', studentStatusController.getHistory);
 
 // GET admission by ID
 router.get('/:id', admissionController.getAdmissionById);

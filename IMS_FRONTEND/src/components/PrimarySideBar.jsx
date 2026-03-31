@@ -5,24 +5,33 @@ import { useSidebarStore } from '../store';
 const PrimarySideBar = () => {
   const { isPrimarySidebarOpen, isFooterVisible } = useSidebarStore();
   const location = useLocation();
-  const [openMenu, setOpenMenu] = useState(null); // 'masters' | 'enquiry' | null
+  const [openMenu, setOpenMenu] = useState(null); // 'masters' | 'enquiry' | 'calling' | null
 
   // Main navigation items (remove flat Enquiry)
   const mainNavItems = [
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
     { path: '/dashboard/admission', icon: 'document-add', label: 'Admission' },
     { path: '/dashboard/fee', icon: 'document-add', label: 'Fee' },
+    { path: '/dashboard/workflow/tasks', icon: 'document', label: 'Workflow Tasks' },
+    { path: '/dashboard/workflow/templates', icon: 'collection', label: 'Workflow Templates' },
     { path: '/dashboard/student-details', icon: 'users', label: 'Student Details' },
     { path: '/dashboard/reports', icon: 'document', label: 'Reports' },
     { path: '/dashboard/settings', icon: 'settings', label: 'Settings' },
+
     // Removed Enquiry from here
   ];
-
+  const callingNavItems = [
+    // { path: '/dashboard/applications', icon: 'document', label: 'Applications' },
+    { path: '/dashboard/calling-management', icon: 'document-add', label: 'Lead Management' },
+    { path: '/dashboard/my-calls', icon: 'users', label: 'My Lead Queue' },
+    // { path: '/dashboard/my-application-queue', icon: 'collection', label: 'My Application Queue' },
+  ];
   // Masters navigation items
   const mastersNavItems = [
     { path: '/dashboard/users', icon: 'users', label: 'Users' },
     { path: '/dashboard/roles', icon: 'shield', label: 'Roles' },
     { path: '/dashboard/courses', icon: 'book', label: 'Courses' },
+    { path: '/dashboard/calling-form-master', icon: 'document-add', label: 'Calling Form Master' },
     { path: '/dashboard/center-code', icon: 'collection', label: 'Center Code' },
     { path: '/dashboard/additional-features', icon: 'collection', label: 'Additional Features' },
     { path: '/dashboard/batches', icon: 'collection', label: 'Batches' },
@@ -56,12 +65,18 @@ const PrimarySideBar = () => {
     return enquiryNavItems.some(item => isActive(item.path));
   };
 
+  const isCallingActive = () => {
+    return callingNavItems.some(item => isActive(item.path));
+  };
+
   // Auto-expand correct menu if route is active
   React.useEffect(() => {
     if (isMastersActive()) {
       setOpenMenu('masters');
     } else if (isEnquiryActive()) {
       setOpenMenu('enquiry');
+    } else if (isCallingActive()) {
+      setOpenMenu('calling');
     } else {
       setOpenMenu(null);
     }
@@ -269,6 +284,41 @@ const PrimarySideBar = () => {
                   </Link>
                 </li>
               ))
+            )}
+
+            {/* Calling section - only show when sidebar is expanded */}
+            {isPrimarySidebarOpen && (
+              <li>
+                <button
+                  onClick={() => setOpenMenu(openMenu === 'calling' ? null : 'calling')}
+                  className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${callingNavItems.some(item => isActive(item.path)) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                > 
+                  <div className="flex items-center">
+                    <span className="inline-flex">{renderIcon('folder')}</span>
+                    <span className="ml-3">Calling</span>
+                  </div>
+                  <span className={`transition-transform duration-200 ${openMenu === 'calling' ? 'rotate-180' : ''}`}>
+                    {renderIcon('chevron')}
+                  </span>
+                </button>
+
+                {/* Calling submenu for expanded sidebar */}
+                {openMenu === 'calling' && (
+                  <ul className="mt-2 space-y-1">
+                    {callingNavItems.map((item) => (
+                      <li key={item.path}>
+                        <Link
+                          to={item.path}
+                          className={`flex items-center p-2 pl-8 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                        >
+                          <span className="inline-flex">{renderIcon(item.icon)}</span>
+                          <span className="ml-3">{item.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
             )}
           </ul>
         </nav>
