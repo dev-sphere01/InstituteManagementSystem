@@ -50,6 +50,12 @@ import StudentDetails from "./pages/student/AllStudents/StudentDetails.jsx";
 import StudentProfile from "./pages/student/StudentProfile/StudentProfile.jsx";
 import AddistionalFeatures from "./pages/masters/additionalFeatures/AdditionalFeatures.jsx";
 
+// Employee Module
+import Employee from "./pages/employee/Employee.jsx";
+
+// Payroll Module
+import Payroll from "./pages/payroll/Payroll.jsx";
+
 
 function App() {
   return (
@@ -121,6 +127,15 @@ function App() {
                   path="student-details/:id"
                   element={<StudentProfile />}
                 />
+
+                {/* Employee Module */}
+                <Route path="employees" element={<Employee />} />
+                <Route path="employees/:view" element={<Employee />} />
+                <Route path="employees/:view/:id" element={<Employee />} />
+
+                {/* Payroll Module */}
+                <Route path="payroll" element={<Payroll />} />
+                <Route path="payroll/:tab" element={<Payroll />} />
               </Route>
 
               {/* 404 route */}

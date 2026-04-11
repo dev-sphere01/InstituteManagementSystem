@@ -18,6 +18,7 @@ const coursesRoutes  = require('./coursesRoutes')
 const additionalFeaturesRoutes = require('./additionalFeaturesRoute');
 const emailVerificationRoutes = require('./emailVerificationRoutes');
 const studentRoutes = require('./studentRoutes');
+const branchRoutes = require('./branchRoutes');
 //const otpRoutes = require('./otpRoutes');
 // Mount routes
 router.use('/users', userRoutes);
@@ -36,6 +37,7 @@ router.use('/sessions', sessionRoutes);
 router.use('/courses', coursesRoutes);
 router.use('/additional-Features', additionalFeaturesRoutes);
 router.use('/dashboard', studentRoutes);
+router.use('/branches', branchRoutes);
 
 
 module.exports = router;
