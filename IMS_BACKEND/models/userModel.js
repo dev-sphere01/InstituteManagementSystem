@@ -38,6 +38,11 @@ const userSchema = new mongoose.Schema({
         required: true,
         index: true
     },
+    roles: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Role',
+        index: true
+    }],
 
 
 
@@ -151,15 +156,30 @@ userSchema.methods.getResetPasswordToken = function() {
 
 // Check if user has specific permission (using role-based permissions only)
 userSchema.methods.hasPermission = async function(permissionName) {
-    // Populate role if not already populated
-    if (!this.populated('role')) {
+    // Populate role/roles if not already populated
+    if (!this.populated('role') && this.role) {
         await this.populate('role');
     }
+    if (!this.populated('roles') && this.roles && this.roles.length > 0) {
+        await this.populate('roles');
+    }
 
-    // Check role permissions (permissions are stored as strings)
-    if (!this.role || !this.role.permissions) return false;
+    const roleDocs = [];
+    if (this.role) roleDocs.push(this.role);
+    if (Array.isArray(this.roles)) {
+        this.roles.forEach((r) => {
+            if (r) roleDocs.push(r);
+        });
+    }
 
-    const permissions = this.role.permissions || [];
+    if (roleDocs.length === 0) return false;
+
+    const permissions = roleDocs.reduce((acc, role) => {
+        if (role && Array.isArray(role.permissions)) {
+            acc.push(...role.permissions);
+        }
+        return acc;
+    }, []);
 
     // Full wildcard access
     if (permissions.includes('*')) return true;
@@ -188,12 +208,40 @@ userSchema.methods.hasModulePermission = function(module, action) {
 
 // Get all user permissions (from role only)
 userSchema.methods.getAllPermissions = async function() {
-    await this.populate('role');
+    if (!this.populated('role') && this.role) {
+        await this.populate('role');
+    }
+    if (!this.populated('roles') && this.roles && this.roles.length > 0) {
+        await this.populate('roles');
+    }
 
-    // Role permissions are stored as strings
-    const rolePermissions = this.role && this.role.permissions ? this.role.permissions : [];
+    const roleDocs = [];
+    if (this.role) roleDocs.push(this.role);
+    if (Array.isArray(this.roles)) {
+        this.roles.forEach((r) => {
+            if (r) roleDocs.push(r);
+        });
+    }
 
-    return rolePermissions;
+    const permissions = roleDocs.reduce((acc, role) => {
+        if (role && Array.isArray(role.permissions)) {
+            acc.push(...role.permissions);
+        }
+        return acc;
+    }, []);
+
+    return permissions;
+};
+
+userSchema.methods.getRoleIds = function() {
+    const ids = [];
+    if (this.role) ids.push(this.role);
+    if (Array.isArray(this.roles)) {
+        this.roles.forEach((r) => {
+            if (r) ids.push(r);
+        });
+    }
+    return Array.from(new Set(ids.map((id) => id.toString()))).map((id) => mongoose.Types.ObjectId(id));
 };
 
 // Check if user account is locked

@@ -3,6 +3,7 @@ const app = require("./app"); // Import the Express app instance
 const dotenv = require("dotenv"); // Import the dotenv module for environment variable management
 const connectDatabase = require("./config/database"); // Import the database connection module
 const logger = require("./utils/logger"); // Import the logger
+const { startEscalationScheduler } = require("./services/escalationService");
 
 // Load Environment Variables
 /**
@@ -46,6 +47,9 @@ async function startServer() {
         logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
         logger.info("Application is ready to accept requests");
       });
+
+      const escalationInterval = Number(process.env.ESCALATION_INTERVAL_MINUTES || 5);
+      startEscalationScheduler(escalationInterval);
     } else {
       logger.error("Failed to connect to database - server will not start");
       process.exit(1);

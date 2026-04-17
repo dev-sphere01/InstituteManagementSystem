@@ -70,7 +70,11 @@ export const AuthProvider = ({ children }) => {
           // Set user data immediately to prevent redirect
           setIsAuthenticated(true);
           setUser(userData);
-          setPermissions(userData.role?.permissions || userData.permissions || []);
+          const rolePermissions = [
+            ...(userData.role?.permissions || []),
+            ...((userData.roles || []).flatMap((r) => r?.permissions || []))
+          ];
+          setPermissions(rolePermissions.length ? rolePermissions : (userData.permissions || []));
 
           console.log('Auth check - User authenticated successfully');
 
@@ -80,7 +84,11 @@ export const AuthProvider = ({ children }) => {
             if (response.success && response.user) {
               // Update with fresh user data
               setUser(response.user);
-              setPermissions(response.user.role?.permissions || response.user.permissions || []);
+              const rolePermissions = [
+                ...(response.user.role?.permissions || []),
+                ...((response.user.roles || []).flatMap((r) => r?.permissions || []))
+              ];
+              setPermissions(rolePermissions.length ? rolePermissions : (response.user.permissions || []));
               localStorage.setItem('user', JSON.stringify(response.user));
               console.log('Auth check - Token verified and user data updated');
             }
@@ -104,7 +112,11 @@ export const AuthProvider = ({ children }) => {
           if (response.success && response.user) {
             setIsAuthenticated(true);
             setUser(response.user);
-            setPermissions(response.user.role?.permissions || response.user.permissions || []);
+            const rolePermissions = [
+              ...(response.user.role?.permissions || []),
+              ...((response.user.roles || []).flatMap((r) => r?.permissions || []))
+            ];
+            setPermissions(rolePermissions.length ? rolePermissions : (response.user.permissions || []));
             localStorage.setItem('user', JSON.stringify(response.user));
             console.log('Auth check - User data fetched and authenticated');
           } else {
@@ -139,7 +151,11 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsAuthenticated(true);
       setUser(userData);
-      setPermissions(userData.role?.permissions || userData.permissions || []);
+      const rolePermissions = [
+        ...(userData.role?.permissions || []),
+        ...((userData.roles || []).flatMap((r) => r?.permissions || []))
+      ];
+      setPermissions(rolePermissions.length ? rolePermissions : (userData.permissions || []));
 
       // Save to localStorage
       localStorage.setItem('user', JSON.stringify(userData));
@@ -191,7 +207,12 @@ export const AuthProvider = ({ children }) => {
   // Check if user has specific permission
   const hasPermission = (permission) => {
     if (!user) return false;
-    const userPermissions = user.role?.permissions || user.permissions || permissions || [];
+    const userPermissions = [
+      ...(user.role?.permissions || []),
+      ...((user.roles || []).flatMap((r) => r?.permissions || [])),
+      ...(user.permissions || []),
+      ...(permissions || [])
+    ];
     if (userPermissions.includes('*')) return true;
     return userPermissions.some((perm) => {
       if (perm === permission) return true;
@@ -206,7 +227,12 @@ export const AuthProvider = ({ children }) => {
   // Check if user has any of the specified permissions
   const hasAnyPermission = (permissionList) => {
     if (!user || !Array.isArray(permissionList)) return false;
-    const userPermissions = user.role?.permissions || user.permissions || permissions || [];
+    const userPermissions = [
+      ...(user.role?.permissions || []),
+      ...((user.roles || []).flatMap((r) => r?.permissions || [])),
+      ...(user.permissions || []),
+      ...(permissions || [])
+    ];
     if (userPermissions.includes('*')) return true;
     return permissionList.some(permission => {
       return userPermissions.some((perm) => {
@@ -223,7 +249,12 @@ export const AuthProvider = ({ children }) => {
   // Check if user has all specified permissions
   const hasAllPermissions = (permissionList) => {
     if (!user || !Array.isArray(permissionList)) return false;
-    const userPermissions = user.role?.permissions || user.permissions || permissions || [];
+    const userPermissions = [
+      ...(user.role?.permissions || []),
+      ...((user.roles || []).flatMap((r) => r?.permissions || [])),
+      ...(user.permissions || []),
+      ...(permissions || [])
+    ];
     if (userPermissions.includes('*')) return true;
     return permissionList.every(permission => {
       return userPermissions.some((perm) => {
@@ -239,8 +270,12 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user has specific role
   const hasRole = (roleName) => {
-    if (!user || !user.role) return false;
-    return user.role.RoleName.toLowerCase() === roleName.toLowerCase();
+    if (!user) return false;
+    const roleNames = [
+      user.role?.RoleName,
+      ...(user.roles || []).map((r) => r?.RoleName)
+    ].filter(Boolean).map((r) => r.toLowerCase());
+    return roleNames.includes(roleName.toLowerCase());
   };
 
   // Auth context value

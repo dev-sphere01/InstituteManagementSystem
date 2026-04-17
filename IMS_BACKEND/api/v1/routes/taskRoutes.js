@@ -1,18 +1,20 @@
 const express = require('express');
 const router = express.Router();
 
+const { isAuthenticatedUser } = require('../../../middlewares/auth');
+
 const {
-  getTasks,
-  getTaskById,
-  updateTaskStatus,
-  assignTask,
-  getTaskHistory
+  getTasksByTab,
+  updateTask,
+  getTasksByStudent,
+  markAsDone
 } = require('../../../controllers/taskController');
 
-router.get('/', getTasks);
-router.get('/:id', getTaskById);
-router.patch('/:id/status', updateTaskStatus);
-router.patch('/:id/assign', assignTask);
-router.get('/:id/history', getTaskHistory);
+router.use(isAuthenticatedUser);
+
+router.get('/', getTasksByTab);
+router.get('/student/:studentId', getTasksByStudent);
+router.patch('/:id', updateTask);
+router.post('/:id/done', markAsDone);
 
 module.exports = router;

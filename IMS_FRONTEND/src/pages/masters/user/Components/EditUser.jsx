@@ -11,7 +11,7 @@ const EditUser = ({ userId, onBack, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: '',
+    roles: [],
     isActive: true
   });
 
@@ -30,7 +30,10 @@ const EditUser = ({ userId, onBack, onSuccess }) => {
       setFormData({
         name: currentUser.name || '',
         email: currentUser.email || '',
-        role: currentUser.role?._id || '',
+        roles: ((currentUser.roles && currentUser.roles.length > 0)
+          ? currentUser.roles
+          : (currentUser.role ? [currentUser.role] : [])
+        ).map((r) => r?._id).filter(Boolean),
         isActive: currentUser.isActive !== undefined ? currentUser.isActive : true
       });
     }
@@ -65,8 +68,8 @@ const EditUser = ({ userId, onBack, onSuccess }) => {
       errors.email = 'Please enter a valid email address';
     }
 
-    if (!formData.role) {
-      errors.role = 'Please select a role';
+    if (!formData.roles || formData.roles.length === 0) {
+      errors.roles = 'Please select at least one role';
     }
 
     setValidationErrors(errors);
@@ -86,7 +89,8 @@ const EditUser = ({ userId, onBack, onSuccess }) => {
       const userData = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
-        role: formData.role,
+        role: formData.roles[0],
+        roles: formData.roles,
         isActive: formData.isActive
       };
 
@@ -228,38 +232,41 @@ const EditUser = ({ userId, onBack, onSuccess }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Role */}
+          {/* Roles */}
           <div>
-            <label htmlFor="role" className={`block text-sm font-medium mb-2 ${
+            <label className={`block text-sm font-medium mb-2 ${
               isDarkMode ? 'text-gray-300' : 'text-gray-700'
             }`}>
-              Role <span className="text-red-500">*</span>
+              Roles <span className="text-red-500">*</span>
             </label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                validationErrors.role
-                  ? isDarkMode
-                    ? 'border-red-600 bg-gray-700 text-white'
-                    : 'border-red-300 bg-white text-gray-900'
-                  : isDarkMode
-                    ? 'border-gray-600 bg-gray-700 text-white'
-                    : 'border-gray-300 bg-white text-gray-900'
-              }`}
-            >
-              <option value="">Select a role</option>
+            <div className={`rounded-md border p-3 space-y-2 ${
+              validationErrors.roles
+                ? isDarkMode
+                  ? 'border-red-600 bg-gray-700'
+                  : 'border-red-300 bg-white'
+                : isDarkMode
+                  ? 'border-gray-600 bg-gray-700'
+                  : 'border-gray-300 bg-white'
+            }`}>
               {roles.map((role) => (
-                <option key={role._id} value={role._id}>
+                <label key={role._id} className={`flex items-center gap-2 text-sm ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                }`}>
+                  <input
+                    type="checkbox"
+                    checked={formData.roles.includes(role._id)}
+                    onChange={() => toggleRole(role._id)}
+                  />
                   {role.RoleName} - {role.description}
-                </option>
+                </label>
               ))}
-            </select>
-            {validationErrors.role && (
-              <p className="mt-1 text-sm text-red-500">{validationErrors.role}</p>
+            </div>
+            {validationErrors.roles && (
+              <p className="mt-1 text-sm text-red-500">{validationErrors.roles}</p>
             )}
+            <p className={`mt-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              The first selected role is treated as the primary role.
+            </p>
           </div>
 
           {/* Status */}
@@ -327,3 +334,14 @@ const EditUser = ({ userId, onBack, onSuccess }) => {
 };
 
 export default EditUser;
+  const toggleRole = (roleId) => {
+    setFormData((prev) => {
+      const exists = prev.roles.includes(roleId);
+      const roles = exists ? prev.roles.filter((id) => id !== roleId) : [...prev.roles, roleId];
+      return { ...prev, roles };
+    });
+
+    if (validationErrors.roles) {
+      setValidationErrors((prev) => ({ ...prev, roles: '' }));
+    }
+  };

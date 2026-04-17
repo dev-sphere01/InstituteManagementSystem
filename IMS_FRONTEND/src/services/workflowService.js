@@ -8,6 +8,9 @@ const workflowService = {
   getTaskById: async (id) => {
     return API.get(`/tasks/${id}`);
   },
+  updateTask: async (id, payload) => {
+    return API.patch(`/tasks/${id}`, payload);
+  },
   updateTaskStatus: async (id, status, note = '') => {
     return API.patch(`/tasks/${id}/status`, { status, note });
   },
@@ -16,6 +19,18 @@ const workflowService = {
   },
   getTaskHistory: async (id) => {
     return API.get(`/tasks/${id}/history`);
+  },
+  getAvailableTasks: async () => {
+    return API.get('/tasks/available');
+  },
+  getMyTasks: async () => {
+    return API.get('/tasks/my');
+  },
+  claimTask: async (id) => {
+    return API.post(`/tasks/${id}/claim`);
+  },
+  completeTask: async (id, note = '', overrideReason = '') => {
+    return API.post(`/tasks/${id}/complete`, { note, overrideReason });
   },
 
   // Workflow templates
@@ -47,6 +62,19 @@ const workflowService = {
   },
   getWorkflowById: async (id) => {
     return API.get(`/workflows/${id}`);
+  },
+  // Fees
+  getFeeSummary: async (params = {}) => {
+    return API.get('/fees', { params });
+  },
+  createFeePlan: async (payload) => {
+    return API.post('/fees', payload);
+  },
+  payInstallment: async (installmentId, amount, method, reference, note, paymentDate) => {
+    return API.patch(`/fees/installments/${installmentId}/pay`, { amount, method, reference, note, paymentDate });
+  },
+  directPay: async (payload) => {
+    return API.post('/fees/direct-pay', payload);
   }
 };
 

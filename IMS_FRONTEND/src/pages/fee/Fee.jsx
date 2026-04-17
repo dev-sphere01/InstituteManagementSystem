@@ -1,833 +1,746 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useMemo, useState } from 'react';
+import workflowService from '../../services/workflowService';
+import { useNotification } from '../../services/NotificationService';
 
-// Mock data for demonstration
-const mockCourses = [
-    { id: 1, name: "Mathematics", price: "5000", icon: "📊", color: "blue" },
-    { id: 2, name: "Physics", price: "5000", icon: "⚛️", color: "green" },
-    { id: 3, name: "Chemistry", price: "5000", icon: "🧪", color: "purple" },
-    { id: 4, name: "Biology", price: "4000", icon: "🧬", color: "red" },
-    { id: 5, name: "English", price: "3000", icon: "📚", color: "orange" },
-];
+const Fee = () => {
+  const notify = useNotification();
+  const [view, setView] = useState('search'); // 'search' or 'pay'
+  const [searchParams, setSearchParams] = useState({ name: '', fatherName: '', course: '' });
+  
+  const [admissions, setAdmissions] = useState([]);
+  const [loadingAdmissions, setLoadingAdmissions] = useState(false);
+  const [selectedId, setSelectedId] = useState('');
 
-const mockStudentData = {
-    student: {
-        id: 1,
-        enrollmentNumber: "ENR001",
-        fullName: "John Doe",
-        email: "john.doe@example.com",
-        phone: "+1234567890",
-        dateOfBirth: "1998-05-15",
-        totalPrice: "15000",
-        paidAmount: "10000",
-        paidEmis: 2,
-        remainingEmis: 1,
-        nextEmiDate: "2025-07-15",
-    },
-    courses: [
-        { id: 1, name: "Mathematics", price: "5000", icon: "📊", color: "blue" },
-        { id: 2, name: "Physics", price: "5000", icon: "⚛️", color: "green" },
-        { id: 3, name: "Chemistry", price: "5000", icon: "🧪", color: "purple" },
-    ],
-    paymentHistory: [
-        { id: 1, amount: "5000", method: "Online", receiptNumber: "RCPT001", paymentDate: "2025-05-01" },
-        { id: 2, amount: "5000", method: "Cash", receiptNumber: "RCPT002", paymentDate: "2025-06-01" },
-    ]
-};
+  const [loadingFee, setLoadingFee] = useState(false);
+  const [finance, setFinance] = useState(null);
+  const [installments, setInstallments] = useState([]);
+  const [transactions, setTransactions] = useState([]);
 
-// Floating Input Component
-const FloatingInput = ({ id, label, value, onChange, type = "text", className = "" }) => {
-    const [isFocused, setIsFocused] = useState(false);
-    const hasValue = value.trim() !== "";
-    const shouldFloat = isFocused || hasValue;
+  const [totalFee, setTotalFee] = useState('');
+  const [maxInstallments, setMaxInstallments] = useState(3);
+  const [firstDueDate, setFirstDueDate] = useState('');
+  const [intervalDays, setIntervalDays] = useState(30);
+  const [savingPlan, setSavingPlan] = useState(false);
 
-    return (
-        <div className={`relative ${className}`}>
-            <input
-                id={id}
-                type={type}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                className={`w-full px-3 border border-gray-300 bg-white rounded-md text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${shouldFloat ? 'pt-6 pb-2' : 'py-4'
-                    }`}
-            />
-            <label
-                htmlFor={id}
-                className={`absolute left-3 text-gray-500 transition-all duration-200 pointer-events-none bg-white px-1 ${shouldFloat
-                    ? 'top-0 text-xs text-blue-600 -translate-y-1/2 scale-90'
-                    : 'top-4 text-sm'
-                    }`}
-            >
-                {label}
-            </label>
-        </div>
-    );
-};
+  const [payAmounts, setPayAmounts] = useState({});
+  const [payMethods, setPayMethods] = useState({});
+  const [payReferences, setPayReferences] = useState({});
+  const [payDates, setPayDates] = useState({});
 
-// Button Component
-const Button = ({ children, onClick, disabled = false, className = "", variant = "primary" }) => {
-    const baseClasses = "px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2";
-    const variants = {
-        primary: "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400",
-        secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300",
-        success: "bg-green-600 text-white hover:bg-green-700",
-    };
+  const [directPayAmount, setDirectPayAmount] = useState('');
+  const [directPayMethod, setDirectPayMethod] = useState('Cash');
+  const [directPayReference, setDirectPayReference] = useState('');
+  const [directPayDate, setDirectPayDate] = useState('');
 
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className={`${baseClasses} ${variants[variant]} ${className} ${disabled ? 'cursor-not-allowed' : ''}`}
-        >
-            {children}
-        </button>
-    );
-};
+  const [showInstallments, setShowInstallments] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-// Card Component
-const Card = ({ children, className = "" }) => (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
-        {children}
-    </div>
-);
+  const loadAdmissions = async () => {
+    setLoadingAdmissions(true);
+    try {
+      const response = await workflowService.getAdmissions({ limit: 500, page: 1 });
+      setAdmissions(response?.admissions || response?.data?.admissions || response?.data || []);
+    } catch (error) {
+      notify('Failed to load admissions', 'error');
+    } finally {
+      setLoadingAdmissions(false);
+    }
+  };
 
-const CardHeader = ({ children, className = "" }) => (
-    <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
-        {children}
-    </div>
-);
+  const loadFeeSummary = async (targetId) => {
+    if (!targetId) return;
+    setLoadingFee(true);
+    try {
+      const response = await workflowService.getFeeSummary({ targetType: 'admission', targetId });
+      const data = response?.data || null;
+      setFinance(data?.finance || null);
+      setInstallments(data?.installments || []);
+      setTransactions(data?.transactions || []);
 
-const CardContent = ({ children, className = "" }) => (
-    <div className={`px-6 py-4 ${className}`}>
-        {children}
-    </div>
-);
+      if (data?.finance?.totalFee !== undefined && data?.finance?.totalFee !== null) {
+        setTotalFee(String(data.finance.totalFee));
+      }
+    } catch (error) {
+      notify('Failed to load fee summary', 'error');
+    } finally {
+      setLoadingFee(false);
+    }
+  };
 
-const CardTitle = ({ children, className = "" }) => (
-    <h3 className={`text-lg font-semibold text-gray-900 ${className}`}>
-        {children}
-    </h3>
-);
+  useEffect(() => {
+    loadAdmissions();
+  }, []);
 
-// Badge Component
-const Badge = ({ children, variant = "default", className = "" }) => {
-    const variants = {
-        default: "bg-gray-100 text-gray-800",
-        success: "bg-green-100 text-green-800",
-        warning: "bg-yellow-100 text-yellow-800",
-        error: "bg-red-100 text-red-800",
-    };
+  useEffect(() => {
+    if (selectedId) {
+      loadFeeSummary(selectedId);
+    } else {
+      setFinance(null);
+      setInstallments([]);
+      setTransactions([]);
+    }
+  }, [selectedId]);
 
-    return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}>
-            {children}
-        </span>
-    );
-};
-
-// Progress Component
-const Progress = ({ value, className = "" }) => (
-    <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>
-        <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-        />
-    </div>
-);
-
-// Table Components
-const Table = ({ children, className = "" }) => (
-    <div className={`overflow-x-auto ${className}`}>
-        <table className="min-w-full divide-y divide-gray-200">
-            {children}
-        </table>
-    </div>
-);
-
-const TableHeader = ({ children }) => (
-    <thead className="bg-gray-50">
-        {children}
-    </thead>
-);
-
-const TableBody = ({ children }) => (
-    <tbody className="bg-white divide-y divide-gray-200">
-        {children}
-    </tbody>
-);
-
-const TableRow = ({ children, className = "" }) => (
-    <tr className={`hover:bg-gray-50 ${className}`}>
-        {children}
-    </tr>
-);
-
-const TableHead = ({ children, className = "" }) => (
-    <th className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}>
-        {children}
-    </th>
-);
-
-const TableCell = ({ children, className = "" }) => (
-    <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${className}`}>
-        {children}
-    </td>
-);
-
-// Radio Group Components
-const RadioGroup = ({ value, onValueChange, children, className = "" }) => (
-    <div className={`space-y-2 ${className}`}>
-        {React.Children.map(children, (child) =>
-            React.cloneElement(child, { selectedValue: value, onValueChange })
-        )}
-    </div>
-);
-
-const RadioGroupItem = ({ value, id, selectedValue, onValueChange }) => (
-    <input
-        type="radio"
-        id={id}
-        value={value}
-        checked={selectedValue === value}
-        onChange={(e) => onValueChange(e.target.value)}
-        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-    />
-);
-
-// Select Components
-const Select = ({ value, onValueChange, children, className = "" }) => (
-    <select
-        value={value}
-        onChange={(e) => onValueChange(e.target.value)}
-        className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${className}`}
-    >
-        {children}
-    </select>
-);
-
-const SelectItem = ({ value, children }) => (
-    <option value={value}>{children}</option>
-);
-
-// Checkbox Component
-const Checkbox = ({ id, checked, onCheckedChange, className = "" }) => (
-    <input
-        type="checkbox"
-        id={id}
-        checked={checked}
-        onChange={(e) => onCheckedChange(e.target.checked)}
-        className={`w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${className}`}
-    />
-);
-
-// Label Component
-const Label = ({ htmlFor, children, className = "" }) => (
-    <label htmlFor={htmlFor} className={`block text-sm font-medium text-gray-700 ${className}`}>
-        {children}
-    </label>
-);
-
-// Separator Component
-const Separator = ({ className = "" }) => (
-    <hr className={`border-gray-200 ${className}`} />
-);
-
-// Toast Hook (simplified)
-const useToast = () => {
-    const [toasts, setToasts] = useState([]);
-
-    const toast = ({ title, description, variant = "default" }) => {
-        const id = Date.now();
-        const newToast = { id, title, description, variant };
-        setToasts(prev => [...prev, newToast]);
-
-        setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id));
-        }, 3000);
-    };
-
-    return { toast, toasts };
-};
-
-// Toaster Component
-const Toaster = ({ toasts }) => (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toasts.map(toast => (
-            <div
-                key={toast.id}
-                className={`p-4 rounded-lg shadow-lg max-w-sm ${toast.variant === 'destructive'
-                    ? 'bg-red-500 text-white'
-                    : 'bg-white border border-gray-200'
-                    }`}
-            >
-                <div className="font-medium">{toast.title}</div>
-                {toast.description && (
-                    <div className="text-sm mt-1">{toast.description}</div>
-                )}
-            </div>
-        ))}
-    </div>
-);
-
-// Color mappings
-const colorMap = {
-    blue: "bg-blue-100 text-blue-600",
-    green: "bg-green-100 text-green-600",
-    purple: "bg-purple-100 text-purple-600",
-    red: "bg-red-100 text-red-600",
-    orange: "bg-orange-100 text-orange-600",
-};
-
-// Main Fee Management Component
-const FeeManagement = () => {
-    const [enrollmentNumber, setEnrollmentNumber] = useState("");
-    const [studentExists, setStudentExists] = useState(null);
-    const [studentData, setStudentData] = useState(null);
-    const [paymentType, setPaymentType] = useState("emi");
-    const [paymentAmount, setPaymentAmount] = useState("");
-    const [paymentMethod, setPaymentMethod] = useState("online");
-    const [currentTime, setCurrentTime] = useState(new Date());
-    const [isLoading, setIsLoading] = useState(false);
-    const [newStudent, setNewStudent] = useState({
-        fullName: "",
-        email: "",
-        phone: "",
-        dateOfBirth: "",
-        enrollmentNumber: "",
+  const filteredAdmissions = useMemo(() => {
+    return admissions.filter(a => {
+      const matchName = (a.fullName || '').toLowerCase().includes(searchParams.name.toLowerCase());
+      const matchFather = (a.fathersName || '').toLowerCase().includes(searchParams.fatherName.toLowerCase());
+      const matchCourse = (a.courseApplied || '').toLowerCase().includes(searchParams.course.toLowerCase());
+      return matchName && matchFather && matchCourse;
     });
-    const [selectedCourses, setSelectedCourses] = useState([]);
-    const { toast, toasts } = useToast();
+  }, [admissions, searchParams]);
 
-    // Update time every second
-    useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
+  const selectedAdmission = useMemo(() => {
+    return admissions.find((a) => a._id === selectedId);
+  }, [admissions, selectedId]);
 
-    const handleFetchDetails = async () => {
-        if (!enrollmentNumber.trim()) {
-            toast({
-                title: "Error",
-                description: "Please enter an enrollment number",
-                variant: "destructive",
-            });
-            return;
-        }
+  const remaining = useMemo(() => {
+    if (!finance) return 0;
+    return Math.max(0, (finance.totalFee || 0) - (finance.totalPaid || 0));
+  }, [finance]);
 
-        setIsLoading(true);
+  const generateInstallments = () => {
+    const fee = Number(totalFee || 0);
+    const count = Number(maxInstallments || 0);
+    if (!fee || fee <= 0 || !count || count <= 0) {
+      notify('Enter total fee and max installments', 'warning');
+      return [];
+    }
+    if (!firstDueDate) {
+      notify('Select first due date', 'warning');
+      return [];
+    }
 
-        // Simulate API call
-        setTimeout(() => {
-            if (enrollmentNumber === "ENR001") {
-                setStudentExists(true);
-                setStudentData(mockStudentData);
-                setPaymentAmount("5000");
-            } else {
-                setStudentExists(false);
-                setNewStudent(prev => ({ ...prev, enrollmentNumber }));
+    const base = Math.floor(fee / count);
+    let remainder = fee - base * count;
+
+    const startDate = new Date(firstDueDate);
+    const dueInterval = Number(intervalDays || 0);
+
+    return Array.from({ length: count }, (_, idx) => {
+      const extra = remainder > 0 ? 1 : 0;
+      if (remainder > 0) remainder -= 1;
+      const amount = base + extra;
+      const dueDate = new Date(startDate);
+      if (dueInterval > 0) {
+        dueDate.setDate(dueDate.getDate() + dueInterval * idx);
+      }
+      return {
+        installmentNo: idx + 1,
+        amount,
+        dueDate: dueDate.toISOString().slice(0, 10)
+      };
+    });
+  };
+
+  const savePlan = async () => {
+    if (!selectedId) {
+      notify('Select a student first', 'warning');
+      return;
+    }
+    const fee = Number(totalFee || 0);
+    if (!fee || fee <= 0) {
+      notify('Enter total fee', 'warning');
+      return;
+    }
+    const plan = generateInstallments();
+    if (plan.length === 0) return;
+
+    setSavingPlan(true);
+    try {
+      await workflowService.createFeePlan({
+        targetType: 'admission',
+        targetId: selectedId,
+        totalFee: fee,
+        installments: plan
+      });
+      notify('Fee plan saved', 'success');
+      await loadFeeSummary(selectedId);
+    } catch (error) {
+      notify('Failed to save fee plan', 'error');
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const validateAndShowConfirm = () => {
+    const amount = Number(directPayAmount || 0);
+    if (!amount || amount <= 0) {
+      notify('Enter a valid payment amount', 'warning');
+      return;
+    }
+    if (directPayMethod === 'UPI' && !directPayReference.trim()) {
+      notify('Please enter UTR number for UPI payment', 'warning');
+      return;
+    }
+    setShowConfirmModal(true);
+  };
+
+  const submitConfirmedPayment = async () => {
+    const amount = Number(directPayAmount || 0);
+    const submissionDate = directPayDate ? new Date(directPayDate).toISOString() : new Date().toISOString();
+
+    try {
+      const response = await workflowService.directPay({
+        targetType: 'admission',
+        targetId: selectedId,
+        amount,
+        method: directPayMethod,
+        reference: directPayReference,
+        paymentDate: submissionDate
+      });
+
+      notify('Direct Payment recorded successfully', 'success');
+      setDirectPayAmount('');
+      setDirectPayReference('');
+      setDirectPayDate('');
+      setShowConfirmModal(false);
+      
+      await loadFeeSummary(selectedId);
+
+      const responseData = response?.data || response;
+      const dataPayload = responseData?.data || responseData;
+      const transaction = dataPayload?.transaction;
+      
+      if (transaction) {
+        handlePrintReceipt(transaction);
+      }
+    } catch (error) {
+      notify(error?.response?.data?.message || 'Failed to record direct payment', 'error');
+    }
+  };
+
+  const handlePrintReceipt = (transaction) => {
+    if (!selectedAdmission) return;
+    const printWindow = window.open('', '_blank');
+    const generationTime = new Date().toLocaleString();
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Fee Receipt</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+            .header p { margin: 5px 0 0 0; color: #666; }
+            .details { margin-bottom: 30px; display: flex; justify-content: space-between; gap: 20px; }
+            .details div { line-height: 1.6; }
+            .amount-box { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center; border: 1px solid #eee; }
+            .amount-box h2 { margin: 0; font-size: 32px; color: #10b981; }
+            .amount-box p { margin: 5px 0 0 0; color: #666; text-transform: uppercase; font-size: 14px; }
+            .meta { font-size: 11px; color: #888; background: #fafafa; padding: 10px; border: 1px dashed #ccc; margin-bottom: 30px; }
+            .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 20px; }
+            .signature { margin-top: 50px; display: flex; justify-content: space-between; }
+            .signature div { border-top: 1px solid #333; padding-top: 5px; width: 200px; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Institute Fee Receipt</h1>
+            <p>Official Payment Record</p>
+          </div>
+          <div class="details">
+            <div>
+              <strong>Student Name:</strong> ${selectedAdmission.fullName}<br/>
+              <strong>Father's Name:</strong> ${selectedAdmission.fathersName || 'N/A'}<br/>
+              <strong>Form No:</strong> ${selectedAdmission.formNo || 'N/A'}<br/>
+              <strong>Course:</strong> ${selectedAdmission.courseApplied || 'N/A'}
+            </div>
+            <div style="text-align: right;">
+              <strong>Receipt No:</strong> ${transaction._id.substring(transaction._id.length - 8).toUpperCase()}<br/>
+              <strong>Date of Payment:</strong> ${new Date(transaction.paymentDate).toLocaleString()}<br/>
+              <strong>Payment Method:</strong> ${transaction.method || 'Cash'}<br/>
+              ${transaction.method === 'UPI' ? '<strong>UTR No:</strong> ' + (transaction.reference || 'N/A') : ''}
+            </div>
+          </div>
+          <div class="amount-box">
+            <h2>₹${transaction.amount}</h2>
+            <p>Amount Received Successfully</p>
+          </div>
+          <div class="meta">
+            <strong>Metadata:</strong><br/>
+            Receipt Generation Time: ${generationTime}<br/>
+            Processing Auth: System Generated
+          </div>
+          <div class="signature">
+            <div>Student Signature</div>
+            <div>Authorized Signatory</div>
+          </div>
+          <div class="footer">
+            This is a computer-generated receipt and does not require a physical signature.
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              window.setTimeout(function() { window.close(); }, 500);
             }
-            setIsLoading(false);
-        }, 1000);
-    };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
-    const handleProcessPayment = () => {
-        if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
-            toast({
-                title: "Error",
-                description: "Please enter a valid payment amount",
-                variant: "destructive",
-            });
-            return;
-        }
+  const handleSelectStudent = (id) => {
+    setSelectedId(id);
+    setView('pay');
+  };
 
-        // Simulate payment processing
-        toast({
-            title: "Success",
-            description: "Payment processed successfully",
-        });
-
-        // Update payment history
-        const newPayment = {
-            id: Date.now(),
-            amount: paymentAmount,
-            method: paymentMethod,
-            receiptNumber: `RCPT${String(Date.now()).slice(-3)}`,
-            paymentDate: new Date().toISOString().split('T')[0],
-        };
-
-        setStudentData(prev => ({
-            ...prev,
-            paymentHistory: [newPayment, ...prev.paymentHistory],
-        }));
-
-        setPaymentAmount("");
-    };
-
-    const handleSaveAndPay = () => {
-        if (!newStudent.fullName || selectedCourses.length === 0) {
-            toast({
-                title: "Error",
-                description: "Please fill in all required fields and select at least one course",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        const totalPrice = selectedCourses.reduce((sum, courseId) => {
-            const course = mockCourses.find(c => c.id === courseId);
-            return sum + (course ? parseFloat(course.price) : 0);
-        }, 0);
-
-        // Simulate student creation
-        toast({
-            title: "Success",
-            description: "Student created successfully",
-        });
-
-        setStudentExists(true);
-        setStudentData({
-            student: {
-                ...newStudent,
-                id: Date.now(),
-                totalPrice: totalPrice.toString(),
-                paidAmount: "0",
-                paidEmis: 0,
-                remainingEmis: 0,
-            },
-            courses: selectedCourses.map(id => mockCourses.find(c => c.id === id)),
-            paymentHistory: [],
-        });
-    };
-
-    const handleCourseSelection = (courseId, checked) => {
-        setSelectedCourses(prev =>
-            checked
-                ? [...prev, courseId]
-                : prev.filter(id => id !== courseId)
-        );
-    };
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            maximumFractionDigits: 0,
-        }).format(parseFloat(amount));
-    };
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
-    const getPaymentProgress = () => {
-        if (!studentData) return 0;
-        const paid = parseFloat(studentData.student.paidAmount);
-        const total = parseFloat(studentData.student.totalPrice);
-        return (paid / total) * 100;
-    };
-
-    return (
-        <div className="min-h-screen bg-gray-50">
-            <Toaster toasts={toasts} />
-
-            <main className="w-full px-4 sm:px-6 lg:px-8 py-8">
-                {/* Enrollment Search */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <Card className="mb-8">
-                        <CardHeader>
-                            <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <span className="text-blue-600">🔍</span>
-                                </div>
-                                <div>
-                                    <CardTitle>Student Lookup</CardTitle>
-                                    <p className="text-sm text-gray-600">
-                                        Enter enrollment number to fetch student details
-                                    </p>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <div className="flex-1">
-                                    <FloatingInput
-                                        id="enrollmentNumber"
-                                        label="Enrollment Number"
-                                        value={enrollmentNumber}
-                                        onChange={setEnrollmentNumber}
-                                    />
-                                </div>
-                                <Button
-                                    onClick={handleFetchDetails}
-                                    disabled={isLoading}
-                                    className="px-6 py-3"
-                                >
-                                    {isLoading ? (
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    ) : (
-                                        "🔍"
-                                    )}
-                                    <span className="ml-2">Fetch Details</span>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
-
-                {/* Student Flow */}
-                <AnimatePresence mode="wait">
-                    {studentExists === true && studentData && (
-                        <motion.div
-                            key="existing-student"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                            className="space-y-6"
-                        >
-                            {/* Student Information */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <Card className="lg:col-span-2">
-                                    <CardHeader>
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                                <span className="text-green-600">🏫</span>
-                                            </div>
-                                            <div>
-                                                <CardTitle>Student Information</CardTitle>
-                                                <p className="text-sm text-gray-600">
-                                                    Enrollment details and payment status
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <Label className="text-sm font-medium text-gray-600">Full Name</Label>
-                                                    <div className="mt-1 px-3 py-2 bg-gray-50 rounded-md">
-                                                        {studentData.student.fullName}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <Label className="text-sm font-medium text-gray-600">Total Price</Label>
-                                                    <div className="mt-1 px-3 py-2 bg-gray-50 rounded-md">
-                                                        {formatCurrency(studentData.student.totalPrice)}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <Label className="text-sm font-medium text-gray-600">Paid EMIs</Label>
-                                                    <div className="mt-1 px-3 py-2 bg-gray-50 rounded-md">
-                                                        {studentData.student.paidEmis}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <Label className="text-sm font-medium text-gray-600">Remaining EMIs</Label>
-                                                    <div className="mt-1 px-3 py-2 bg-gray-50 rounded-md">
-                                                        {studentData.student.remainingEmis}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <Label className="text-sm font-medium text-gray-600">Next EMI Date</Label>
-                                                <div className="mt-1 px-3 py-2 bg-gray-50 rounded-md">
-                                                    {studentData.student.nextEmiDate ? formatDate(studentData.student.nextEmiDate) : 'N/A'}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Payment Status */}
-                                <Card>
-                                    <CardHeader>
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                                                <span className="text-orange-600">💳</span>
-                                            </div>
-                                            <div>
-                                                <CardTitle>Payment Status</CardTitle>
-                                                <p className="text-sm text-gray-600">
-                                                    Current payment overview
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="flex justify-between items-center py-3 border-b">
-                                            <span className="text-sm text-gray-600">Total Amount</span>
-                                            <span className="font-semibold">{formatCurrency(studentData.student.totalPrice)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center py-3 border-b">
-                                            <span className="text-sm text-gray-600">Paid Amount</span>
-                                            <span className="font-semibold text-green-600">{formatCurrency(studentData.student.paidAmount)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center py-3 border-b">
-                                            <span className="text-sm text-gray-600">Due Amount</span>
-                                            <span className="font-semibold text-red-600">
-                                                {formatCurrency((parseFloat(studentData.student.totalPrice) - parseFloat(studentData.student.paidAmount)).toString())}
-                                            </span>
-                                        </div>
-                                        <div className="mt-4">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-sm text-gray-600">Payment Progress</span>
-                                                <span className="text-sm font-medium">{Math.round(getPaymentProgress())}%</span>
-                                            </div>
-                                            <Progress value={getPaymentProgress()} />
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-
-                            {/* Enrolled Courses */}
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex items-center space-x-3">
-                                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                            <span className="text-blue-600">📚</span>
-                                        </div>
-                                        <div>
-                                            <CardTitle>Enrolled Courses</CardTitle>
-                                            <p className="text-sm text-gray-600">
-                                                Courses selected for this student
-                                            </p>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {studentData.courses.map((course) => (
-                                            <div key={course.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                                                <div className="flex items-center space-x-3 mb-3">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${colorMap[course.color]}`}>
-                                                        <span>{course.icon}</span>
-                                                    </div>
-                                                    <h4 className="font-medium">{course.name}</h4>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-sm text-gray-600">Course Fee</span>
-                                                    <span className="font-semibold">{formatCurrency(course.price)}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Payment Section */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <Card>
-                                    <CardHeader>
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                                <span className="text-green-600">💰</span>
-                                            </div>
-                                            <div>
-                                                <CardTitle>Make Payment</CardTitle>
-                                                <p className="text-sm text-gray-600">
-                                                    Choose payment method and amount
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="space-y-6">
-                                        <div>
-                                            <Label className="text-sm font-medium mb-3 block">Payment Type</Label>
-                                            <RadioGroup value={paymentType} onValueChange={setPaymentType}>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem value="emi" id="emi" />
-                                                    <Label htmlFor="emi">EMI Payment</Label>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem value="full" id="full" />
-                                                    <Label htmlFor="full">Full Payment</Label>
-                                                </div>
-                                            </RadioGroup>
-                                        </div>
-
-                                        <FloatingInput
-                                            id="paymentAmount"
-                                            label="Amount Being Paid (₹)"
-                                            type="number"
-                                            value={paymentAmount}
-                                            onChange={setPaymentAmount}
-                                        />
-
-                                        <div>
-                                            <Label className="text-sm font-medium mb-3 block">Payment Method</Label>
-                                            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                                <SelectItem value="online">Online Payment</SelectItem>
-                                                <SelectItem value="cash">Cash</SelectItem>
-                                                <SelectItem value="cheque">Cheque</SelectItem>
-                                                <SelectItem value="card">Card</SelectItem>
-                                            </Select>
-                                        </div>
-
-                                        <Button
-                                            onClick={handleProcessPayment}
-                                            variant="success"
-                                            className="w-full"
-                                        >
-                                            <span>💳</span>
-                                            <span className="ml-2">Process Payment</span>
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Payment History */}
-                                <Card>
-                                    <CardHeader>
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <span className="text-gray-600">🧾</span>
-                                            </div>
-                                            <div>
-                                                <CardTitle>Payment History</CardTitle>
-                                                <p className="text-sm text-gray-600">
-                                                    Recent payment transactions
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Date</TableHead>
-                                                    <TableHead>Amount</TableHead>
-                                                    <TableHead>Method</TableHead>
-                                                    <TableHead>Receipt</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {studentData.paymentHistory.map((payment) => (
-                                                    <TableRow key={payment.id}>
-                                                        <TableCell>{formatDate(payment.paymentDate)}</TableCell>
-                                                        <TableCell className="font-medium text-green-600">
-                                                            {formatCurrency(payment.amount)}
-                                                        </TableCell>
-                                                        <TableCell>{payment.method}</TableCell>
-                                                        <TableCell className="text-blue-600">{payment.receiptNumber}</TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {studentExists === false && (
-                        <motion.div
-                            key="new-student"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex items-center space-x-3">
-                                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                            <span className="text-blue-600">👤➕</span>
-                                        </div>
-                                        <div>
-                                            <CardTitle>New Student Admission</CardTitle>
-                                            <p className="text-sm text-gray-600">
-                                                Fill in the student details for new admission
-                                            </p>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <FloatingInput
-                                            id="newStudentName"
-                                            label="Full Name"
-                                            value={newStudent.fullName}
-                                            onChange={(value) => setNewStudent(prev => ({ ...prev, fullName: value }))}
-                                        />
-                                        <FloatingInput
-                                            id="newStudentEmail"
-                                            label="Email Address"
-                                            type="email"
-                                            value={newStudent.email}
-                                            onChange={(value) => setNewStudent(prev => ({ ...prev, email: value }))}
-                                        />
-                                        <FloatingInput
-                                            id="newStudentPhone"
-                                            label="Phone Number"
-                                            type="tel"
-                                            value={newStudent.phone}
-                                            onChange={(value) => setNewStudent(prev => ({ ...prev, phone: value }))}
-                                        />
-                                        <FloatingInput
-                                            id="newStudentDob"
-                                            label="Date of Birth"
-                                            type="date"
-                                            value={newStudent.dateOfBirth}
-                                            onChange={(value) => setNewStudent(prev => ({ ...prev, dateOfBirth: value }))}
-                                        />
-                                    </div>
-
-                                    <div className="mt-8">
-                                        <h4 className="text-lg font-semibold mb-4">Available Courses</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {mockCourses.map((course) => (
-                                                <div key={course.id} className="border rounded-lg p-4">
-                                                    <div className="flex items-center space-x-3 mb-3">
-                                                        <Checkbox
-                                                            id={`course-${course.id}`}
-                                                            checked={selectedCourses.includes(course.id)}
-                                                            onCheckedChange={(checked) =>
-                                                                handleCourseSelection(course.id, checked)
-                                                            }
-                                                        />
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${colorMap[course.color]}`}>
-                                                            <span>{course.icon}</span>
-                                                        </div>
-                                                        <h4 className="font-medium">{course.name}</h4>
-                                                    </div>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-sm text-gray-600">Course Fee</span>
-                                                        <span className="font-semibold">{formatCurrency(course.price)}</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-8 flex justify-end">
-                                        <Button
-                                            onClick={handleSaveAndPay}
-                                            className="px-8 py-3"
-                                        >
-                                            <span>💾</span>
-                                            <span className="ml-2">Save & Pay</span>
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </main>
+  return (
+    <div className="space-y-4">
+      <div className="relative overflow-hidden rounded-xl border border-amber-200/60 bg-gradient-to-br from-amber-600 via-orange-500 to-rose-500 p-5 text-white shadow-md">
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10" />
+        <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-white/10" />
+        <div className="relative z-10 flex justify-between items-center">
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] text-white/70">Fee Control</div>
+            <h1 className="text-xl font-bold">Student Fee Management</h1>
+            <p className="text-sm text-white/80">Search students, collect fee via UPI/Cash, and generate printable receipts instantly.</p>
+          </div>
+          {view === 'pay' && (
+            <button
+              onClick={() => { setView('search'); setSelectedId(''); }}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg transition-colors font-medium text-sm border border-white/30 flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              Back to Search
+            </button>
+          )}
         </div>
-    );
+      </div>
+
+      {view === 'search' && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="text-base font-semibold text-gray-900 mb-3">Multi-field Student Search</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               <div>
+                 <label className="block text-xs text-gray-500 mb-1">Student Name</label>
+                 <input
+                   type="text"
+                   className="w-full border rounded-lg px-3 py-2 text-sm"
+                   placeholder="Search name..."
+                   value={searchParams.name}
+                   onChange={e => setSearchParams(prev => ({ ...prev, name: e.target.value }))}
+                 />
+               </div>
+               <div>
+                 <label className="block text-xs text-gray-500 mb-1">Father's Name</label>
+                 <input
+                   type="text"
+                   className="w-full border rounded-lg px-3 py-2 text-sm"
+                   placeholder="Search father's name..."
+                   value={searchParams.fatherName}
+                   onChange={e => setSearchParams(prev => ({ ...prev, fatherName: e.target.value }))}
+                 />
+               </div>
+               <div>
+                 <label className="block text-xs text-gray-500 mb-1">Course Applied</label>
+                 <input
+                   type="text"
+                   className="w-full border rounded-lg px-3 py-2 text-sm"
+                   placeholder="Search course..."
+                   value={searchParams.course}
+                   onChange={e => setSearchParams(prev => ({ ...prev, course: e.target.value }))}
+                 />
+               </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-base font-semibold text-gray-900">Found Students ({filteredAdmissions.length})</h2>
+              {loadingAdmissions && <span className="text-sm text-indigo-600 animate-pulse">Loading dataset...</span>}
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-50 text-slate-700">
+                  <tr>
+                    <th className="text-left px-3 py-2">Student Name</th>
+                    <th className="text-left px-3 py-2">Father's Name</th>
+                    <th className="text-left px-3 py-2">Course</th>
+                    <th className="text-left px-3 py-2">Form No</th>
+                    <th className="text-left px-3 py-2">Contact</th>
+                    <th className="text-center px-3 py-2">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAdmissions.slice(0, 100).map(student => (
+                    <tr key={student._id} className="border-b hover:bg-slate-50 transition-colors">
+                      <td className="px-3 py-2 font-medium text-gray-800">{student.fullName}</td>
+                      <td className="px-3 py-2 text-gray-600">{student.fathersName || '-'}</td>
+                      <td className="px-3 py-2 text-gray-600">{student.courseApplied || '-'}</td>
+                      <td className="px-3 py-2 text-gray-600">{student.formNo || '-'}</td>
+                      <td className="px-3 py-2 text-gray-600">{student.contactNumber || '-'}</td>
+                      <td className="px-3 py-2 text-center">
+                        <button
+                          onClick={() => handleSelectStudent(student._id)}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-medium transition-colors shadow-sm"
+                        >
+                          Collect Fee
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredAdmissions.length === 0 && !loadingAdmissions && (
+                    <tr>
+                      <td colSpan="6" className="text-center py-6 text-gray-500">
+                        No students found matching the criteria.
+                      </td>
+                    </tr>
+                  )}
+                  {filteredAdmissions.length > 100 && (
+                    <tr>
+                      <td colSpan="6" className="text-center py-3 text-xs text-amber-600 bg-amber-50">
+                        Showing top 100 results. Please refine your search.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view === 'pay' && selectedAdmission && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-1 border border-slate-200 bg-slate-50 p-4 rounded-xl">
+              <h3 className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3">Student Profile</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                  <span className="text-slate-500">Name</span>
+                  <span className="font-semibold text-slate-800">{selectedAdmission.fullName}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                  <span className="text-slate-500">Father's Name</span>
+                  <span className="font-medium text-slate-800">{selectedAdmission.fathersName || '-'}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                  <span className="text-slate-500">Course</span>
+                  <span className="font-medium text-slate-800">{selectedAdmission.courseApplied || '-'}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                  <span className="text-slate-500">Form No</span>
+                  <span className="font-medium text-slate-800">{selectedAdmission.formNo || '-'}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2">
+                  <span className="text-slate-500">Contact</span>
+                  <span className="font-medium text-slate-800">{selectedAdmission.contactNumber || '-'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-base font-semibold text-gray-900">Fee Summary</div>
+                  <div className="text-xs text-gray-500">Total fee, paid amount, and remaining balance.</div>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <button
+                    className="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg border border-indigo-100 hover:bg-indigo-100 font-semibold transition"
+                    onClick={() => setShowInstallments(!showInstallments)}
+                  >
+                    {showInstallments ? 'Hide Installments' : 'View Installments Details'}
+                  </button>
+                  <button
+                    className="text-xs text-gray-500 hover:underline px-2"
+                    onClick={() => loadFeeSummary(selectedId)}
+                    disabled={loadingFee}
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              {loadingFee ? (
+                <div className="text-sm text-gray-500 flex-1 flex items-center justify-center">Loading fee summary...</div>
+              ) : (
+                <div className="grid grid-cols-3 gap-3 flex-1">
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 flex flex-col justify-center">
+                    <div className="text-[11px] font-semibold text-slate-500 mb-0.5">Total Fee</div>
+                    <div className="text-lg font-bold text-slate-800">₹{finance?.totalFee || 0}</div>
+                  </div>
+                  <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 flex flex-col justify-center">
+                    <div className="text-[11px] font-semibold text-emerald-600 mb-0.5">Total Paid</div>
+                    <div className="text-lg font-bold text-emerald-700">₹{finance?.totalPaid || 0}</div>
+                  </div>
+                  <div className="rounded-lg border border-rose-100 bg-rose-50 p-3 flex flex-col justify-center">
+                    <div className="text-[11px] font-semibold text-rose-600 mb-0.5">Remaining</div>
+                    <div className="text-lg font-bold text-rose-700">₹{remaining}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+            <div>
+               <h2 className="text-base font-semibold text-gray-900">Submit Fee Payment</h2>
+              <p className="text-sm text-gray-500">Record an arbitrary payment amount. The system dynamically updates any defined installments automatically.</p>
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Amount to Pay</label>
+                  <input
+                    type="number"
+                    className="border border-indigo-200 outline-none focus:ring-2 focus:ring-indigo-500 rounded-md px-3 py-2 text-sm w-full font-medium"
+                    placeholder="0"
+                    value={directPayAmount}
+                    onChange={(e) => setDirectPayAmount(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Method</label>
+                  <select
+                    className="border rounded-md px-3 py-2 text-sm w-full bg-slate-50 focus:bg-white"
+                    value={directPayMethod}
+                    onChange={(e) => setDirectPayMethod(e.target.value)}
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI</option>
+                  </select>
+                </div>
+                {directPayMethod === 'UPI' && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">UTR Number</label>
+                    <input
+                      type="text"
+                      className="border rounded-md px-3 py-2 text-sm w-full bg-slate-50 focus:bg-white"
+                      placeholder="Ex: 5313..."
+                      value={directPayReference}
+                      onChange={(e) => setDirectPayReference(e.target.value)}
+                    />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    className="border rounded-md px-3 py-2 text-sm w-full bg-slate-50 focus:bg-white"
+                    value={directPayDate}
+                    onChange={(e) => setDirectPayDate(e.target.value)}
+                  />
+                </div>
+                <div className={directPayMethod === 'UPI' ? 'md:col-span-4' : 'md:col-span-1'}>
+                  <button
+                    className="text-white hover:bg-emerald-600 bg-emerald-500 px-4 py-2 w-full rounded-md text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-1 h-[38px]"
+                    onClick={validateAndShowConfirm}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    Submit Payment
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {showInstallments && (
+            <div className="animate-in fade-in slide-in-from-top-4 space-y-4">
+              <div className="rounded-xl border border-indigo-100 bg-gradient-to-br from-white via-white to-indigo-50/50 p-4 shadow-sm space-y-3">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">Define Fee Plan</h2>
+                  <p className="text-sm text-gray-500">Set maximum fee and structured due dates.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">Total Fee</label>
+                    <input
+                      type="number"
+                      className="border rounded-lg px-3 py-2 text-sm w-full"
+                      value={totalFee}
+                      onChange={(e) => setTotalFee(e.target.value)}
+                      placeholder="15000"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">Max Installments</label>
+                    <input
+                      type="number"
+                      className="border rounded-lg px-3 py-2 text-sm w-full"
+                      value={maxInstallments}
+                      onChange={(e) => setMaxInstallments(e.target.value)}
+                      placeholder="3"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">First Due Date</label>
+                    <input
+                      type="date"
+                      className="border rounded-lg px-3 py-2 text-sm w-full"
+                      value={firstDueDate}
+                      onChange={(e) => setFirstDueDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">Interval (Days)</label>
+                    <input
+                      type="number"
+                      className="border rounded-lg px-3 py-2 text-sm w-full"
+                      value={intervalDays}
+                      onChange={(e) => setIntervalDays(e.target.value)}
+                      placeholder="30"
+                    />
+                  </div>
+                </div>
+                <div className="pt-2">
+                  <button
+                    className="px-5 py-2 rounded-lg bg-indigo-600 text-white font-medium shadow-sm hover:bg-indigo-700 transition"
+                    onClick={savePlan}
+                    disabled={savingPlan}
+                  >
+                    {savingPlan ? 'Saving...' : 'Save Fee Plan'}
+                  </button>
+                </div>
+              </div>
+
+              {installments.length > 0 && (
+                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+                  <div>
+                    <h2 className="text-base font-semibold text-gray-900">Installment Structure Projection</h2>
+                    <p className="text-sm text-gray-500">Track how the paid amount covers the defined fee plan sequentially.</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead className="bg-slate-50 text-slate-700">
+                        <tr>
+                          <th className="text-left px-3 py-3 rounded-tl-lg">#</th>
+                          <th className="text-left px-3 py-3">Due Date</th>
+                          <th className="text-left px-3 py-3">Amount</th>
+                          <th className="text-left px-3 py-3">Paid Allocation</th>
+                          <th className="text-left px-3 py-3 rounded-tr-lg">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {installments.map((inst, idx) => (
+                          <tr key={inst._id} className={idx !== installments.length - 1 ? "border-b border-slate-100 bg-white" : "bg-white"}>
+                            <td className="px-3 py-4">{inst.installmentNo}</td>
+                            <td className="px-3 py-4 text-slate-500">{new Date(inst.dueDate).toLocaleDateString()}</td>
+                            <td className="px-3 py-4 font-medium text-slate-800">₹{inst.amount}</td>
+                            <td className="px-3 py-4 text-emerald-600 font-semibold">₹{inst.paidAmount || 0}</td>
+                            <td className="px-3 py-4">
+                              <span className={`px-2 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${inst.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : inst.status === 'Partial' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                                {inst.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {transactions.length > 0 && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Transaction Ledger</h2>
+                <p className="text-sm text-gray-500">History of payments and valid printable receipts.</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-slate-50 text-slate-700">
+                    <tr>
+                      <th className="text-left px-3 py-3 rounded-tl-lg">Receipt No</th>
+                      <th className="text-left px-3 py-3">Date of Submission</th>
+                      <th className="text-left px-3 py-3">Amount</th>
+                      <th className="text-left px-3 py-3">Method</th>
+                      <th className="text-left px-3 py-3">Ref / UTR</th>
+                      <th className="text-right px-3 py-3 rounded-tr-lg">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((trx, idx) => (
+                      <tr key={trx._id} className={idx !== transactions.length - 1 ? "border-b border-slate-100" : ""}>
+                        <td className="px-3 py-3 font-mono text-xs">{trx._id.substring(trx._id.length - 8).toUpperCase()}</td>
+                        <td className="px-3 py-3 font-medium text-slate-700">{new Date(trx.paymentDate).toLocaleString()}</td>
+                        <td className="px-3 py-3 text-emerald-600 font-bold">₹{trx.amount}</td>
+                        <td className="px-3 py-3">
+                          <span className="bg-slate-100 px-2 py-0.5 rounded text-xs text-slate-600 font-semibold">{trx.method || 'Cash'}</span>
+                        </td>
+                        <td className="px-3 py-3 font-mono text-xs text-slate-500">{trx.reference || '-'}</td>
+                        <td className="px-3 py-3 text-right">
+                           <button
+                             className="text-xs font-semibold px-3 py-1.5 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-md transition-colors inline-flex items-center gap-1.5"
+                             onClick={() => handlePrintReceipt(trx)}
+                           >
+                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                             Print Receipt
+                           </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-5">
+              <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Confirm Fee Submission</h3>
+              <p className="text-xs text-gray-500 mb-5">Please verify the payment details below. A receipt will be generated automatically.</p>
+              
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Student</span>
+                  <span className="font-bold text-slate-800">{selectedAdmission?.fullName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Amount</span>
+                  <span className="font-bold text-emerald-600 text-lg">₹{directPayAmount}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Method</span>
+                  <span className="font-bold text-slate-800">{directPayMethod}</span>
+                </div>
+                {directPayMethod === 'UPI' && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-medium">UTR Number</span>
+                    <span className="font-bold text-slate-800">{directPayReference || '-'}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Date & Time</span>
+                  <span className="font-bold text-slate-800">
+                    {directPayDate ? new Date(directPayDate).toLocaleString() : 'Current Time'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-100">
+              <button
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors"
+                onClick={submitConfirmedPayment}
+              >
+                Confirm & Print Receipt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
-export default FeeManagement;
+export default Fee;

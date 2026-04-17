@@ -239,6 +239,7 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
     name: req.body.name,
     email: req.body.email,
     role: req.body.role,
+    roles: req.body.roles,
     isActive: req.body.isActive,
     avatar: req.body.avatar
   };
@@ -265,6 +266,7 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
       name: oldUser.name,
       email: oldUser.email,
       role: oldUser.role,
+      roles: oldUser.roles,
       isActive: oldUser.isActive,
       avatar: oldUser.avatar,
     },
@@ -272,6 +274,7 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      roles: user.roles,
       isActive: user.isActive,
       avatar: user.avatar,
     },

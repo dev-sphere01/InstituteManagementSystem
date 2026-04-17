@@ -69,21 +69,26 @@ const createWorkflowInstance = async ({
   const effectiveSteps = buildStepDependencies(template.steps || [], template.autoSequence);
   const tasksPayload = effectiveSteps.map((step) => {
     const dueDate = calculateDueDate(step.dueInDays);
-    const isBlocked = step.dependsOn && step.dependsOn.length > 0;
     return {
       workflowInstanceId: instance._id,
+      workflowTemplateId: template._id,
+      studentId: targetType === 'admission' ? targetId : undefined,
       targetType,
       targetId,
+      taskName: step.title,
       stepKey: step.key,
       title: step.title,
       description: step.description,
       sequence: step.sequence || 0,
       dependsOn: step.dependsOn || [],
-      status: isBlocked ? 'blocked' : 'pending',
+      status: 'pending',
       assignedRole: step.assignedRole,
       dueDate,
       priority: step.priority || 'normal',
-      escalation: step.escalation || { enabled: false, afterDays: 0 }
+      escalation: step.escalation || { enabled: false, afterDays: 0 },
+      escalationLevels: step.escalationLevels || [],
+      stepType: step.stepType || 'general',
+      paymentRules: step.paymentRules || { minRequiredAmount: 0, minRequiredInstallments: 0, requiresFullPayment: false, minPaidPercentage: 0 }
     };
   });
 
@@ -94,39 +99,8 @@ const createWorkflowInstance = async ({
   return { instance, tasksCreated: tasksPayload.length, skipped: false };
 };
 
-const unblockDependentTasks = async (workflowInstanceId, completedStepKey) => {
-  const dependents = await Task.find({
-    workflowInstanceId,
-    dependsOn: completedStepKey,
-    status: 'blocked'
-  }).lean();
-
-  if (dependents.length === 0) return 0;
-
-  const completedKeys = await Task.find({
-    workflowInstanceId,
-    status: 'done'
-  }).select('stepKey').lean();
-  const completedSet = new Set(completedKeys.map((t) => t.stepKey));
-  completedSet.add(completedStepKey);
-
-  const toUnblockIds = [];
-  for (const task of dependents) {
-    const deps = task.dependsOn || [];
-    const allDone = deps.every((k) => completedSet.has(k));
-    if (allDone) {
-      toUnblockIds.push(task._id);
-    }
-  }
-
-  if (toUnblockIds.length === 0) return 0;
-
-  const result = await Task.updateMany(
-    { _id: { $in: toUnblockIds } },
-    { $set: { status: 'pending' } }
-  );
-
-  return result.modifiedCount || 0;
+const unblockDependentTasks = async () => {
+  return 0;
 };
 
 module.exports = {

@@ -1,82 +1,155 @@
 const Task = require('../models/task');
-const TaskHistory = require('../models/taskHistory');
-const { unblockDependentTasks } = require('../services/workflowService');
 
-exports.getTasks = async (req, res) => {
+const TASK_ORDER = [
+  'Fee Collection',
+  'Document Verification',
+  'Registration',
+  'Exam Form',
+  'Admit Card',
+  'Certificate'
+];
+
+// Helper to advance sequence
+const advanceTaskSequence = async (task) => {
+  if (task.status !== 'completed') return;
+  const currentIndex = TASK_ORDER.indexOf(task.taskName);
+  
+  task.isCurrent = false;
+
+  if (currentIndex !== -1 && currentIndex < TASK_ORDER.length - 1) {
+    const nextTaskName = TASK_ORDER[currentIndex + 1];
+    await Task.updateOne(
+      { studentId: task.studentId, taskName: nextTaskName },
+      { $set: { isCurrent: true, status: 'pending' } }
+    );
+  }
+  
+  await task.save();
+};
+
+// Helper to check if user is admin
+const getUserWithRole = async (user) => {
+  if (!user) return null;
+  const populatedUser = await require('../models/userModel').findById(user._id).populate('role');
+  return populatedUser;
+};
+
+const isAdminUser = async (user) => {
+  if (!user || !user.role || !user.role.RoleName) return false;
+  if (user.role.RoleName.toLowerCase().includes('admin')) {
+    return true;
+  }
+  return false;
+};
+
+// Filter tasks by taskName (tab) and assignedRole (or all if admin)
+exports.getTasksByTab = async (req, res) => {
   try {
-    const {
-      status,
-      assignedTo,
-      assignedRole,
-      targetType,
-      targetId,
-      workflowInstanceId,
-      dueBefore,
-      dueAfter
-    } = req.query;
-
-    const filter = {};
-    if (status) filter.status = status;
-    if (assignedTo) filter.assignedTo = assignedTo;
-    if (assignedRole) filter.assignedRole = assignedRole;
-    if (targetType) filter.targetType = targetType;
-    if (targetId) filter.targetId = targetId;
-    if (workflowInstanceId) filter.workflowInstanceId = workflowInstanceId;
-
-    if (dueBefore || dueAfter) {
-      filter.dueDate = {};
-      if (dueBefore) filter.dueDate.$lte = new Date(dueBefore);
-      if (dueAfter) filter.dueDate.$gte = new Date(dueAfter);
+    const { taskName, filterStatus, course, batch } = req.query; // 'Fee Collection', 'Document Verification', etc.
+    let filter = {};
+    
+    if (filterStatus === 'completed') {
+      filter.status = 'completed';
+    } else if (filterStatus === 'all') {
+      // No additional status filter, just get all tasks for the taskName regardless of status or isCurrent
+    } else {
+      filter.$or = [
+        { isCurrent: true },
+        // Backwards compatibility for legacy tasks
+        { isCurrent: { $exists: false }, taskName: 'Fee Collection', status: { $ne: 'completed' } }
+      ];
+    }
+    
+    if (taskName) {
+      filter.taskName = taskName;
     }
 
-    const tasks = await Task.find(filter)
-      .populate('assignedRole', 'RoleName')
-      .populate('assignedTo', 'name email')
-      .sort({ dueDate: 1, createdAt: -1 });
-    return res.status(200).json({ success: true, data: tasks });
+    const fullUser = await getUserWithRole(req.user);
+    const isAdmin = await isAdminUser(fullUser);
+    if (!isAdmin) {
+       const userRoleName = fullUser?.role?.RoleName || '';
+       filter.assignedRole = { $regex: new RegExp(`^${userRoleName}$`, 'i') };
+    }
+
+    let studentMatch = {};
+    if (course) studentMatch.courseApplied = course;
+    if (batch) studentMatch.month = batch;
+
+    let tasks = await Task.find(filter)
+      .populate({
+        path: 'studentId',
+        select: 'fullName courseApplied generatedRegNo formNo month emailAddress contactNumber',
+        match: Object.keys(studentMatch).length > 0 ? studentMatch : undefined
+      })
+      .sort({ createdAt: -1 });
+      
+    if (Object.keys(studentMatch).length > 0) {
+      tasks = tasks.filter(t => t.studentId != null);
+    }
+
+    return res.status(200).json({ success: true, count: tasks.length, data: tasks });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-exports.getTaskById = async (req, res) => {
+// Update task status and remarks
+exports.updateTask = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id)
-      .populate('assignedRole', 'RoleName')
-      .populate('assignedTo', 'name email');
+    const { status, remarkText } = req.body;
+    const task = await Task.findById(req.params.id).populate('studentId');
     if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+
+    const fullUser = await getUserWithRole(req.user);
+    const isAdmin = await isAdminUser(fullUser);
+    const userRoleName = fullUser?.role?.RoleName || '';
+    
+    // Authorization check
+    if (!isAdmin && task.assignedRole.toLowerCase() !== userRoleName.toLowerCase()) {
+      return res.status(403).json({ success: false, message: 'Not authorized for this task' });
+    }
+
+    if (status && ['pending', 'in_progress', 'completed'].includes(status)) {
+       task.status = status;
+    }
+
+    if (remarkText && remarkText.trim() !== '') {
+      task.remarks.push({
+        text: remarkText,
+        by: req.user?.name || 'Unknown'
+      });
+    }
+
+    await task.save();
+    
+    if (task.status === 'completed') {
+       await advanceTaskSequence(task);
+    }
+    
     return res.status(200).json({ success: true, data: task });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-exports.updateTaskStatus = async (req, res) => {
+// Mark as Done (shortcut for updateStatus to completed)
+exports.markAsDone = async (req, res) => {
   try {
-    const { status, note } = req.body;
-    if (!status) return res.status(400).json({ success: false, message: 'status is required' });
-
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
 
-    const previousStatus = task.status;
-    task.status = status;
-    if (status === 'done') {
-      task.completedAt = new Date();
+    const fullUser = await getUserWithRole(req.user);
+    const isAdmin = await isAdminUser(fullUser);
+    const userRoleName = fullUser?.role?.RoleName || '';
+    
+    if (!isAdmin && task.assignedRole.toLowerCase() !== userRoleName.toLowerCase()) {
+      return res.status(403).json({ success: false, message: 'Not authorized for this task' });
     }
+
+    task.status = 'completed';
     await task.save();
-
-    await TaskHistory.create({
-      taskId: task._id,
-      fromStatus: previousStatus,
-      toStatus: status,
-      changedBy: req.user ? req.user._id : undefined,
-      note
-    });
-
-    if (status === 'done') {
-      await unblockDependentTasks(task.workflowInstanceId, task.stepKey);
-    }
+    
+    await advanceTaskSequence(task);
 
     return res.status(200).json({ success: true, data: task });
   } catch (error) {
@@ -84,32 +157,13 @@ exports.updateTaskStatus = async (req, res) => {
   }
 };
 
-exports.assignTask = async (req, res) => {
+// Get all tasks for a particular student
+exports.getTasksByStudent = async (req, res) => {
   try {
-    const { assignedTo, assignedRole } = req.body;
-    const update = {};
-    if (assignedTo) update.assignedTo = assignedTo;
-    if (assignedRole) update.assignedRole = assignedRole;
-    if (Object.keys(update).length === 0) {
-      return res.status(400).json({ success: false, message: 'assignedTo or assignedRole is required' });
-    }
-
-    const task = await Task.findByIdAndUpdate(req.params.id, update, { new: true });
-    if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
-
-    return res.status(200).json({ success: true, data: task });
+    const { studentId } = req.params;
+    const tasks = await Task.find({ studentId }).sort({ createdAt: 1 });
+    return res.status(200).json({ success: true, data: tasks });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-exports.getTaskHistory = async (req, res) => {
-  try {
-    const history = await TaskHistory.find({ taskId: req.params.id })
-      .populate('changedBy', 'name email')
-      .sort({ timestamp: -1 });
-    return res.status(200).json({ success: true, data: history });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+     return res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -60,9 +60,9 @@ import EmployeeCalling from "./pages/calling/EmployeeCalling.jsx";
 import ApplicationCallingQueue from "./pages/calling/ApplicationCallingQueue.jsx";
 import LeadDetails from "./pages/calling/LeadDetails.jsx";
 import LeadProfile from "./pages/calling/LeadProfile.jsx";
-import TaskInbox from "./pages/workflow/TaskInbox.jsx";
-import TaskDetails from "./pages/workflow/TaskDetails.jsx";
+import WorkflowTasks from "./pages/workflow/WorkflowTasks.jsx";
 import WorkflowTemplates from "./pages/workflow/WorkflowTemplates.jsx";
+import DocumentVerificationDetail from "./pages/workflow/DocumentVerificationDetail.jsx";
 
 function App() {
   return (
@@ -131,8 +131,8 @@ function App() {
                 {/* Fee Routes */}
                 <Route path="Fee" element={<Fee />} />
                 {/* Workflow Routes */}
-                <Route path="workflow/tasks" element={<TaskInbox />} />
-                <Route path="workflow/tasks/:id" element={<TaskDetails />} />
+                <Route path="workflow/tasks/:tabSlug?" element={<WorkflowTasks />} />
+                <Route path="workflow/document-verification/:id" element={<DocumentVerificationDetail />} />
                 <Route path="workflow/templates" element={<WorkflowTemplates />} />
 
                 {/* Change Password - now protected */}

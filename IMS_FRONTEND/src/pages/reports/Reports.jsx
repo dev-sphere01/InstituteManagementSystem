@@ -1,6 +1,14 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const reports = [
+  {
+    icon: "📝",
+    title: "Student Registration",
+    description:
+      "Comprehensive report of students whose registration is pending, completed, or in progress.",
+    link: "/dashboard/workflow/tasks/registration?filter=all"
+  },
   {
     icon: "📈",
     title: "Monthly Sales",
@@ -46,9 +54,15 @@ const Reports = () => {
             <p className="text-gray-600 dark:text-gray-400 mb-5">
               {report.description}
             </p>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors">
-              View Report
-            </button>
+            {report.link ? (
+              <Link to={report.link} className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors">
+                View Report
+              </Link>
+            ) : (
+              <button disabled className="bg-gray-400 text-white px-4 py-2 rounded-md cursor-not-allowed">
+                Coming Soon
+              </button>
+            )}
           </div>
         ))}
       </div>

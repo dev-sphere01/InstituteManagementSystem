@@ -1,96 +1,43 @@
+// models/task.js
 const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema({
-  workflowInstanceId: {
+  studentId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'WorkflowInstance',
+    ref: 'AdmissionDetails',
     required: true,
     index: true
   },
-  targetType: {
+  taskName: {
     type: String,
     required: true,
-    enum: ['admission', 'student', 'custom'],
-    index: true
+    enum: ['Fee Collection', 'Document Verification', 'Registration', 'Exam Form', 'Admit Card', 'Certificate']
   },
-  targetId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    index: true
-  },
-  stepKey: {
-    type: String,
-    required: true,
-    trim: true,
-    index: true
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    trim: true
-  },
-  sequence: {
-    type: Number,
-    default: 0
-  },
-  dependsOn: [{
-    type: String,
-    trim: true
-  }],
   status: {
     type: String,
-    enum: ['pending', 'in_progress', 'blocked', 'done', 'overdue', 'canceled'],
-    default: 'pending',
-    index: true
+    enum: ['pending', 'in_progress', 'completed'],
+    default: 'pending'
   },
   assignedRole: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Role',
-    required: true,
-    index: true
+    type: String, // String matching RoleName OR static roles e.g. 'Accountant', 'Verifier', 'Admin'
+    required: true
   },
-  assignedTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+  isCurrent: {
+    type: Boolean,
+    default: false,
     index: true
   },
   dueDate: {
-    type: Date,
-    index: true
-  },
-  priority: {
-    type: String,
-    enum: ['low', 'normal', 'high', 'critical'],
-    default: 'normal'
-  },
-  escalation: {
-    enabled: { type: Boolean, default: false },
-    afterDays: { type: Number, default: 0, min: 0 },
-    escalateToRole: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Role'
-    },
-    escalatedAt: { type: Date }
-  },
-  completedAt: {
     type: Date
   },
-  metadata: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
-  }
+  remarks: [{
+    text: String,
+    by: String, // user name
+    date: { type: Date, default: Date.now }
+  }]
 }, {
   timestamps: true,
   collection: 'tasks'
 });
-
-taskSchema.index({ workflowInstanceId: 1, stepKey: 1 }, { unique: true });
-taskSchema.index({ status: 1, dueDate: 1 });
-taskSchema.index({ assignedRole: 1, status: 1 });
-taskSchema.index({ assignedTo: 1, status: 1 });
 
 module.exports = mongoose.model('Task', taskSchema);

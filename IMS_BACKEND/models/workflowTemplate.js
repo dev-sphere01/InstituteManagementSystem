@@ -45,6 +45,22 @@ const workflowStepSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Role'
     }
+  },
+  escalationLevels: [{
+    level: { type: Number, required: true, min: 1 },
+    role: { type: mongoose.Schema.Types.ObjectId, ref: 'Role', required: true },
+    dueInDays: { type: Number, default: 0, min: 0 }
+  }],
+  stepType: {
+    type: String,
+    enum: ['general', 'fee_collection', 'document_verification', 'registration', 'exam_form', 'admit_card', 'certificate'],
+    default: 'general'
+  },
+  paymentRules: {
+    minRequiredAmount: { type: Number, default: 0, min: 0 },
+    minRequiredInstallments: { type: Number, default: 0, min: 0 },
+    requiresFullPayment: { type: Boolean, default: false },
+    minPaidPercentage: { type: Number, default: 0, min: 0, max: 100 }
   }
 }, { _id: false });
 

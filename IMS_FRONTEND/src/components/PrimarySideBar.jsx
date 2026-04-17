@@ -1,18 +1,42 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebarStore } from '../store';
+import { useAuth } from '../context/AuthContext';
 
 const PrimarySideBar = () => {
   const { isPrimarySidebarOpen, isFooterVisible } = useSidebarStore();
+  const { user, hasRole, hasPermission } = useAuth();
   const location = useLocation();
-  const [openMenu, setOpenMenu] = useState(null); // 'masters' | 'enquiry' | 'calling' | null
+  const [openMenu, setOpenMenu] = useState(null);
+
+  const TAB_ROLE_MAP = {
+    "Fee Collection": ["Accountant"],
+    "Document Verification": ["Verifier"],
+    "Registration": ["Admin"],
+    "Exam Form": ["Admin"],
+    "Admit Card": ["Admin"],
+    "Certificate": ["Admin"]
+  };
+  const TABS = Object.keys(TAB_ROLE_MAP);
+
+  const getVisibleWorkflowTabs = () => {
+    const isAdmin = hasRole('Admin') || hasPermission('*') || user?.role?.RoleName?.toLowerCase()?.includes('admin');
+    if (isAdmin) return TABS;
+    const userRole = user?.role?.RoleName || "";
+    return TABS.filter(tab => TAB_ROLE_MAP[tab].some(r => r.toLowerCase() === userRole.toLowerCase()));
+  };
+
+  const workflowNavItems = getVisibleWorkflowTabs().map(tab => ({
+    path: `/dashboard/workflow/tasks/${tab.toLowerCase().replace(" ", "-")}`,
+    icon: 'document',
+    label: tab
+  }));
 
   // Main navigation items (remove flat Enquiry)
   const mainNavItems = [
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
     { path: '/dashboard/admission', icon: 'document-add', label: 'Admission' },
     { path: '/dashboard/fee', icon: 'document-add', label: 'Fee' },
-    { path: '/dashboard/workflow/tasks', icon: 'document', label: 'Workflow Tasks' },
     { path: '/dashboard/workflow/templates', icon: 'collection', label: 'Workflow Templates' },
     { path: '/dashboard/student-details', icon: 'users', label: 'Student Details' },
     { path: '/dashboard/reports', icon: 'document', label: 'Reports' },
@@ -69,6 +93,10 @@ const PrimarySideBar = () => {
     return callingNavItems.some(item => isActive(item.path));
   };
 
+  const isWorkflowActive = () => {
+    return workflowNavItems.some(item => isActive(item.path));
+  };
+
   // Auto-expand correct menu if route is active
   React.useEffect(() => {
     if (isMastersActive()) {
@@ -77,6 +105,8 @@ const PrimarySideBar = () => {
       setOpenMenu('enquiry');
     } else if (isCallingActive()) {
       setOpenMenu('calling');
+    } else if (isWorkflowActive()) {
+      setOpenMenu('workflow');
     } else {
       setOpenMenu(null);
     }
@@ -306,6 +336,40 @@ const PrimarySideBar = () => {
                 {openMenu === 'calling' && (
                   <ul className="mt-2 space-y-1">
                     {callingNavItems.map((item) => (
+                      <li key={item.path}>
+                        <Link
+                          to={item.path}
+                          className={`flex items-center p-2 pl-8 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                        >
+                          <span className="inline-flex">{renderIcon(item.icon)}</span>
+                          <span className="ml-3">{item.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            )}
+
+            {/* Workflow section */}
+            {isPrimarySidebarOpen && workflowNavItems.length > 0 && (
+              <li>
+                <button
+                  onClick={() => setOpenMenu(openMenu === 'workflow' ? null : 'workflow')}
+                  className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${isWorkflowActive() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                > 
+                  <div className="flex items-center">
+                    <span className="inline-flex">{renderIcon('folder')}</span>
+                    <span className="ml-3">Workflow Tasks</span>
+                  </div>
+                  <span className={`transition-transform duration-200 ${openMenu === 'workflow' ? 'rotate-180' : ''}`}>
+                    {renderIcon('chevron')}
+                  </span>
+                </button>
+
+                {openMenu === 'workflow' && (
+                  <ul className="mt-2 space-y-1">
+                    {workflowNavItems.map((item) => (
                       <li key={item.path}>
                         <Link
                           to={item.path}
