@@ -80,26 +80,26 @@ const Review = ({formId, formData = {}, onBack, onSubmit }) => {
   };
 
   const containerClasses = `p-6 rounded-xl shadow-md w-full ${
-    isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+    isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
   }`;
 
-  const sectionBg = isDarkMode ? 'bg-gray-800' : 'bg-gray-50';
+  const sectionBg = isDarkMode ? 'bg-gray-700' : 'bg-gray-50';
   const textMuted = isDarkMode ? 'text-gray-300' : 'text-gray-600';
 
   return (
-    <div className="w-full mt-4 shadow-lg border rounded-md p-2">
-      <div className="flex items-center justify-between mb-6 px-2 md:px-0">
-        <h2 className="text-2xl font-bold text-primary">Review Your Details</h2>
+    <div className="w-full mt-1">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>Review Your Details</h2>
         <button
           type="button"
           onClick={downloadPDF}
-          className="text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+          className="text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
         >
           Download PDF
         </button>
       </div>
 
-      <div className={`${containerClasses} space-y-8`}>
+      <div className={`${containerClasses} space-y-8 border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         {sections.map((section) => (
           <div key={section.title}>
             <h3 className={`text-lg font-semibold mb-2 ${textMuted}`}>{section.title}</h3>

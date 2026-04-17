@@ -74,12 +74,11 @@ const Education = ({ formId,formData = {}, setFormData, onNext, onBack, validati
     `w-full px-4 py-2 border rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors[field]
       ? 'border-red-500 focus:ring-red-400'
       : isDarkMode
-        ? 'border-gray-700 bg-[#23272f] text-white placeholder-gray-400 focus:bg-[#23272f]'
-        : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white'
+        ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400'
+        : 'border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400'
     }`;
 
-  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'
-    }`;
+  const labelClass = `block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`;
 
   const renderInput = ({
     label,

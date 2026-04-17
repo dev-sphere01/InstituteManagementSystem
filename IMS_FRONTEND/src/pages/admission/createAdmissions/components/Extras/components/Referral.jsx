@@ -25,22 +25,22 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
     }));
   };
 
-  const inputClass = `w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
+  const inputClass = `w-full px-3 py-2 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150 ${
     isDarkMode
-      ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
-      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+      : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'
   }`;
 
-  const labelClass = `block text-sm font-medium mb-1 ${
-    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+  const labelClass = `block text-sm font-semibold mb-1 ${
+    isDarkMode ? 'text-gray-200' : 'text-gray-700'
   }`;
 
   return (
     <div
-      className={`w-full rounded-2xl shadow-md p-6 ${
+      className={`w-full rounded-xl shadow-md p-6 ${
         isDarkMode
-          ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border border-gray-700 text-white'
-          : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200 text-gray-900'
+          ? 'bg-gray-800 border border-gray-700 text-white'
+          : 'bg-white border border-gray-200 text-gray-900'
       }`}
     >
       <h3 className="text-xl font-bold mb-6">Referral Information</h3>
