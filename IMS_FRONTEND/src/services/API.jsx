@@ -140,8 +140,14 @@ const API = {
     export: (params = {}) => instance.get('/logs/export', { params, responseType: 'blob' })
   },
 
-
-  
+  // Branch management endpoints
+  branches: {
+    getAll: (params = {}) => instance.get('/branches', { params }),
+    getById: (id) => instance.get(`/branches/${id}`),
+    create: (data) => instance.post('/branches', data),
+    update: (id, data) => instance.put(`/branches/${id}`, data),
+    delete: (id) => instance.delete(`/branches/${id}`),
+  },
 };
 
 export default API;

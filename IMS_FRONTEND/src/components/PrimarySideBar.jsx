@@ -5,7 +5,7 @@ import { useSidebarStore } from '../store';
 const PrimarySideBar = () => {
   const { isPrimarySidebarOpen, isFooterVisible } = useSidebarStore();
   const location = useLocation();
-  const [openMenu, setOpenMenu] = useState(null); // 'masters' | 'enquiry' | null
+  const [openMenu, setOpenMenu] = useState(null); // 'masters' | 'enquiry' | 'employees' | 'payroll' | null
 
   // Main navigation items (remove flat Enquiry)
   const mainNavItems = [
@@ -24,6 +24,7 @@ const PrimarySideBar = () => {
     { path: '/dashboard/roles', icon: 'shield', label: 'Roles' },
     { path: '/dashboard/courses', icon: 'book', label: 'Courses' },
     { path: '/dashboard/center-code', icon: 'collection', label: 'Center Code' },
+    { path: '/dashboard/employees/branches', icon: 'collection', label: 'Branch' },
     { path: '/dashboard/additional-features', icon: 'collection', label: 'Additional Features' },
     { path: '/dashboard/batches', icon: 'collection', label: 'Batches' },
     { path: '/dashboard/sessions', icon: 'calendar', label: 'Sessions' },
@@ -34,6 +35,24 @@ const PrimarySideBar = () => {
   const enquiryNavItems = [
     { path: '/dashboard/enquiry/create', icon: 'document-add', label: 'New' },
     { path: '/dashboard/enquiry/view', icon: 'document', label: 'All' },
+  ];
+
+  // Employee navigation items
+  const employeeNavItems = [
+    { path: '/dashboard/employees', icon: 'users', label: 'All Employees' },
+    { path: '/dashboard/employees/new', icon: 'document-add', label: 'Add Employee' },
+    { path: '/dashboard/employees/departments', icon: 'collection', label: 'Departments' },
+  ];
+
+  // Payroll navigation items
+  const payrollNavItems = [
+    { path: '/dashboard/payroll/attendance', icon: 'calendar', label: 'Attendance' },
+    { path: '/dashboard/payroll/holidays', icon: 'calendar', label: 'Holidays' },
+    { path: '/dashboard/payroll/rules', icon: 'settings', label: 'Shift & Rules' },
+    { path: '/dashboard/payroll/process', icon: 'document', label: 'Process Payroll' },
+    { path: '/dashboard/payroll/slip', icon: 'document-add', label: 'Salary Slip' },
+    { path: '/dashboard/payroll/holdings', icon: 'collection', label: 'Holdings' },
+    { path: '/dashboard/payroll/incentives', icon: 'chart', label: 'Incentives' },
   ];
 
   // Function to check if a path is active
@@ -56,12 +75,26 @@ const PrimarySideBar = () => {
     return enquiryNavItems.some(item => isActive(item.path));
   };
 
+  // Function to check if any employee route is active
+  const isEmployeesActive = () => {
+    return employeeNavItems.some(item => isActive(item.path));
+  };
+
+  // Function to check if any payroll route is active
+  const isPayrollActive = () => {
+    return payrollNavItems.some(item => isActive(item.path));
+  };
+
   // Auto-expand correct menu if route is active
   React.useEffect(() => {
     if (isMastersActive()) {
       setOpenMenu('masters');
     } else if (isEnquiryActive()) {
       setOpenMenu('enquiry');
+    } else if (isEmployeesActive()) {
+      setOpenMenu('employees');
+    } else if (isPayrollActive()) {
+      setOpenMenu('payroll');
     } else {
       setOpenMenu(null);
     }
@@ -211,6 +244,96 @@ const PrimarySideBar = () => {
             ) : (
               /* Enquiry items as individual icons when sidebar is collapsed */
               enquiryNavItems.map((item) => (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center p-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                  >
+                    <span className="inline-flex">{renderIcon(item.icon)}</span>
+                    <span className="ml-3 hidden">{item.label}</span>
+                  </Link>
+                </li>
+              ))
+            )}
+
+            {/* Employees section */}
+            {isPrimarySidebarOpen ? (
+              <li>
+                <button
+                  onClick={() => setOpenMenu(openMenu === 'employees' ? null : 'employees')}
+                  className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${isEmployeesActive() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                >
+                  <div className="flex items-center">
+                    <span className="inline-flex">{renderIcon('users')}</span>
+                    <span className="ml-3">Employees</span>
+                  </div>
+                  <span className={`transition-transform duration-200 ${openMenu === 'employees' ? 'rotate-180' : ''}`}>
+                    {renderIcon('chevron')}
+                  </span>
+                </button>
+                {openMenu === 'employees' && (
+                  <ul className="mt-2 space-y-1">
+                    {employeeNavItems.map((item) => (
+                      <li key={item.path}>
+                        <Link
+                          to={item.path}
+                          className={`flex items-center p-2 pl-8 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                        >
+                          <span className="inline-flex">{renderIcon(item.icon)}</span>
+                          <span className="ml-3">{item.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ) : (
+              employeeNavItems.map((item) => (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center p-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                  >
+                    <span className="inline-flex">{renderIcon(item.icon)}</span>
+                    <span className="ml-3 hidden">{item.label}</span>
+                  </Link>
+                </li>
+              ))
+            )}
+
+            {/* Payroll section */}
+            {isPrimarySidebarOpen ? (
+              <li>
+                <button
+                  onClick={() => setOpenMenu(openMenu === 'payroll' ? null : 'payroll')}
+                  className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${isPayrollActive() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                >
+                  <div className="flex items-center">
+                    <span className="inline-flex">{renderIcon('document')}</span>
+                    <span className="ml-3">Payroll</span>
+                  </div>
+                  <span className={`transition-transform duration-200 ${openMenu === 'payroll' ? 'rotate-180' : ''}`}>
+                    {renderIcon('chevron')}
+                  </span>
+                </button>
+                {openMenu === 'payroll' && (
+                  <ul className="mt-2 space-y-1">
+                    {payrollNavItems.map((item) => (
+                      <li key={item.path}>
+                        <Link
+                          to={item.path}
+                          className={`flex items-center p-2 pl-8 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                        >
+                          <span className="inline-flex">{renderIcon(item.icon)}</span>
+                          <span className="ml-3">{item.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ) : (
+              payrollNavItems.map((item) => (
                 <li key={item.path}>
                   <Link
                     to={item.path}
