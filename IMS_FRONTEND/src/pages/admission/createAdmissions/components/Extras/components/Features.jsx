@@ -39,10 +39,10 @@ const Features = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
 
   return (
     <div
-      className={`w-full rounded-2xl shadow-md p-6 ${
+      className={`w-full rounded-xl shadow-md p-6 ${
         isDarkMode
-          ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border border-gray-700 text-white'
-          : 'bg-gradient-to-br from-white via-gray-50 to-blue-50 border border-gray-200 text-gray-900'
+          ? 'bg-gray-800 border border-gray-700 text-white'
+          : 'bg-white border border-gray-200 text-gray-900'
       }`}
     >
       <h3 className="text-xl font-bold mb-6">Additional Features</h3>

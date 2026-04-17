@@ -192,6 +192,7 @@ export const AuthProvider = ({ children }) => {
   const hasPermission = (permission) => {
     if (!user) return false;
     const userPermissions = user.role?.permissions || user.permissions || permissions || [];
+    if (userPermissions.includes('*')) return true;
     return userPermissions.includes(permission);
   };
 
@@ -199,6 +200,7 @@ export const AuthProvider = ({ children }) => {
   const hasAnyPermission = (permissionList) => {
     if (!user || !Array.isArray(permissionList)) return false;
     const userPermissions = user.role?.permissions || user.permissions || permissions || [];
+    if (userPermissions.includes('*')) return true;
     return permissionList.some(permission => userPermissions.includes(permission));
   };
 
@@ -206,6 +208,7 @@ export const AuthProvider = ({ children }) => {
   const hasAllPermissions = (permissionList) => {
     if (!user || !Array.isArray(permissionList)) return false;
     const userPermissions = user.role?.permissions || user.permissions || permissions || [];
+    if (userPermissions.includes('*')) return true;
     return permissionList.every(permission => userPermissions.includes(permission));
   };
 

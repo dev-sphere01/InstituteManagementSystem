@@ -128,9 +128,13 @@ userSchema.pre('save', async function(next) {
 
 // JWT token generation method
 userSchema.methods.getJWTToken = function() {
-    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRE,
-    });
+    // Include permissions if role is populated (it is at login via authenticateUser)
+    const permissions = this.role && this.role.permissions ? this.role.permissions : [];
+    return jwt.sign(
+        { id: this._id, permissions },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRE }
+    );
 };
 
 // Compare user password
@@ -156,11 +160,12 @@ userSchema.methods.hasPermission = async function(permissionName) {
         await this.populate('role');
     }
 
-    // Check role permissions (permissions are stored as strings)
-    const hasRolePermission = this.role && this.role.permissions &&
-        this.role.permissions.includes(permissionName);
+    const rolePermissions = (this.role && this.role.permissions) ? this.role.permissions : [];
 
-    return hasRolePermission;
+    // Wildcard — admin role grants everything
+    if (rolePermissions.includes('*')) return true;
+
+    return rolePermissions.includes(permissionName);
 };
 
 // Check if user has permission for module and action

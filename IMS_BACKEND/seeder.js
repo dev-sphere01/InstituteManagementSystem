@@ -25,8 +25,19 @@ const seedDatabase = async () => {
                 'log.read', 'log.delete', 'log.export',
                 'settings.read', 'settings.update',
                 'reports.read', 'reports.create', 'reports.export',
-                'profile.read', 'profile.update'
-            ], // Full permissions generated from frontend modules.json
+                'profile.read', 'profile.update',
+                 // Full permissions generated from frontend modules.json
+                '*',
+                // Employee module
+                'employee.create', 'employee.read', 'employee.update', 'employee.delete',
+                'department.create', 'department.read', 'department.update',
+                // Attendance
+                'attendance.create', 'attendance.read', 'attendance.update',
+                // Payroll
+                'payroll.read', 'payroll.process', 'payroll.approve', 'payroll.update', 'payroll.delete',
+                // Incentives
+                'incentive.create', 'incentive.read', 'incentive.update', 'incentive.delete',
+            ],
             level: 100,
             isSystem: true,
             isActive: true
