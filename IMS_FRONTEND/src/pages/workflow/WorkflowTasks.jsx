@@ -5,6 +5,7 @@ import { useNotification } from "../../services/NotificationService";
 
 import { useAuth } from "../../context/AuthContext";
 import DocumentVerificationPanel from "./DocumentVerificationPanel";
+import StatusManagementPanel from "./StatusManagementPanel";
 import * as XLSX from "xlsx";
 
 const TAB_ROLE_MAP = {
@@ -245,6 +246,12 @@ const WorkflowTasks = () => {
       <div className="relative z-10 max-w-full mx-auto w-full">
         {activeTab === 'Document Verification' ? (
           <DocumentVerificationPanel />
+        ) : activeTab === 'Exam Form' || activeTab === 'Admit Card' || activeTab === 'Certificate' ? (
+          <StatusManagementPanel
+            activeTab={activeTab}
+            courseOptions={courseOptions}
+            batchOptions={batchOptions}
+          />
         ) : (
           <>
             {/* Header Block & Controls with Glassmorphism */}
