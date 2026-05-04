@@ -19,6 +19,8 @@ const additionalFeaturesRoutes = require('./additionalFeaturesRoute');
 const emailVerificationRoutes = require('./emailVerificationRoutes');
 const studentRoutes = require('./studentRoutes');
 const branchRoutes = require('./branchRoutes');
+const leadRoutes = require('./leadRoutes');
+const campaignRoutes = require('./campaignRoutes');
 //const otpRoutes = require('./otpRoutes');
 // Mount routes
 router.use('/users', userRoutes);
@@ -38,6 +40,8 @@ router.use('/courses', coursesRoutes);
 router.use('/additional-Features', additionalFeaturesRoutes);
 router.use('/dashboard', studentRoutes);
 router.use('/branches', branchRoutes);
+router.use('/leads', leadRoutes);
+router.use('/campaigns', campaignRoutes);
 
 
 module.exports = router;
