@@ -30,7 +30,9 @@ app.use(helmet({
   },
 }));
 app.use(cors({
-  origin: process.env.NODE_ENV === "production" ? process.env.FRONTEND_URL : "http://localhost:5173",
+  origin: process.env.NODE_ENV === "production"
+    ? process.env.FRONTEND_URL
+    : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
 
@@ -58,12 +60,15 @@ app.use("/api", limiter);
 app.use(express.json({ limit: "10kb" })); // Limit JSON payload size
 app.use(cookieParser());
 
-// Apply audit middleware to all API routes
-app.use('/api', auditMiddleware);
-
 // Import API routes
 const apiV1Routes = require("./api/v1/routes");
-// const enquiryRoutes = require('./api/v1/routes/enquiryRoutes');
+
+// Public CRM webhook — registered BEFORE audit middleware (no auth required)
+const { publicWebhook } = require('./controllers/leadController');
+app.post('/api/public/leads', publicWebhook);
+
+// Apply audit middleware to all API routes
+app.use('/api', auditMiddleware);
 
 // Mount API routes with versioning
 app.use("/api/v1", apiV1Routes);

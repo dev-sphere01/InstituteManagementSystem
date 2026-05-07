@@ -55,6 +55,13 @@ const PrimarySideBar = () => {
     { path: '/dashboard/payroll/incentives', icon: 'chart', label: 'Incentives' },
   ];
 
+  // CRM navigation items
+  const crmNavItems = [
+    { path: '/dashboard/crm/leads', icon: 'users', label: 'Lead Pipeline' },
+    { path: '/dashboard/crm/campaigns', icon: 'collection', label: 'Campaigns' },
+    { path: '/dashboard/crm/analytics', icon: 'chart', label: 'Analytics & ROI' },
+  ];
+
   // Function to check if a path is active
   const isActive = (path) => {
     // Exact match for dashboard home
@@ -85,6 +92,8 @@ const PrimarySideBar = () => {
     return payrollNavItems.some(item => isActive(item.path));
   };
 
+  const isCrmActive = () => crmNavItems.some(item => isActive(item.path));
+
   // Auto-expand correct menu if route is active
   React.useEffect(() => {
     if (isMastersActive()) {
@@ -95,6 +104,8 @@ const PrimarySideBar = () => {
       setOpenMenu('employees');
     } else if (isPayrollActive()) {
       setOpenMenu('payroll');
+    } else if (isCrmActive()) {
+      setOpenMenu('crm');
     } else {
       setOpenMenu(null);
     }
@@ -334,6 +345,51 @@ const PrimarySideBar = () => {
               </li>
             ) : (
               payrollNavItems.map((item) => (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center p-2 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                  >
+                    <span className="inline-flex">{renderIcon(item.icon)}</span>
+                    <span className="ml-3 hidden">{item.label}</span>
+                  </Link>
+                </li>
+              ))
+            )}
+
+            {/* CRM section */}
+            {isPrimarySidebarOpen ? (
+              <li>
+                <button
+                  onClick={() => setOpenMenu(openMenu === 'crm' ? null : 'crm')}
+                  className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${isCrmActive() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                >
+                  <div className="flex items-center">
+                    <span className="inline-flex">{renderIcon('users')}</span>
+                    <span className="ml-3">CRM</span>
+                  </div>
+                  <span className={`transition-transform duration-200 ${openMenu === 'crm' ? 'rotate-180' : ''}`}>
+                    {renderIcon('chevron')}
+                  </span>
+                </button>
+                {openMenu === 'crm' && (
+                  <ul className="mt-2 space-y-1">
+                    {crmNavItems.map((item) => (
+                      <li key={item.path}>
+                        <Link
+                          to={item.path}
+                          className={`flex items-center p-2 pl-8 rounded-md transition-colors ${isActive(item.path) ? 'bg-blue-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}
+                        >
+                          <span className="inline-flex">{renderIcon(item.icon)}</span>
+                          <span className="ml-3">{item.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ) : (
+              crmNavItems.map((item) => (
                 <li key={item.path}>
                   <Link
                     to={item.path}

@@ -56,6 +56,14 @@ import Employee from "./pages/employee/Employee.jsx";
 // Payroll Module
 import Payroll from "./pages/payroll/Payroll.jsx";
 
+// CRM Module
+import LeadPipeline from "./pages/crm/leads/LeadPipeline.jsx";
+import CrmAnalytics from "./pages/crm/analytics/CrmAnalytics.jsx";
+import Campaigns from "./pages/crm/campaigns/Campaigns.jsx";
+
+// Public Pages
+import ContactUs from "./pages/public/ContactUs.jsx";
+
 
 function App() {
   return (
@@ -136,10 +144,18 @@ function App() {
                 {/* Payroll Module */}
                 <Route path="payroll" element={<Payroll />} />
                 <Route path="payroll/:tab" element={<Payroll />} />
+
+                {/* CRM Module */}
+                <Route path="crm/leads" element={<LeadPipeline />} />
+                <Route path="crm/analytics" element={<CrmAnalytics />} />
+                <Route path="crm/campaigns" element={<Campaigns />} />
               </Route>
 
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />
+
+              {/* Public routes — no auth required */}
+              <Route path="/contact" element={<ContactUs />} />
             </Routes>
           </Router>
         </NotificationProvider>
