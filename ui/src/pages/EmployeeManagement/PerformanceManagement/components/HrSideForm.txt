@@ -1,0 +1,2648 @@
+import React, { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
+import { Save, Users, FolderOpen, Upload, Download, Languages, ChevronDown, X, Lock, Edit, CheckCircle, Clock, ListChecks } from 'lucide-react'
+import { notification, API } from '@/services'
+import useEmpDataStore from '@/store/empDataStore'
+import ExcelImportService from '@/services/ExcelMappingService'
+import EmployeeAssessmentTemplate from '@/templates/EmployeeAssessment.xlsx'
+
+const HrSideForm = ({
+  selectedSessionId,
+  reviewSessions,
+  loadingSessions,
+  areReviewsLocked,
+  setAreReviewsLocked,
+  isHindi,
+  setIsHindi,
+  reviewStats,
+  loadingStats,
+  overallFilter
+}) => {
+  const notify = notification()
+  const {
+    currentEmployee,
+    fetchEmployeeById,
+    getEmployeeDisplayName,
+    loading,
+    error
+  } = useEmpDataStore()
+
+  // Core states
+  const [employees, setEmployees] = useState([])
+  const [reviewParameters, setReviewParameters] = useState([])
+  const [loadingParameters, setLoadingParameters] = useState(false)
+
+  // Grid data state - stores assessment values for each employee-parameter combination
+  const [assessmentData, setAssessmentData] = useState({})
+
+  // Final remarks for each employee
+  const [finalRemarks, setFinalRemarks] = useState({})
+
+  // Categories for grouping parameters
+  const [categories, setCategories] = useState([])
+
+  // Import mode states
+  const [showImportMode, setShowImportMode] = useState(false)
+  const [importedData, setImportedData] = useState([])
+  const [isImportMode, setIsImportMode] = useState(false)
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState('assessment')
+
+  // Filter states for Direct Reviews and Assigned Reviews
+  const [directReviewsFilter, setDirectReviewsFilter] = useState(null) // null, 'assessed', or 'remaining'
+  const [assignedReviewsFilter, setAssignedReviewsFilter] = useState(null) // null, 'assessed', or 'remaining'
+
+  // Random Assessment states (keeping existing functionality)
+  const [showRandomAssessmentTab, setShowRandomAssessmentTab] = useState(false)
+  const [allEmployees, setAllEmployees] = useState([])
+  const [selectedAssessor, setSelectedAssessor] = useState(null)
+  const [selectedAssessees, setSelectedAssessees] = useState([])
+  const [assessorSearch, setAssessorSearch] = useState('')
+  const [assesseeSearch, setAssesseeSearch] = useState('')
+  const [showAssessorDropdown, setShowAssessorDropdown] = useState(false)
+  const [showAssesseeDropdown, setShowAssesseeDropdown] = useState(false)
+  const [filteredAssessors, setFilteredAssessors] = useState([])
+  const [filteredAssessees, setFilteredAssessees] = useState([])
+  const assessorDropdownRef = useRef(null)
+  const assesseeDropdownRef = useRef(null)
+  const assessorInputRef = useRef(null)
+  const assesseeInputRef = useRef(null)
+
+  // Review Assigned Employees states (keeping existing functionality)
+  const [showReviewAssignedTab, setShowReviewAssignedTab] = useState(false)
+  const [assignedEmployees, setAssignedEmployees] = useState([])
+  const [filteredAssignedEmployees, setFilteredAssignedEmployees] = useState([])
+  const [selectedAssignedEmpId, setSelectedAssignedEmpId] = useState('')
+  const [assignedEmployeeSearch, setAssignedEmployeeSearch] = useState('')
+  const [showAssignedEmployeeDropdown, setShowAssignedEmployeeDropdown] = useState(false)
+  const assignedEmployeeDropdownRef = useRef(null)
+  const assignedEmployeeInputRef = useRef(null)
+
+  // View All Reviews states (keeping existing functionality)
+  const [showViewAllReviewsTab, setShowViewAllReviewsTab] = useState(false)
+  const [allReviewsEmployees, setAllReviewsEmployees] = useState([])
+  const [filteredAllReviewsEmployees, setFilteredAllReviewsEmployees] = useState([])
+  const [selectedReviewEmployee, setSelectedReviewEmployee] = useState(null)
+  const [selectedReviewEmpId, setSelectedReviewEmpId] = useState('')
+  const [reviewEmployeeSearch, setReviewEmployeeSearch] = useState('')
+  const [showReviewEmployeeDropdown, setShowReviewEmployeeDropdown] = useState(false)
+  const reviewEmployeeDropdownRef = useRef(null)
+  const reviewEmployeeInputRef = useRef(null)
+  const [allEmployeeReviews, setAllEmployeeReviews] = useState([])
+  const [loadingAllReviews, setLoadingAllReviews] = useState(false)
+  const [selectedReviewDetail, setSelectedReviewDetail] = useState(null)
+  const [reviewerNames, setReviewerNames] = useState({})
+
+  // Regularization states
+  const [selectedReviewForRegularization, setSelectedReviewForRegularization] = useState(null)
+  const [regularizationFormData, setRegularizationFormData] = useState({
+    SelfDevelopment: 0,
+    EmployeeStaffDevelopment: 0,
+    DecisionMaking: 0,
+    ProductivityEfficiency: 0,
+    CallForDuty: 0,
+    AttendancePunctuality: 0,
+    BehaviourOverallDiscipline: 0,
+    Integrity: 0,
+    LoyaltySubmissionToCompanyGoals: 0,
+    FinalRemark: ''
+  })
+  const [isSubmittingRegularization, setIsSubmittingRegularization] = useState(false)
+
+  // Define field mapping for Excel import
+  const predefinedFields = [
+    { key: 'empNo', label: 'Emp No', required: true, variations: ['emp no', 'empno', 'employee number', 'employee no'] },
+    { key: 'name', label: 'Name', required: true, variations: ['name', 'employee name', 'emp name'] },
+    { key: 'department', label: 'Department', required: false, variations: ['department', 'dept'] },
+    { key: 'manager', label: 'Manager', required: false, variations: ['manager', 'reporting manager'] },
+    { key: 'selfDevelopment', label: 'Self Development', required: true, variations: ['self development', 'selfdevelopment'] },
+    { key: 'employeeStaffDevelopment', label: 'Employee/Staff Development', required: true, variations: ['employee / staff development', 'employee staff development', 'staff development'] },
+    { key: 'decisionMaking', label: 'Decision Making', required: true, variations: ['decision making', 'decisionmaking'] },
+    { key: 'productivityEfficiency', label: 'Productivity/Efficiency', required: true, variations: ['productivity / efficiency - timely completion of targets', 'productivity efficiency', 'productivity', 'efficiency'] },
+    { key: 'callForDuty', label: 'Call for Duty', required: true, variations: ['call for duty', 'callforduty'] },
+    { key: 'performanceScore', label: 'Performance Score', required: false, variations: ['score', 'performance score'] },
+    { key: 'attendancePunctuality', label: 'Attendance & Punctuality', required: true, variations: ['attendance & punctuality', 'attendance and punctuality', 'attendance'] },
+    { key: 'behaviourOverallDiscipline', label: 'Behaviour/Overall Discipline', required: true, variations: ['behaviour/overall discipline', 'behaviour overall discipline', 'behaviour', 'discipline'] },
+    { key: 'disciplineScore', label: 'Discipline Score', required: false, variations: ['score', 'discipline score'] },
+    { key: 'integrity', label: 'Integrity', required: true, variations: ['integrity'] },
+    { key: 'loyaltySubmissionToCompanyGoals', label: 'Loyalty/Submission to Company Goals', required: true, variations: ['loyalty/submission to company goals', 'loyalty submission to company goals', 'loyalty'] },
+    { key: 'integrityScore', label: 'Integrity Score', required: false, variations: ['score', 'integrity score'] },
+    { key: 'totalWeightage', label: 'Total Weightage', required: false, variations: ['total weightage', 'totalweightage', 'final score'] }
+  ]
+
+
+
+  // Load review parameters
+  const loadReviewParameters = async () => {
+    setLoadingParameters(true)
+    try {
+      const response = await API.get('/ReviewParameters')
+      const parameters = Array.isArray(response.data) ? response.data : []
+      setReviewParameters(parameters)
+
+      // Extract unique categories
+      const categoryMap = new Map()
+      parameters.forEach(p => {
+        if (!categoryMap.has(p.CategoryID)) {
+          categoryMap.set(p.CategoryID, {
+            id: p.CategoryID,
+            name: p.Category,
+            nameHindi: p.CategoryHindi
+          })
+        }
+      })
+      const uniqueCategories = Array.from(categoryMap.values())
+      setCategories(uniqueCategories)
+
+    } catch (error) {
+      console.error('Failed to load review parameters:', error)
+      notify.error('Failed to load review parameters')
+    } finally {
+      setLoadingParameters(false)
+    }
+  }
+
+  // Load existing reviews for selected session
+  const loadExistingReviews = async (sessionId) => {
+    if (!currentEmployee?.EmpID || !sessionId) return
+
+    try {
+      const response = await API.get(`/EmpAssessments/GetReviewsbyReviewerID/${currentEmployee.EmpID}/${sessionId}`)
+      const existingReviews = Array.isArray(response.data) ? response.data : []
+
+      // Populate assessment data with existing reviews
+      const newAssessmentData = {}
+      existingReviews.forEach(review => {
+        reviewParameters.forEach(param => {
+          const key = `${review.EmpID}_${param.ReviewParameterID}`
+          // Map the review data to parameter values based on parameter names
+          newAssessmentData[key] = getParameterValueFromReview(review, param)
+        })
+      })
+
+      setAssessmentData(newAssessmentData)
+    } catch (error) {
+      console.error('Failed to load existing reviews:', error)
+      // notify.error('Failed to load existing reviews')
+    }
+  }
+
+  // Helper function to map review data to parameter values
+  const getParameterValueFromReview = (review, parameter) => {
+    const paramName = parameter.ParameterName.toLowerCase()
+
+    if (paramName.includes('self development')) return review.SelfDevelopment
+    if (paramName.includes('employee') && paramName.includes('staff development')) return review.EmployeeStaffDevelopment
+    if (paramName.includes('decision making')) return review.DecisionMaking
+    if (paramName.includes('productivity')) return review.ProductivityEfficiency
+    if (paramName.includes('call for duty')) return review.CallForDuty
+    if (paramName.includes('attendance')) return review.AttendancePunctuality
+    if (paramName.includes('behaviour')) return review.BehaviourOverallDiscipline
+    if (paramName.includes('integrity') && !paramName.includes('loyalty')) return review.Integrity
+    if (paramName.includes('loyalty')) return review.LoyaltySubmissionToCompanyGoals
+
+    return 0
+  }
+
+  // Handle assessment value change
+  const handleAssessmentChange = (empId, parameterId, value) => {
+    const key = `${empId}_${parameterId}`
+    setAssessmentData(prev => ({
+      ...prev,
+      [key]: parseInt(value) || 0
+    }))
+  }
+
+  // Handle final remark change
+  const handleFinalRemarkChange = (empId, remark) => {
+    console.log('Final remark changed for employee:', empId, 'Remark:', remark)
+    setFinalRemarks(prev => {
+      const updated = {
+        ...prev,
+        [empId]: remark
+      }
+      console.log('Updated finalRemarks state:', updated)
+      return updated
+    })
+  }
+
+  // Calculate category scores for an employee
+  const calculateCategoryScore = (empId, categoryId) => {
+    const categoryParams = reviewParameters.filter(p => p.CategoryID === categoryId)
+    const values = categoryParams.map(param => {
+      const key = `${empId}_${param.ReviewParameterID}`
+      return assessmentData[key] || 0
+    }).filter(val => val > 0)
+
+    if (values.length === 0) return 0
+    return Math.round((values.reduce((sum, val) => sum + val, 0) / values.length) * 100) / 100
+  }
+
+  // Calculate final percentage for an employee
+  const calculateFinalPercentage = (empId) => {
+    // Fixed category weightages
+    const cat1Score = calculateCategoryScore(empId, 1) // Performance - 60%
+    const cat2Score = calculateCategoryScore(empId, 2) // Discipline - 20%
+    const cat3Score = calculateCategoryScore(empId, 3) // Integrity - 20%
+
+    // Calculate weighted score: (K4*0.6+N4*0.2+Q4*0.2)/4*100
+    const finalScore = ((cat1Score * 0.60) + (cat2Score * 0.20) + (cat3Score * 0.20)) / 4 * 100
+
+    return Math.round(finalScore * 100) / 100
+  }
+
+  // Check if an employee has been assessed
+  const isEmployeeAssessed = (empId) => {
+    // Check if any assessment data exists for this employee
+    const hasAssessmentData = reviewParameters.some(param => {
+      const key = `${empId}_${param.ReviewParameterID}`
+      return assessmentData[key] && assessmentData[key] > 0
+    })
+    return hasAssessmentData
+  }
+
+  // Filter employees based on assessment status
+  const getFilteredEmployees = (employeeList, filterType) => {
+    if (!filterType) return employeeList
+    
+    return employeeList.filter(emp => {
+      const isAssessed = isEmployeeAssessed(emp.EmpID)
+      if (filterType === 'assessed') return isAssessed
+      if (filterType === 'remaining') return !isAssessed
+      return true
+    })
+  }
+
+  // Handle filter button click for Direct Reviews
+  const handleDirectReviewsFilterClick = (filterType) => {
+    setDirectReviewsFilter(prev => prev === filterType ? null : filterType)
+  }
+
+  // Handle filter button click for Assigned Reviews
+  const handleAssignedReviewsFilterClick = (filterType) => {
+    setAssignedReviewsFilter(prev => prev === filterType ? null : filterType)
+  }
+
+  // Handle imported data from Excel
+  const handleImportedData = (data) => {
+    console.log('Imported data:', data)
+    setImportedData(data)
+    setIsImportMode(data.length > 0)
+  }
+
+  // Handle file reset
+  const handleFileReset = () => {
+    setImportedData([])
+    setIsImportMode(false)
+  }
+
+  // Download template
+  const handleDownloadTemplate = () => {
+    const link = document.createElement('a')
+    link.href = EmployeeAssessmentTemplate
+    link.download = 'EmployeeAssessment.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    notify.success('Template downloaded successfully!')
+  }
+
+  // Calculate scores for imported row
+  const calculateScoresForRow = (row) => {
+    // Performance Score
+    const performanceValues = [
+      parseInt(row.selfDevelopment) || 0,
+      parseInt(row.employeeStaffDevelopment) || 0,
+      parseInt(row.decisionMaking) || 0,
+      parseInt(row.productivityEfficiency) || 0,
+      parseInt(row.callForDuty) || 0
+    ].filter(val => val > 0)
+    const performanceScore = performanceValues.length > 0
+      ? performanceValues.reduce((sum, val) => sum + val, 0) / performanceValues.length
+      : 0
+
+    // Discipline Score
+    const disciplineValues = [
+      parseInt(row.attendancePunctuality) || 0,
+      parseInt(row.behaviourOverallDiscipline) || 0
+    ].filter(val => val > 0)
+    const disciplineScore = disciplineValues.length > 0
+      ? disciplineValues.reduce((sum, val) => sum + val, 0) / disciplineValues.length
+      : 0
+
+    // Integrity Score
+    const integrityValues = [
+      parseInt(row.integrity) || 0,
+      parseInt(row.loyaltySubmissionToCompanyGoals) || 0
+    ].filter(val => val > 0)
+    const integrityScore = integrityValues.length > 0
+      ? integrityValues.reduce((sum, val) => sum + val, 0) / integrityValues.length
+      : 0
+
+    // Final Percentage
+    const finalPercentage = (performanceScore * 0.6 + disciplineScore * 0.2 + integrityScore * 0.2) / 4 * 100
+
+    return {
+      performanceScore: Math.round(performanceScore * 100) / 100,
+      disciplineScore: Math.round(disciplineScore * 100) / 100,
+      integrityScore: Math.round(integrityScore * 100) / 100,
+      finalPercentage: Math.round(finalPercentage * 100) / 100
+    }
+  }
+
+  // Submit bulk assessments from imported data
+  const handleBulkSubmit = async () => {
+    if (importedData.length === 0) {
+      return notify.error('No data to submit')
+    }
+
+    try {
+      const currentDate = new Date()
+      const payloads = []
+
+      for (const row of importedData) {
+        // Find employee by EmpNo
+        const employee = employees.find(emp => emp.EmpID === parseInt(row.empNo))
+
+        if (!employee) {
+          console.warn(`Employee with ID ${row.empNo} not found, skipping...`)
+          continue
+        }
+
+        const scores = calculateScoresForRow(row)
+
+        const payload = {
+          EAID: 0,
+          EmpID: parseInt(row.empNo),
+          RSID: parseInt(selectedSessionId),
+          SessionID: parseInt(selectedSessionId),
+          SelfDevelopment: parseInt(row.selfDevelopment) || 0,
+          EmployeeStaffDevelopment: parseInt(row.employeeStaffDevelopment) || 0,
+          DecisionMaking: parseInt(row.decisionMaking) || 0,
+          ProductivityEfficiency: parseInt(row.productivityEfficiency) || 0,
+          CallForDuty: parseInt(row.callForDuty) || 0,
+          PerformanceScore: scores.performanceScore,
+          AttendancePunctuality: parseInt(row.attendancePunctuality) || 0,
+          BehaviourOverallDiscipline: parseInt(row.behaviourOverallDiscipline) || 0,
+          DisciplineScore: scores.disciplineScore,
+          Integrity: parseInt(row.integrity) || 0,
+          LoyaltySubmissionToCompanyGoals: parseInt(row.loyaltySubmissionToCompanyGoals) || 0,
+          IntegrityScore: scores.integrityScore,
+          FinalPercentage: scores.finalPercentage,
+          FinalRemark: row.finalRemark || '',
+          SubmittedAt: currentDate.toISOString(),
+          Month: currentDate.getMonth() + 1,
+          Year: currentDate.getFullYear(),
+          SubmittedBy: currentEmployee?.EmpID || 0
+        }
+
+        payloads.push(payload)
+      }
+
+      if (payloads.length === 0) {
+        return notify.error('No valid employee records found in the imported data')
+      }
+
+      // Submit all assessments
+      console.log('Submitting bulk assessments:', payloads)
+
+      for (const payload of payloads) {
+        await API.post('/EmpAssessments', payload)
+      }
+
+      notify.success(`Successfully submitted ${payloads.length} assessment(s)!`)
+
+      // Reset import mode
+      setImportedData([])
+      setIsImportMode(false)
+      setShowImportMode(false)
+
+    } catch (error) {
+      console.error('Failed to submit bulk assessments:', error)
+      notify.error('Failed to submit assessments. Please try again.')
+    }
+  }
+
+  // Get category weightage (sum of parameter weightages in category)
+  const getCategoryWeightage = (categoryId) => {
+    const categoryParams = reviewParameters.filter(p => p.CategoryID === categoryId)
+    return categoryParams.reduce((sum, param) => sum + param.Weightage, 0)
+  }
+
+  // Submit assessments
+  const handleSubmitAssessments = async () => {
+    if (!selectedSessionId) {
+      return notify.info('Please select a review session')
+    }
+
+    try {
+      const currentDate = new Date()
+      const payloads = []
+
+      // Determine which employee list to use based on active tab
+      const employeeList = activeTab === 'reviewAssigned' ? assignedEmployees : employees
+
+      console.log('=== SUBMIT ASSESSMENTS ===')
+      console.log('Active Tab:', activeTab)
+      console.log('Employee List Type:', activeTab === 'reviewAssigned' ? 'Assigned Employees' : 'Regular Employees')
+      console.log('Employee List Count:', employeeList.length)
+      console.log('========================')
+
+      employeeList.forEach(employee => {
+        const empId = employee.EmpID
+
+        // Check if employee has any assessment data or final remarks
+        const hasAssessmentData = reviewParameters.some(param => {
+          const key = `${empId}_${param.ReviewParameterID}`
+          return assessmentData[key] > 0
+        })
+
+        const hasFinalRemarks = finalRemarks[empId] && finalRemarks[empId].trim() !== ''
+
+        if (!hasAssessmentData && !hasFinalRemarks) return // Skip employees with no data or remarks
+
+        // Calculate scores
+        const performanceScore = calculateCategoryScore(empId, 1) // Performance parameters
+        const disciplineScore = calculateCategoryScore(empId, 2) // Discipline/Behaviour factors  
+        const integrityScore = calculateCategoryScore(empId, 3) // Integrity & Loyalty
+        const finalPercentage = calculateFinalPercentage(empId)
+
+        const payload = {
+          EAID: 0,
+          EmpID: empId,
+          RSID: parseInt(selectedSessionId),
+          SessionID: parseInt(selectedSessionId),
+          SelfDevelopment: assessmentData[`${empId}_1`] || 0,
+          EmployeeStaffDevelopment: assessmentData[`${empId}_2`] || 0,
+          DecisionMaking: assessmentData[`${empId}_3`] || 0,
+          ProductivityEfficiency: assessmentData[`${empId}_4`] || 0,
+          CallForDuty: assessmentData[`${empId}_5`] || 0,
+          PerformanceScore: performanceScore,
+          AttendancePunctuality: assessmentData[`${empId}_6`] || 0,
+          BehaviourOverallDiscipline: assessmentData[`${empId}_7`] || 0,
+          DisciplineScore: disciplineScore,
+          Integrity: assessmentData[`${empId}_8`] || 0,
+          LoyaltySubmissionToCompanyGoals: assessmentData[`${empId}_9`] || 0,
+          IntegrityScore: integrityScore,
+          FinalPercentage: finalPercentage,
+          FinalRemark: finalRemarks[empId] || '',
+          SubmittedAt: currentDate.toISOString(),
+          Month: currentDate.getMonth() + 1,
+          Year: currentDate.getFullYear(),
+          SubmittedBy: currentEmployee?.EmpID || 0
+        }
+
+        console.log('=== ASSESSMENT PAYLOAD ===')
+        console.log('Employee ID:', empId)
+        console.log('Final Remarks:', finalRemarks[empId])
+        console.log('Full Payload:', JSON.stringify(payload, null, 2))
+        console.log('========================')
+
+        payloads.push(payload)
+      })
+
+      if (payloads.length === 0) {
+        return notify.info('No assessment data to submit')
+      }
+
+      console.log('=== ALL PAYLOADS TO SUBMIT ===')
+      console.log('Total payloads:', payloads.length)
+      payloads.forEach((p, index) => {
+        console.log(`Payload ${index + 1}:`, {
+          EmpID: p.EmpID,
+          FinalRemarks: p.FinalRemarks,
+          RSID: p.RSID
+        })
+      })
+      console.log('=============================')
+
+      // Submit all assessments
+      for (const payload of payloads) {
+        await API.post('/EmpAssessments', payload)
+      }
+
+      const assessmentType = activeTab === 'reviewAssigned' ? 'assigned employee' : 'employee'
+      notify.success(`Successfully submitted ${payloads.length} ${assessmentType} assessment(s)!`)
+
+      // Reload existing reviews to show updated data
+      loadExistingReviews(selectedSessionId)
+
+    } catch (error) {
+      console.error('Failed to submit assessments:', error)
+      notify.error('Failed to submit assessments. Please try again.')
+    }
+  }
+
+  // Load initial data on component mount
+  useEffect(() => {
+    loadReviewParameters()
+  }, [])
+
+  // Check if current employee is in DeptID 10 and load all employees for random assessment
+  useEffect(() => {
+    const checkDeptAndLoadEmployees = async () => {
+      if (!currentEmployee?.EmpID) {
+        return
+      }
+
+      try {
+        // Check employee's department
+        const deptResponse = await API.get(`/EmpDeptPos/${currentEmployee.EmpID}`)
+        if (deptResponse.data && deptResponse.data.DeptID === 10) {
+          setShowRandomAssessmentTab(true)
+          setShowViewAllReviewsTab(true)
+
+          // Load all employees for random assessment dropdowns and view all reviews
+          const allEmpsResponse = await API.get(`/Employees/ForHR/${currentEmployee.EmpID}`)
+          const allEmpsList = Array.isArray(allEmpsResponse.data) ? allEmpsResponse.data : []
+          // const filteredEmpsList = allEmpsList.filter(emp => emp.EmpID !== currentEmployee.EmpID)
+          setAllEmployees(allEmpsList)
+          setFilteredAssessors(allEmpsList)
+          setFilteredAssessees(allEmpsList)
+          setAllReviewsEmployees(allEmpsList)
+          setFilteredAllReviewsEmployees(allEmpsList)
+        } else {
+          setShowRandomAssessmentTab(false)
+          setShowViewAllReviewsTab(false)
+        }
+      } catch (err) {
+        console.error('Failed to check department or load employees', err)
+      }
+    }
+
+    checkDeptAndLoadEmployees()
+  }, [currentEmployee?.EmpID])
+
+  // Load existing reviews when session is selected
+  useEffect(() => {
+    if (selectedSessionId && reviewParameters.length > 0) {
+      loadExistingReviews(selectedSessionId)
+    }
+  }, [selectedSessionId, reviewParameters, currentEmployee?.EmpID])
+
+  // Check if current employee is assigned as an assessor
+  useEffect(() => {
+    const checkAssessorAssignments = async () => {
+      console.log('Checking assessor assignments...')
+      console.log('Checking assessor assignments for:', currentEmployee.EmpID, 'Session:', selectedSessionId)
+
+      if (!currentEmployee?.EmpID || !selectedSessionId) {
+        setShowReviewAssignedTab(false)
+        return
+      }
+
+      try {
+        // Check if user is assigned as an assessor for the selected session
+        const response = await API.get(`/RandomAssessments/GetEmployeebyAssessorID?id=${currentEmployee.EmpID}&sessionID=${selectedSessionId}`)
+
+        if (response.data) {
+          const assignment = response.data
+          console.log('Assignment data:', assignment)
+
+          // Get the list of assessee IDs from the assignment
+          const assesseeIds = assignment.AssesseeIDs || []
+          console.log('Assessee IDs:', assesseeIds)
+
+          if (assesseeIds.length > 0) {
+            // Load all employees to filter assigned ones
+            const allEmpsResponse = await API.get('/Employees')
+            const allEmpsList = Array.isArray(allEmpsResponse.data) ? allEmpsResponse.data : []
+
+            // Filter employees whose IDs are in the assesseeIds array
+            const assignedEmps = allEmpsList.filter(emp => assesseeIds.includes(emp.EmpID))
+
+            console.log('Assigned employees:', assignedEmps)
+
+            setAssignedEmployees(assignedEmps)
+            setFilteredAssignedEmployees(assignedEmps)
+            setShowReviewAssignedTab(true)
+          } else {
+            setShowReviewAssignedTab(false)
+          }
+        } else {
+          setShowReviewAssignedTab(false)
+        }
+      } catch (err) {
+        console.error('Failed to check assessor assignments', err)
+        setShowReviewAssignedTab(false)
+      }
+    }
+
+    checkAssessorAssignments()
+  }, [currentEmployee?.EmpID, selectedSessionId])
+
+  // Load employees by manager on mount
+  useEffect(() => {
+    const loadEmployeesByManager = async () => {
+      if (!currentEmployee?.EmpID) {
+        console.log('No current employee found')
+        return
+      }
+
+      try {
+        console.log('Loading employees for manager:', currentEmployee.EmpID)
+        const response = await API.get(`/Employees/GetEmployeebymanager?EmpID=${currentEmployee.EmpID}`)
+        const employeeList = Array.isArray(response.data) ? response.data : []
+        console.log('Loaded employees:', employeeList)
+        setEmployees(employeeList)
+      } catch (err) {
+        console.error('Failed to load employees by manager', err)
+        // notify.error('Failed to load employees')
+      }
+    }
+
+    loadEmployeesByManager()
+  }, [currentEmployee?.EmpID])
+
+  // Filter assigned employees based on search
+  useEffect(() => {
+    if (!assignedEmployeeSearch) {
+      setFilteredAssignedEmployees(assignedEmployees)
+    } else {
+      const filtered = assignedEmployees.filter(emp =>
+        `${emp.FirstName} ${emp.LastName}`.toLowerCase().includes(assignedEmployeeSearch.toLowerCase()) ||
+        emp.EmpID.toString().includes(assignedEmployeeSearch)
+      )
+      setFilteredAssignedEmployees(filtered)
+    }
+  }, [assignedEmployeeSearch, assignedEmployees])
+
+  // Assigned employee handlers
+  const handleAssignedEmployeeSelect = (employee) => {
+    setSelectedAssignedEmpId(employee.EmpID.toString())
+    setAssignedEmployeeSearch(`${employee.EmpID} - ${employee.FirstName} ${employee.LastName}`)
+    setShowAssignedEmployeeDropdown(false)
+    // Remove focus from input field
+    if (assignedEmployeeInputRef.current) {
+      assignedEmployeeInputRef.current.blur()
+    }
+  }
+
+  const handleAssignedEmployeeSearchChange = (value) => {
+    setAssignedEmployeeSearch(value)
+    setShowAssignedEmployeeDropdown(true)
+    // Don't clear selected employee when user is typing/backspacing
+    // Only clear when explicitly selecting a new employee
+  }
+
+  // Fetch all reviews for selected employee in View All Reviews tab
+  useEffect(() => {
+    const fetchAllEmployeeReviews = async () => {
+      if (!selectedReviewEmpId) {
+        setAllEmployeeReviews([])
+        setSelectedReviewDetail(null)
+        setReviewerNames({})
+        return
+      }
+
+      setLoadingAllReviews(true)
+      try {
+        const response = await API.get(`/EmpAssessments/GetAllreviews/${selectedReviewEmpId}/${selectedSessionId}`)
+        if (response.data && Array.isArray(response.data)) {
+          setAllEmployeeReviews(response.data)
+
+          // Fetch reviewer names for all unique SubmittedBy IDs
+          const uniqueReviewerIds = [...new Set(response.data.map(review => review.SubmittedBy).filter(id => id))]
+          const reviewerNamesMap = {}
+
+          await Promise.all(
+            uniqueReviewerIds.map(async (empId) => {
+              try {
+                const empResponse = await API.get(`/Employees/${empId}`)
+                if (empResponse.data) {
+                  reviewerNamesMap[empId] = `${empResponse.data.FirstName} ${empResponse.data.LastName}`
+                }
+              } catch (err) {
+                console.error(`Failed to fetch reviewer name for EmpID ${empId}:`, err)
+                reviewerNamesMap[empId] = 'Unknown'
+              }
+            })
+          )
+
+          setReviewerNames(reviewerNamesMap)
+        } else {
+          setAllEmployeeReviews([])
+          setReviewerNames({})
+        }
+      } catch (error) {
+        console.error('Failed to fetch all reviews:', error)
+        setAllEmployeeReviews([])
+        setReviewerNames({})
+        notify.error('Failed to load employee reviews')
+      } finally {
+        setLoadingAllReviews(false)
+      }
+    }
+
+    fetchAllEmployeeReviews()
+  }, [selectedReviewEmpId])
+
+  // Review employee handlers
+  const handleReviewEmployeeSelect = (employee) => {
+    setSelectedReviewEmpId(employee.EmpID.toString())
+    setReviewEmployeeSearch(`${employee.EmpID} - ${employee.FirstName} ${employee.LastName}`)
+    setSelectedReviewEmployee(employee)
+    setShowReviewEmployeeDropdown(false)
+    setSelectedReviewDetail(null)
+    // Remove focus from input field
+    if (reviewEmployeeInputRef.current) {
+      reviewEmployeeInputRef.current.blur()
+    }
+  }
+
+  const handleReviewEmployeeSearchChange = (value) => {
+    setReviewEmployeeSearch(value)
+    setShowReviewEmployeeDropdown(true)
+    // Don't clear selected employee and reviews when user is typing/backspacing
+    // Only clear when explicitly selecting a new employee
+  }
+
+  // Close dropdown when clicking outside or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (assessorDropdownRef.current && !assessorDropdownRef.current.contains(event.target)) {
+        setShowAssessorDropdown(false)
+      }
+      if (assesseeDropdownRef.current && !assesseeDropdownRef.current.contains(event.target)) {
+        setShowAssesseeDropdown(false)
+      }
+      if (assignedEmployeeDropdownRef.current && !assignedEmployeeDropdownRef.current.contains(event.target)) {
+        setShowAssignedEmployeeDropdown(false)
+      }
+      if (reviewEmployeeDropdownRef.current && !reviewEmployeeDropdownRef.current.contains(event.target)) {
+        setShowReviewEmployeeDropdown(false)
+      }
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setShowAssessorDropdown(false)
+        setShowAssesseeDropdown(false)
+        setShowAssignedEmployeeDropdown(false)
+        setShowReviewEmployeeDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  // Filter assessors based on search
+  useEffect(() => {
+    if (!assessorSearch) {
+      setFilteredAssessors(allEmployees)
+    } else {
+      const filtered = allEmployees.filter(emp =>
+        `${emp.FirstName} ${emp.LastName}`.toLowerCase().includes(assessorSearch.toLowerCase()) ||
+        emp.EmpID.toString().includes(assessorSearch)
+      )
+      setFilteredAssessors(filtered)
+    }
+  }, [assessorSearch, allEmployees])
+
+  // Filter assessees based on search
+  useEffect(() => {
+    if (!assesseeSearch) {
+      setFilteredAssessees(allEmployees)
+    } else {
+      const filtered = allEmployees.filter(emp =>
+        `${emp.FirstName} ${emp.LastName}`.toLowerCase().includes(assesseeSearch.toLowerCase()) ||
+        emp.EmpID.toString().includes(assesseeSearch)
+      )
+      setFilteredAssessees(filtered)
+    }
+  }, [assesseeSearch, allEmployees])
+
+  // Filter review employees based on search
+  useEffect(() => {
+    if (!reviewEmployeeSearch) {
+      setFilteredAllReviewsEmployees(allReviewsEmployees)
+    } else {
+      const filtered = allReviewsEmployees.filter(emp =>
+        `${emp.FirstName} ${emp.LastName}`.toLowerCase().includes(reviewEmployeeSearch.toLowerCase()) ||
+        emp.EmpID.toString().includes(reviewEmployeeSearch)
+      )
+      setFilteredAllReviewsEmployees(filtered)
+    }
+  }, [reviewEmployeeSearch, allReviewsEmployees])
+
+  // Check if reviews are locked when employee reviews are loaded
+  useEffect(() => {
+    if (allEmployeeReviews.length > 0) {
+      // Check if any review has IsLocked = true
+      const locked = allEmployeeReviews.some(review => review.IsLocked === true)
+      setAreReviewsLocked(locked)
+    } else {
+      setAreReviewsLocked(false)
+    }
+  }, [allEmployeeReviews])
+
+  // Regularization handlers
+  const handleRegularizeClick = (review) => {
+    setSelectedReviewForRegularization(review)
+    setRegularizationFormData({
+      SelfDevelopment: review.SelfDevelopment || 0,
+      EmployeeStaffDevelopment: review.EmployeeStaffDevelopment || 0,
+      DecisionMaking: review.DecisionMaking || 0,
+      ProductivityEfficiency: review.ProductivityEfficiency || 0,
+      CallForDuty: review.CallForDuty || 0,
+      AttendancePunctuality: review.AttendancePunctuality || 0,
+      BehaviourOverallDiscipline: review.BehaviourOverallDiscipline || 0,
+      Integrity: review.Integrity || 0,
+      LoyaltySubmissionToCompanyGoals: review.LoyaltySubmissionToCompanyGoals || 0,
+      FinalRemark: review.FinalRemark || ''
+    })
+  }
+
+  const handleRegularizationFormChange = (field, value) => {
+    setRegularizationFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const calculateRegularizationScores = () => {
+    // Performance Score
+    const performanceValues = [
+      parseInt(regularizationFormData.SelfDevelopment) || 0,
+      parseInt(regularizationFormData.EmployeeStaffDevelopment) || 0,
+      parseInt(regularizationFormData.DecisionMaking) || 0,
+      parseInt(regularizationFormData.ProductivityEfficiency) || 0,
+      parseInt(regularizationFormData.CallForDuty) || 0
+    ].filter(val => val > 0)
+    const performanceScore = performanceValues.length > 0
+      ? performanceValues.reduce((sum, val) => sum + val, 0) / performanceValues.length
+      : 0
+
+    // Discipline Score
+    const disciplineValues = [
+      parseInt(regularizationFormData.AttendancePunctuality) || 0,
+      parseInt(regularizationFormData.BehaviourOverallDiscipline) || 0
+    ].filter(val => val > 0)
+    const disciplineScore = disciplineValues.length > 0
+      ? disciplineValues.reduce((sum, val) => sum + val, 0) / disciplineValues.length
+      : 0
+
+    // Integrity Score
+    const integrityValues = [
+      parseInt(regularizationFormData.Integrity) || 0,
+      parseInt(regularizationFormData.LoyaltySubmissionToCompanyGoals) || 0
+    ].filter(val => val > 0)
+    const integrityScore = integrityValues.length > 0
+      ? integrityValues.reduce((sum, val) => sum + val, 0) / integrityValues.length
+      : 0
+
+    // Final Percentage
+    const finalPercentage = (performanceScore * 0.6 + disciplineScore * 0.2 + integrityScore * 0.2) / 4 * 100
+
+    return {
+      performanceScore: Math.round(performanceScore * 100) / 100,
+      disciplineScore: Math.round(disciplineScore * 100) / 100,
+      integrityScore: Math.round(integrityScore * 100) / 100,
+      finalPercentage: Math.round(finalPercentage * 100) / 100
+    }
+  }
+
+  const handleSubmitRegularization = async () => {
+    if (!selectedReviewForRegularization || !selectedReviewEmpId) {
+      return notify.error('No review selected for regularization')
+    }
+
+    setIsSubmittingRegularization(true)
+    try {
+      const scores = calculateRegularizationScores()
+      const currentDate = new Date()
+
+      const payload = {
+        EAID: 0,
+        EmpID: parseInt(selectedReviewEmpId),
+        RSID: parseInt(selectedSessionId),
+        SessionID: parseInt(selectedSessionId),
+        SelfDevelopment: parseInt(regularizationFormData.SelfDevelopment) || 0,
+        EmployeeStaffDevelopment: parseInt(regularizationFormData.EmployeeStaffDevelopment) || 0,
+        DecisionMaking: parseInt(regularizationFormData.DecisionMaking) || 0,
+        ProductivityEfficiency: parseInt(regularizationFormData.ProductivityEfficiency) || 0,
+        CallForDuty: parseInt(regularizationFormData.CallForDuty) || 0,
+        PerformanceScore: scores.performanceScore,
+        AttendancePunctuality: parseInt(regularizationFormData.AttendancePunctuality) || 0,
+        BehaviourOverallDiscipline: parseInt(regularizationFormData.BehaviourOverallDiscipline) || 0,
+        DisciplineScore: scores.disciplineScore,
+        Integrity: parseInt(regularizationFormData.Integrity) || 0,
+        LoyaltySubmissionToCompanyGoals: parseInt(regularizationFormData.LoyaltySubmissionToCompanyGoals) || 0,
+        IntegrityScore: scores.integrityScore,
+        FinalPercentage: scores.finalPercentage,
+        FinalRemark: regularizationFormData.FinalRemark || '',
+        SubmittedAt: currentDate.toISOString(),
+        Month: currentDate.getMonth() + 1,
+        Year: currentDate.getFullYear(),
+        SubmittedBy: currentEmployee?.EmpID || 0
+      }
+
+      await API.post('/EmpAssessments', payload)
+      notify.success('Regularized review submitted successfully!')
+
+      // Refresh the reviews list
+      const response = await API.get(`/EmpAssessments/GetReviewsbyEmpID/${selectedReviewEmpId}/${selectedSessionId}`)
+      const reviews = Array.isArray(response.data) ? response.data : []
+      setAllEmployeeReviews(reviews)
+
+      // Clear the regularization form
+      setSelectedReviewForRegularization(null)
+      setRegularizationFormData({
+        SelfDevelopment: 0,
+        EmployeeStaffDevelopment: 0,
+        DecisionMaking: 0,
+        ProductivityEfficiency: 0,
+        CallForDuty: 0,
+        AttendancePunctuality: 0,
+        BehaviourOverallDiscipline: 0,
+        Integrity: 0,
+        LoyaltySubmissionToCompanyGoals: 0,
+        FinalRemark: ''
+      })
+    } catch (error) {
+      console.error('Failed to submit regularized review:', error)
+      notify.error('Failed to submit regularized review')
+    } finally {
+      setIsSubmittingRegularization(false)
+    }
+  }
+
+  const handleCancelRegularization = () => {
+    setSelectedReviewForRegularization(null)
+    setRegularizationFormData({
+      SelfDevelopment: 0,
+      EmployeeStaffDevelopment: 0,
+      DecisionMaking: 0,
+      ProductivityEfficiency: 0,
+      CallForDuty: 0,
+      AttendancePunctuality: 0,
+      BehaviourOverallDiscipline: 0,
+      Integrity: 0,
+      LoyaltySubmissionToCompanyGoals: 0,
+      FinalRemark: ''
+    })
+  }
+
+  // Random Assessment handlers
+  const handleAssessorSelect = (employee) => {
+    setSelectedAssessor(employee)
+    setAssessorSearch(`${employee.EmpID} - ${employee.FirstName} ${employee.LastName}`)
+    setShowAssessorDropdown(false)
+    // Remove focus from input field
+    if (assessorInputRef.current) {
+      assessorInputRef.current.blur()
+    }
+  }
+
+  const handleAssesseeToggle = (employee) => {
+    const isSelected = selectedAssessees.some(emp => emp.EmpID === employee.EmpID)
+    if (isSelected) {
+      setSelectedAssessees(selectedAssessees.filter(emp => emp.EmpID !== employee.EmpID))
+    } else {
+      setSelectedAssessees([...selectedAssessees, employee])
+    }
+  }
+
+  const handleRemoveAssessee = (empId) => {
+    setSelectedAssessees(selectedAssessees.filter(emp => emp.EmpID !== empId))
+  }
+
+  const handleRandomAssessmentSubmit = async () => {
+    // Validation
+    if (!selectedAssessor) {
+      return notify.error('Please select an assessor')
+    }
+    if (selectedAssessees.length === 0) {
+      return notify.error('Please select at least one assessee')
+    }
+
+    const currentDate = new Date()
+    const payload = {
+      RAID: 0,
+      AssessorID: selectedAssessor.EmpID,
+      AssesseeIDs: selectedAssessees.map(emp => emp.EmpID),
+      Month: currentDate.getMonth() + 1,
+      Year: currentDate.getFullYear(),
+      RSID: selectedSessionId
+    }
+
+    console.log('=== RANDOM ASSESSMENT PAYLOAD ===')
+    console.log(JSON.stringify(payload, null, 2))
+    console.log('=================================')
+
+    try {
+      await API.post('/RandomAssessments', payload)
+      notify.success('Random assessment submitted successfully!')
+
+      // Reset form
+      setSelectedAssessor(null)
+      setSelectedAssessees([])
+      setAssessorSearch('')
+      setAssesseeSearch('')
+    } catch (error) {
+      console.error('Failed to submit random assessment:', error)
+      notify.error('Failed to submit random assessment. Please try again.')
+    }
+  }
+
+  return (
+    <div>
+      {/* Tabs */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-xl shadow-sm p-4 border border-gray-200 mb-6"
+      >
+        <p className="text-gray-600 mb-4">
+          {activeTab === 'assessment'
+            ? 'Complete performance evaluations for all employees in a grid format. Rate employees on various parameters.'
+            : activeTab === 'random'
+              ? 'Assign random assessments by selecting an assessor and assessees.'
+              : activeTab === 'reviewAssigned'
+                ? 'Review and assess employees assigned to you.'
+                : 'View all performance reviews for any employee.'}
+        </p>
+
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('assessment')}
+            className={`px-4 py-2 font-medium transition-colors border-b-2 ${activeTab === 'assessment'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-600 hover:text-gray-800'
+              }`}
+          >
+            Performance Assessment
+          </button>
+          {showRandomAssessmentTab && (
+            <button
+              onClick={() => setActiveTab('random')}
+              className={`px-4 py-2 font-medium transition-colors border-b-2 ${activeTab === 'random'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+                }`}
+            >
+              Assign Additional Assessment
+            </button>
+          )}
+          {showReviewAssignedTab && (
+            <button
+              onClick={() => setActiveTab('reviewAssigned')}
+              className={`px-4 py-2 font-medium transition-colors border-b-2 ${activeTab === 'reviewAssigned'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+                }`}
+            >
+              Additional Assessment
+            </button>
+          )}
+          {showViewAllReviewsTab && (
+            <button
+              onClick={() => setActiveTab('viewAllReviews')}
+              className={`px-4 py-2 font-medium transition-colors border-b-2 ${activeTab === 'viewAllReviews'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+                }`}
+            >
+              View All Reviews
+            </button>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Performance Assessment Tab */}
+      {activeTab === 'assessment' && selectedSessionId && (
+        <div className="space-y-6">
+          {/* Import Mode Section */}
+          {showImportMode && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-6"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <Upload className="h-5 w-5 text-blue-600" />
+                <h2 className="text-xl font-semibold text-gray-800">Bulk Import Employee Assessments</h2>
+              </div>
+
+              <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-900 mb-2">Instructions:</h3>
+                <ol className="list-decimal list-inside text-sm text-blue-800 space-y-1">
+                  <li>Download the template using the "Download Template" button above</li>
+                  <li>Fill in the employee assessment data in the Excel file</li>
+                  <li>Upload the completed file using the import section below</li>
+                  <li>Review the mapped data and submit</li>
+                </ol>
+              </div>
+
+              <ExcelImportService
+                predefinedFields={predefinedFields}
+                onDataChange={handleImportedData}
+                onFileReset={handleFileReset}
+                debugMode={false}
+                exportJsonEnabled={false}
+                headerRow={3}
+              />
+
+              {/* Preview imported data */}
+              {importedData.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                    Preview: {importedData.length} Record(s) Ready to Import
+                  </h3>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Emp No</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Self Dev</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff Dev</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Decision</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Productivity</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Call Duty</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Attendance</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Behaviour</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Integrity</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loyalty</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Final %</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {importedData.map((row, index) => {
+                          const scores = calculateScoresForRow(row)
+                          return (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.empNo}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.name}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.selfDevelopment}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.employeeStaffDevelopment}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.decisionMaking}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.productivityEfficiency}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.callForDuty}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.attendancePunctuality}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.behaviourOverallDiscipline}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.integrity}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{row.loyaltySubmissionToCompanyGoals}</td>
+                              <td className="px-4 py-3 text-sm font-semibold text-green-600">{scores.finalPercentage}%</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex justify-end mt-4">
+                    <motion.button
+                      onClick={handleBulkSubmit}
+                      disabled={areReviewsLocked}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors"
+                    >
+                      <Save className="h-4 w-4" />
+                      {areReviewsLocked ? 'Reviews Locked' : `Submit ${importedData.length} Assessment(s)`}
+                    </motion.button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Assessment Grid */}
+          {!showImportMode && selectedSessionId && reviewParameters.length > 0 && employees.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            >
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-800">Employee Assessment Grid</h2>
+                      <p className="text-gray-600 mt-1">
+                        Rate each employee on the parameters below. Use the dropdown to select ratings.
+                      </p>
+                    </div>
+
+                    {/* Compact Direct Reviews Stats - Now as Filter Buttons */}
+                    {reviewStats && reviewStats.DirectReviews && reviewStats.DirectReviews.TotalEmployees > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center gap-2"
+                      >
+                        {/* Total - Display only, not clickable */}
+                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 rounded-md border border-blue-200">
+                          <ListChecks className="h-3.5 w-3.5 text-blue-600" />
+                          <span className="text-xs font-medium text-blue-700">Total:</span>
+                          <span className="text-sm font-bold text-blue-900">{reviewStats.DirectReviews.TotalEmployees}</span>
+                        </div>
+
+                        {/* Assessed - Clickable Filter Button */}
+                        <motion.button
+                          onClick={() => handleDirectReviewsFilterClick('assessed')}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-all ${
+                            directReviewsFilter === 'assessed'
+                              ? 'bg-green-600 border-green-700 shadow-md'
+                              : 'bg-green-50 border-green-200 hover:bg-green-100'
+                          }`}
+                        >
+                          <CheckCircle className={`h-3.5 w-3.5 ${directReviewsFilter === 'assessed' ? 'text-white' : 'text-green-600'}`} />
+                          <span className={`text-xs font-medium ${directReviewsFilter === 'assessed' ? 'text-white' : 'text-green-700'}`}>
+                            Assessed:
+                          </span>
+                          <span className={`text-sm font-bold ${directReviewsFilter === 'assessed' ? 'text-white' : 'text-green-900'}`}>
+                            {reviewStats.DirectReviews.Completed}
+                          </span>
+                        </motion.button>
+
+                        {/* To be Assessed - Clickable Filter Button */}
+                        <motion.button
+                          onClick={() => handleDirectReviewsFilterClick('remaining')}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-all ${
+                            directReviewsFilter === 'remaining'
+                              ? 'bg-orange-600 border-orange-700 shadow-md'
+                              : 'bg-orange-50 border-orange-200 hover:bg-orange-100'
+                          }`}
+                        >
+                          <Clock className={`h-3.5 w-3.5 ${directReviewsFilter === 'remaining' ? 'text-white' : 'text-orange-600'}`} />
+                          <span className={`text-xs font-medium ${directReviewsFilter === 'remaining' ? 'text-white' : 'text-orange-700'}`}>
+                            To be Assessed:
+                          </span>
+                          <span className={`text-sm font-bold ${directReviewsFilter === 'remaining' ? 'text-white' : 'text-orange-900'}`}>
+                            {reviewStats.DirectReviews.Remaining}
+                          </span>
+                        </motion.button>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Bulk Import/Export Controls */}
+                  <div className="flex items-center gap-2">
+                    <motion.button
+                      onClick={handleDownloadTemplate}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 px-2 py-1 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download Template
+                    </motion.button>
+                    <motion.button
+                      onClick={() => setShowImportMode(!showImportMode)}
+                      disabled={areReviewsLocked}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`flex items-center gap-2 px-2 py-1 font-medium rounded-md transition-colors ${areReviewsLocked
+                        ? 'bg-gray-400 cursor-not-allowed text-white'
+                        : showImportMode
+                          ? 'bg-gray-600 hover:bg-gray-700 text-white'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                    >
+                      <Upload className="h-4 w-4" />
+                      {showImportMode ? 'Manual Entry' : 'Bulk Import'}
+                    </motion.button>
+                  </div>
+                </div>
+
+                {areReviewsLocked && (
+                  <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200 flex items-center gap-2">
+                    <Lock className="h-5 w-5 text-red-600" />
+                    <p className="text-red-800 font-medium">
+                      This session is locked. All input fields are disabled.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      {/* Employee Column Header */}
+                      <th className="sticky left-0 bg-gray-50 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 min-w-[200px]">
+                        Employee
+                      </th>
+
+                      {/* Parameter Column Headers grouped by category */}
+                      {categories.map((category) => {
+                        const categoryParams = reviewParameters.filter(p => p.CategoryID === category.id)
+                        return (
+                          <React.Fragment key={category.id}>
+                            <th
+                              colSpan={categoryParams.length + 1}
+                              className="px-4 py-2 text-center text-sm font-semibold text-white bg-gray-800 border-r border-gray-300"
+                            >
+                              {getCategoryWeightage(category.id)}% - {isHindi ? category.nameHindi : category.name}
+                            </th>
+                          </React.Fragment>
+                        )
+                      })}
+
+                      {/* Final Score Column */}
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-l border-gray-300">
+                        Final Score
+                      </th>
+
+                      {/* Final Remark Column */}
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50 border-l border-gray-300 min-w-[200px]">
+                        Final Remark
+                      </th>
+                    </tr>
+
+                    {/* Sub-header row for individual parameters */}
+                    <tr className="bg-gray-100">
+                      <th className="sticky left-0 bg-gray-100 px-4 py-2 border-r border-gray-200"></th>
+
+                      {categories.map((category) => {
+                        const categoryParams = reviewParameters.filter(p => p.CategoryID === category.id)
+                        return (
+                          <React.Fragment key={`sub-${category.id}`}>
+                            {categoryParams.map((param) => (
+                              <th
+                                key={param.ReviewParameterID}
+                                className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[120px]"
+                                title={isHindi ? param.ParameterNameHindi : param.ParameterName}
+                              >
+                                <div className="truncate">
+                                  {isHindi ? param.ParameterNameHindi : param.ParameterName}
+                                </div>
+                              </th>
+                            ))}
+                            {/* Category Score Column */}
+                            <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-300 bg-gray-200">
+                              Score
+                            </th>
+                          </React.Fragment>
+                        )
+                      })}
+
+                      <th className="px-4 py-2 text-xs font-medium text-gray-700 text-center bg-green-100 border-l border-gray-300">
+                        %
+                      </th>
+
+                      <th className="px-4 py-2 text-xs font-medium text-gray-700 text-center bg-yellow-100 border-l border-gray-300">
+                        Remark
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {getFilteredEmployees(employees, directReviewsFilter).map((employee, empIndex) => (
+                      <tr key={employee.EmpID} className={empIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        {/* Employee Info Column */}
+                        <td className="sticky left-0 bg-inherit px-4 py-3 border-r border-gray-200">
+                          <div className="flex flex-col">
+                            <div className="font-medium text-gray-900">
+                              {employee.FirstName} {employee.LastName}
+                            </div>
+                            <div className="text-sm text-gray-500">ID: {employee.EmpID}</div>
+                          </div>
+                        </td>
+
+                        {/* Parameter Columns grouped by category */}
+                        {categories.map((category) => {
+                          const categoryParams = reviewParameters.filter(p => p.CategoryID === category.id)
+                          return (
+                            <React.Fragment key={`emp-${employee.EmpID}-cat-${category.id}`}>
+                              {categoryParams.map((param) => {
+                                const key = `${employee.EmpID}_${param.ReviewParameterID}`
+                                const currentValue = assessmentData[key] || 0
+                                const options = isHindi ? param.OptionsHindi : param.OptionsEnglish
+
+                                return (
+                                  <td key={param.ReviewParameterID} className="px-2 py-3 border-r border-gray-200">
+                                    <select
+                                      value={currentValue}
+                                      onChange={(e) => handleAssessmentChange(employee.EmpID, param.ReviewParameterID, e.target.value)}
+                                      disabled={areReviewsLocked}
+                                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
+                                    >
+                                      <option value={0}>Select...</option>
+                                      {options.map((option, index) => (
+                                        <option key={index} value={index + 1}>
+                                          {option}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </td>
+                                )
+                              })}
+
+                              {/* Category Score Display */}
+                              <td className="px-2 py-3 text-center border-r border-gray-300 bg-gray-50">
+                                <div className="font-semibold text-gray-800">
+                                  {calculateCategoryScore(employee.EmpID, category.id).toFixed(1)}
+                                </div>
+                              </td>
+                            </React.Fragment>
+                          )
+                        })}
+
+                        {/* Final Score Column */}
+                        <td className="px-4 py-3 text-center bg-green-50 border-l border-gray-300">
+                          <div className="font-bold text-green-600 text-lg">
+                            {calculateFinalPercentage(employee.EmpID).toFixed(1)}%
+                          </div>
+                        </td>
+
+                        {/* Final Remark Column */}
+                        <td className="px-4 py-3 bg-yellow-50 border-l border-gray-300">
+                          <textarea
+                            value={finalRemarks[employee.EmpID] || ''}
+                            onChange={(e) => handleFinalRemarkChange(employee.EmpID, e.target.value)}
+                            disabled={areReviewsLocked}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded resize-none focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
+                            rows="2"
+                            placeholder="Enter final remarks..."
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Submit Button */}
+              <div className="p-6 border-t border-gray-200 bg-gray-50">
+                {/* Debug: Show current final remarks
+                {Object.keys(finalRemarks).length > 0 && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="text-sm text-yellow-800">
+                      <strong>Debug - Final Remarks:</strong>
+                      <pre className="mt-1 text-xs">{JSON.stringify(finalRemarks, null, 2)}</pre>
+                    </div>
+                  </div>
+                )} */}
+
+                <div className="flex justify-end">
+                  <motion.button
+                    onClick={handleSubmitAssessments}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={!selectedSessionId || employees.length === 0 || areReviewsLocked}
+                    className="flex items-center gap-2 px-6 py-3 bg-gray-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors focus:ring-2 focus:ring-blue-400"
+                  >
+                    <Save className="h-4 w-4" />
+                    {areReviewsLocked ? 'Reviews Locked' : 'Save'}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Loading States */}
+          {loadingParameters && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-600">Loading parameters...</span>
+            </div>
+          )}
+
+          {/* Empty States */}
+          {!selectedSessionId && reviewSessions.length > 0 && (
+            <div className="text-center py-12">
+              <FolderOpen className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500 text-lg">Please select a review session to begin assessments</p>
+            </div>
+          )}
+
+          {selectedSessionId && employees.length === 0 && (
+            <div className="text-center py-12">
+              <Users className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500 text-lg">No employees found for assessment</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Random Assessment Tab */}
+      {activeTab === 'random' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <Users className="h-5 w-5 text-blue-600" />
+            <h2 className="text-xl font-semibold text-gray-800">Additional Assessment Assignment</h2>
+          </div>
+
+          <div className="space-y-6">
+            {/* Assessor Selection - Single Select */}
+            <div>
+              <label className="block relative" ref={assessorDropdownRef}>
+                <span className="text-gray-700 font-medium mb-2 block">Select Assessor (Single)</span>
+                <div className="relative">
+                  <input
+                    ref={assessorInputRef}
+                    type="text"
+                    value={assessorSearch}
+                    onChange={(e) => {
+                      setAssessorSearch(e.target.value)
+                      setShowAssessorDropdown(true)
+                    }}
+                    onFocus={() => setShowAssessorDropdown(true)}
+                    disabled={allEmployees.length === 0}
+                    className="block w-full px-4 py-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 transition-colors"
+                    placeholder={allEmployees.length ? 'Search assessor by name or ID...' : 'Loading employees...'}
+                  />
+                  {selectedAssessor && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAssessor(null)
+                        setAssessorSearch('')
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Assessor Dropdown */}
+                {showAssessorDropdown && filteredAssessors.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {filteredAssessors.map((emp) => (
+                      <div
+                        key={emp.EmpID}
+                        onClick={() => handleAssessorSelect(emp)}
+                        className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                      >
+                        <div className="font-medium text-gray-900">
+                          {emp.EmpID} - {emp.FirstName} {emp.LastName}
+                        </div>
+                        {emp.WorkEmail && (
+                          <div className="text-sm text-gray-500">{emp.WorkEmail}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </label>
+
+              {/* Selected Assessor Display */}
+              {selectedAssessor && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-blue-800">
+                      <Users className="h-4 w-4" />
+                      <span className="font-medium">Selected Assessor:</span>
+                      <span>
+                        {selectedAssessor.FirstName} {selectedAssessor.LastName} ({selectedAssessor.EmpID})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Assessee Selection - Multi Select */}
+            <div>
+              <label className="block relative" ref={assesseeDropdownRef}>
+                <span className="text-gray-700 font-medium mb-2 block">Select Assessees (Multiple)</span>
+                <input
+                  type="text"
+                  value={assesseeSearch}
+                  onChange={(e) => {
+                    setAssesseeSearch(e.target.value)
+                    setShowAssesseeDropdown(true)
+                  }}
+                  onFocus={() => setShowAssesseeDropdown(true)}
+                  disabled={allEmployees.length === 0}
+                  className="block w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 transition-colors"
+                  placeholder={allEmployees.length ? 'Search assessees by name or ID... (Click to select multiple)' : 'Loading employees...'}
+                />
+
+                {/* Assessee Dropdown */}
+                {showAssesseeDropdown && filteredAssessees.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
+                    <div className="max-h-52 overflow-y-auto">
+                      {filteredAssessees.map((emp) => {
+                        const isSelected = selectedAssessees.some(selected => selected.EmpID === emp.EmpID)
+                        return (
+                          <div
+                            key={emp.EmpID}
+                            onClick={() => handleAssesseeToggle(emp)}
+                            className={`px-4 py-3 cursor-pointer border-b border-gray-100 transition-colors ${isSelected ? 'bg-blue-100 hover:bg-blue-200' : 'hover:bg-blue-50'
+                              }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => { }}
+                                className="h-4 w-4 text-blue-600 rounded"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900">
+                                  {emp.EmpID} - {emp.FirstName} {emp.LastName}
+                                </div>
+                                {emp.WorkEmail && (
+                                  <div className="text-sm text-gray-500">{emp.WorkEmail}</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {/* Done button */}
+                    <div className="border-t border-gray-200 p-2 bg-gray-50">
+                      <button
+                        onClick={() => setShowAssesseeDropdown(false)}
+                        className="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Assessed ({selectedAssessees.length} selected)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </label>
+
+              {/* Selected Assessees Display */}
+              {selectedAssessees.length > 0 && (
+                <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-green-800">
+                      <Users className="h-4 w-4" />
+                      <span className="font-medium">Selected Assessees ({selectedAssessees.length}):</span>
+                    </div>
+                    {selectedAssessees.length > 0 && (
+                      <button
+                        onClick={() => setSelectedAssessees([])}
+                        className="text-xs text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAssessees.map((emp) => (
+                      <div
+                        key={emp.EmpID}
+                        className="flex items-center gap-2 bg-white px-3 py-1 rounded-full border border-green-300"
+                      >
+                        <span className="text-sm text-gray-700">
+                          {emp.FirstName} {emp.LastName} ({emp.EmpID})
+                        </span>
+                        <button
+                          onClick={() => handleRemoveAssessee(emp.EmpID)}
+                          className="text-red-500 hover:text-red-700 transition-colors"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <motion.button
+                onClick={handleRandomAssessmentSubmit}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                disabled={!selectedAssessor || selectedAssessees.length === 0}
+                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                <Save className="h-4 w-4" />
+                Submit Random Assessment
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Review Assigned Employees Tab Content */}
+      {activeTab === 'reviewAssigned' && showReviewAssignedTab && selectedSessionId && (
+        <div className="space-y-6">
+          {/* Assessment Grid for Assigned Employees */}
+          {selectedSessionId && reviewParameters.length > 0 && assignedEmployees.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center gap-3 flex-wrap mb-2">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800">Assigned Employees Assessment Grid</h2>
+                    <p className="text-gray-600 mt-1">
+                      Rate your assigned employees on the parameters below. Use the dropdown to select ratings.
+                    </p>
+                  </div>
+
+                  {/* Compact Assigned Reviews Stats - Now as Filter Buttons */}
+                  {reviewStats && reviewStats.AssignedReviews && reviewStats.AssignedReviews.TotalEmployees > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex items-center gap-2"
+                    >
+                      {/* Total - Display only, not clickable */}
+                      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 rounded-md border border-blue-200">
+                        <ListChecks className="h-3.5 w-3.5 text-blue-600" />
+                        <span className="text-xs font-medium text-blue-700">Total:</span>
+                        <span className="text-sm font-bold text-blue-900">{reviewStats.AssignedReviews.TotalEmployees}</span>
+                      </div>
+
+                      {/* Assessed - Clickable Filter Button */}
+                      <motion.button
+                        onClick={() => handleAssignedReviewsFilterClick('assessed')}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-all ${
+                          assignedReviewsFilter === 'assessed'
+                            ? 'bg-green-600 border-green-700 shadow-md'
+                            : 'bg-green-50 border-green-200 hover:bg-green-100'
+                        }`}
+                      >
+                        <CheckCircle className={`h-3.5 w-3.5 ${assignedReviewsFilter === 'assessed' ? 'text-white' : 'text-green-600'}`} />
+                        <span className={`text-xs font-medium ${assignedReviewsFilter === 'assessed' ? 'text-white' : 'text-green-700'}`}>
+                          Assessed:
+                        </span>
+                        <span className={`text-sm font-bold ${assignedReviewsFilter === 'assessed' ? 'text-white' : 'text-green-900'}`}>
+                          {reviewStats.AssignedReviews.Completed}
+                        </span>
+                      </motion.button>
+
+                      {/* To be Assessed - Clickable Filter Button */}
+                      <motion.button
+                        onClick={() => handleAssignedReviewsFilterClick('remaining')}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border transition-all ${
+                          assignedReviewsFilter === 'remaining'
+                            ? 'bg-orange-600 border-orange-700 shadow-md'
+                            : 'bg-orange-50 border-orange-200 hover:bg-orange-100'
+                        }`}
+                      >
+                        <Clock className={`h-3.5 w-3.5 ${assignedReviewsFilter === 'remaining' ? 'text-white' : 'text-orange-600'}`} />
+                        <span className={`text-xs font-medium ${assignedReviewsFilter === 'remaining' ? 'text-white' : 'text-orange-700'}`}>
+                          To be Assessed:
+                        </span>
+                        <span className={`text-sm font-bold ${assignedReviewsFilter === 'remaining' ? 'text-white' : 'text-orange-900'}`}>
+                          {reviewStats.AssignedReviews.Remaining}
+                        </span>
+                      </motion.button>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Lock Indicator */}
+                {areReviewsLocked && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-red-600" />
+                    <span className="text-sm font-medium text-red-800">This session is locked. All input fields are disabled.</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      {/* Employee Column Header */}
+                      <th className="sticky left-0 bg-gray-50 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 min-w-[200px]">
+                        Employee
+                      </th>
+
+                      {/* Parameter Column Headers grouped by category */}
+                      {categories.map((category) => {
+                        const categoryParams = reviewParameters.filter(p => p.CategoryID === category.id)
+                        return (
+                          <React.Fragment key={category.id}>
+                            <th
+                              colSpan={categoryParams.length + 1}
+                              className="px-4 py-2 text-center text-sm font-semibold text-white bg-gray-800 border-r border-gray-300"
+                            >
+                              {getCategoryWeightage(category.id)}% - {isHindi ? category.nameHindi : category.name}
+                            </th>
+                          </React.Fragment>
+                        )
+                      })}
+
+                      {/* Final Score Column */}
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-l border-gray-300">
+                        Final Score
+                      </th>
+
+                      {/* Final Remark Column */}
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50 border-l border-gray-300 min-w-[200px]">
+                        Final Remark
+                      </th>
+                    </tr>
+
+                    {/* Sub-header row for individual parameters */}
+                    <tr className="bg-gray-100">
+                      <th className="sticky left-0 bg-gray-100 px-4 py-2 border-r border-gray-200"></th>
+
+                      {categories.map((category) => {
+                        const categoryParams = reviewParameters.filter(p => p.CategoryID === category.id)
+                        return (
+                          <React.Fragment key={`sub-${category.id}`}>
+                            {categoryParams.map((param) => (
+                              <th
+                                key={param.ReviewParameterID}
+                                className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[120px]"
+                                title={isHindi ? param.ParameterNameHindi : param.ParameterName}
+                              >
+                                <div className="truncate">
+                                  {isHindi ? param.ParameterNameHindi : param.ParameterName}
+                                </div>
+                              </th>
+                            ))}
+                            {/* Category Score Column */}
+                            <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-300 bg-gray-200">
+                              Score
+                            </th>
+                          </React.Fragment>
+                        )
+                      })}
+
+                      <th className="px-4 py-2 text-xs font-medium text-gray-700 text-center bg-green-100 border-l border-gray-300">
+                        %
+                      </th>
+
+                      <th className="px-4 py-2 text-xs font-medium text-gray-700 text-center bg-yellow-100 border-l border-gray-300">
+                        Remark
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {getFilteredEmployees(assignedEmployees, assignedReviewsFilter).map((employee, empIndex) => (
+                      <tr key={employee.EmpID} className={empIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        {/* Employee Info Column */}
+                        <td className="sticky left-0 bg-inherit px-4 py-3 border-r border-gray-200">
+                          <div className="flex flex-col">
+                            <div className="font-medium text-gray-900">
+                              {employee.FirstName} {employee.LastName}
+                            </div>
+                            <div className="text-sm text-gray-500">ID: {employee.EmpID}</div>
+                          </div>
+                        </td>
+
+                        {/* Parameter Columns grouped by category */}
+                        {categories.map((category) => {
+                          const categoryParams = reviewParameters.filter(p => p.CategoryID === category.id)
+                          return (
+                            <React.Fragment key={`emp-${employee.EmpID}-cat-${category.id}`}>
+                              {categoryParams.map((param) => {
+                                const key = `${employee.EmpID}_${param.ReviewParameterID}`
+                                const currentValue = assessmentData[key] || 0
+                                const options = isHindi ? param.OptionsHindi : param.OptionsEnglish
+
+                                return (
+                                  <td key={param.ReviewParameterID} className="px-2 py-3 border-r border-gray-200">
+                                    <select
+                                      value={currentValue}
+                                      onChange={(e) => handleAssessmentChange(employee.EmpID, param.ReviewParameterID, e.target.value)}
+                                      disabled={areReviewsLocked}
+                                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
+                                    >
+                                      <option value={0}>Select...</option>
+                                      {options.map((option, index) => (
+                                        <option key={index} value={index + 1}>
+                                          {option}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </td>
+                                )
+                              })}
+
+                              {/* Category Score Display */}
+                              <td className="px-2 py-3 text-center border-r border-gray-300 bg-gray-50">
+                                <div className="font-semibold text-gray-800">
+                                  {calculateCategoryScore(employee.EmpID, category.id).toFixed(1)}
+                                </div>
+                              </td>
+                            </React.Fragment>
+                          )
+                        })}
+
+                        {/* Final Score Column */}
+                        <td className="px-4 py-3 text-center bg-green-50 border-l border-gray-300">
+                          <div className="font-bold text-green-600 text-lg">
+                            {calculateFinalPercentage(employee.EmpID).toFixed(1)}%
+                          </div>
+                        </td>
+
+                        {/* Final Remark Column */}
+                        <td className="px-4 py-3 bg-yellow-50 border-l border-gray-300">
+                          <textarea
+                            value={finalRemarks[employee.EmpID] || ''}
+                            onChange={(e) => handleFinalRemarkChange(employee.EmpID, e.target.value)}
+                            disabled={areReviewsLocked}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded resize-none focus:ring-2 focus:ring-blue-400 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
+                            rows="2"
+                            placeholder="Enter final remarks..."
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Submit Button */}
+              <div className="p-6 border-t border-gray-200 bg-gray-50">
+                <div className="flex justify-end">
+                  <motion.button
+                    onClick={handleSubmitAssessments}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={!selectedSessionId || assignedEmployees.length === 0 || areReviewsLocked}
+                    className="flex items-center gap-2 px-6 py-3 bg-gray-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors focus:ring-2 focus:ring-blue-400"
+                  >
+                    {areReviewsLocked ? (
+                      <>
+                        <Lock className="h-4 w-4" />
+                        Reviews Locked
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Save
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Empty States */}
+          {!selectedSessionId && reviewSessions.length > 0 && (
+            <div className="text-center py-12">
+              <FolderOpen className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500 text-lg">Please select a review session to begin assessments</p>
+            </div>
+          )}
+
+          {selectedSessionId && assignedEmployees.length === 0 && (
+            <div className="text-center py-12">
+              <Users className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500 text-lg">No assigned employees found for assessment</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* View All Reviews Tab */}
+      {activeTab === 'viewAllReviews' && showViewAllReviewsTab && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Employee Selection and Reviews Table */}
+          <div className={`${selectedReviewDetail ? "col-span-2" : "col-span-3"} space-y-6`}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <FolderOpen className="h-5 w-5 text-blue-600" />
+                <h2 className="text-xl font-semibold text-gray-800">View Employee Reviews</h2>
+              </div>
+
+              {/* Employee Selection Dropdown */}
+              <div className="mb-2">
+                <label className="block relative" ref={reviewEmployeeDropdownRef}>
+                  <span className="text-gray-700 font-medium mb-2 block">Select Employee</span>
+                  <div className="relative">
+                    <input
+                      ref={reviewEmployeeInputRef}
+                      type="text"
+                      value={reviewEmployeeSearch}
+                      onChange={(e) => handleReviewEmployeeSearchChange(e.target.value)}
+                      onFocus={() => setShowReviewEmployeeDropdown(true)}
+                      placeholder="Search by name or ID..."
+                      className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                    {selectedReviewEmpId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedReviewEmpId('')
+                          setReviewEmployeeSearch('')
+                          setSelectedReviewEmployee(null)
+                          setAllEmployeeReviews([])
+                          setSelectedReviewDetail(null)
+                          setReviewerNames({})
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {showReviewEmployeeDropdown && filteredAllReviewsEmployees.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {filteredAllReviewsEmployees.map((emp) => (
+                        <div
+                          key={emp.EmpID}
+                          onClick={() => handleReviewEmployeeSelect(emp)}
+                          className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-800">
+                            {emp.EmpID} - {emp.FirstName} {emp.LastName}
+                          </div>
+                          <div className="text-sm text-gray-500">{emp.Email}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </label>
+              </div>
+
+              {/* Reviews Table */}
+              {loadingAllReviews ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+              ) : selectedReviewEmpId && allEmployeeReviews.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Review Date
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Month/Year
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Reviewer
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Performance
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Discipline
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Integrity
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Final Score
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {allEmployeeReviews.map((review) => (
+                        <tr
+                          key={review.EAID}
+                          className={`hover:bg-gray-50 transition-colors ${selectedReviewDetail?.EAID === review.EAID ? 'bg-blue-50' : ''
+                            }`}
+                        >
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
+                            {new Date(review.SubmittedAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                            {review.Month}/{review.Year}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                            {reviewerNames[review.SubmittedBy] || 'Loading...'}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded font-medium">
+                              {review.PerformanceScore}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded font-medium">
+                              {review.DisciplineScore}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded font-medium">
+                              {review.IntegrityScore}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded font-bold">
+                              {review.FinalPercentage}%
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setSelectedReviewDetail(review)}
+                                className="text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                View Details
+                              </button>
+                              {!areReviewsLocked && (
+                                <button
+                                  onClick={() => handleRegularizeClick(review)}
+                                  className="flex items-center gap-1 px-2 py-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
+                                  title="Select"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : selectedReviewEmpId ? (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500 text-lg">No reviews found for this employee</p>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500 text-lg">Select an employee to view their reviews</p>
+                </div>
+              )}
+            </motion.div>
+
+            {/* Regularization Form - Grid Style */}
+            {selectedReviewForRegularization && !areReviewsLocked && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-6"
+              >
+                {/* Header */}
+                <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Edit className="h-6 w-6 text-green-600" />
+                      <div>
+                        <h2 className="text-xl font-semibold text-gray-800">Final Review</h2>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Edit the ratings below and submit to create a Final Review
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleCancelRegularization}
+                      className="text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  {/* Original Review Info */}
+                  <div className="mt-4 bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="grid grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Employee:</span>
+                        <span className="ml-2 font-medium text-gray-800">{selectedReviewEmployee.FirstName}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Original Reviewer:</span>
+                        <span className="ml-2 font-medium text-gray-800">
+                          {reviewerNames[selectedReviewForRegularization.SubmittedBy] || 'Loading...'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Review Date:</span>
+                        <span className="ml-2 font-medium text-gray-800">
+                          {new Date(selectedReviewForRegularization.SubmittedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Original Score:</span>
+                        <span className="ml-2 font-bold text-green-600">
+                          {selectedReviewForRegularization.FinalPercentage}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assessment Grid Table */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      {/* Category Headers */}
+                      <tr className="bg-gray-50">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 min-w-[150px]">
+                          Employee
+                        </th>
+
+                        {/* Performance Category */}
+                        <th colSpan="6" className="px-4 py-2 text-center text-sm font-semibold text-white bg-gray-800 border-r border-gray-300">
+                          60% - Performance
+                        </th>
+
+                        {/* Discipline Category */}
+                        <th colSpan="3" className="px-4 py-2 text-center text-sm font-semibold text-white bg-gray-800 border-r border-gray-300">
+                          20% - Discipline
+                        </th>
+
+                        {/* Integrity Category */}
+                        <th colSpan="3" className="px-4 py-2 text-center text-sm font-semibold text-white bg-gray-800 border-r border-gray-300">
+                          20% - Integrity
+                        </th>
+
+                        {/* Final Score */}
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-l border-gray-300">
+                          Final Score
+                        </th>
+
+                        {/* Final Remark */}
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50 border-l border-gray-300 min-w-[200px]">
+                          Final Remark
+                        </th>
+                      </tr>
+
+                      {/* Parameter Sub-headers */}
+                      <tr className="bg-gray-100">
+                        <th className="px-4 py-2 border-r border-gray-200"></th>
+
+                        {/* Performance Parameters */}
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[100px]">
+                          Self Dev
+                        </th>
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[100px]">
+                          Staff Dev
+                        </th>
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[100px]">
+                          Decision
+                        </th>
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[100px]">
+                          Productivity
+                        </th>
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[100px]">
+                          Call Duty
+                        </th>
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-300 bg-gray-200">
+                          Score
+                        </th>
+
+                        {/* Discipline Parameters */}
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[100px]">
+                          Attendance
+                        </th>
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[100px]">
+                          Behaviour
+                        </th>
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-300 bg-gray-200">
+                          Score
+                        </th>
+
+                        {/* Integrity Parameters */}
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[100px]">
+                          Integrity
+                        </th>
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-200 min-w-[100px]">
+                          Loyalty
+                        </th>
+                        <th className="px-2 py-2 text-xs font-medium text-gray-700 text-center border-r border-gray-300 bg-gray-200">
+                          Score
+                        </th>
+
+                        {/* Final Score */}
+                        <th className="px-4 py-2 text-xs font-medium text-gray-700 text-center bg-green-100 border-l border-gray-300">
+                          %
+                        </th>
+
+                        {/* Final Remark */}
+                        <th className="px-4 py-2 text-xs font-medium text-gray-700 text-center bg-yellow-100 border-l border-gray-300">
+                          Remark
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="bg-white">
+                      <tr className="bg-white">
+                        {/* Employee Info */}
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <div className="flex flex-col">
+                            <div className="font-medium text-gray-900">
+                              {selectedReviewEmpId}
+                            </div>
+                            {/* <div className="text-xs text-gray-500">Regularizing</div> */}
+                          </div>
+                        </td>
+
+                        {/* Performance Parameters */}
+                        <td className="px-2 py-3 border-r border-gray-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="4"
+                            value={regularizationFormData.SelfDevelopment}
+                            onChange={(e) => handleRegularizationFormChange('SelfDevelopment', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:border-transparent text-center"
+                          />
+                        </td>
+                        <td className="px-2 py-3 border-r border-gray-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="4"
+                            value={regularizationFormData.EmployeeStaffDevelopment}
+                            onChange={(e) => handleRegularizationFormChange('EmployeeStaffDevelopment', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:border-transparent text-center"
+                          />
+                        </td>
+                        <td className="px-2 py-3 border-r border-gray-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="4"
+                            value={regularizationFormData.DecisionMaking}
+                            onChange={(e) => handleRegularizationFormChange('DecisionMaking', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:border-transparent text-center"
+                          />
+                        </td>
+                        <td className="px-2 py-3 border-r border-gray-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="4"
+                            value={regularizationFormData.ProductivityEfficiency}
+                            onChange={(e) => handleRegularizationFormChange('ProductivityEfficiency', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:border-transparent text-center"
+                          />
+                        </td>
+                        <td className="px-2 py-3 border-r border-gray-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="4"
+                            value={regularizationFormData.CallForDuty}
+                            onChange={(e) => handleRegularizationFormChange('CallForDuty', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-400 focus:border-transparent text-center"
+                          />
+                        </td>
+                        <td className="px-2 py-3 text-center border-r border-gray-300 bg-gray-50">
+                          <div className="font-semibold text-blue-600">
+                            {calculateRegularizationScores().performanceScore}
+                          </div>
+                        </td>
+
+                        {/* Discipline Parameters */}
+                        <td className="px-2 py-3 border-r border-gray-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="4"
+                            value={regularizationFormData.AttendancePunctuality}
+                            onChange={(e) => handleRegularizationFormChange('AttendancePunctuality', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-400 focus:border-transparent text-center"
+                          />
+                        </td>
+                        <td className="px-2 py-3 border-r border-gray-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="4"
+                            value={regularizationFormData.BehaviourOverallDiscipline}
+                            onChange={(e) => handleRegularizationFormChange('BehaviourOverallDiscipline', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-orange-400 focus:border-transparent text-center"
+                          />
+                        </td>
+                        <td className="px-2 py-3 text-center border-r border-gray-300 bg-gray-50">
+                          <div className="font-semibold text-orange-600">
+                            {calculateRegularizationScores().disciplineScore}
+                          </div>
+                        </td>
+
+                        {/* Integrity Parameters */}
+                        <td className="px-2 py-3 border-r border-gray-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="4"
+                            value={regularizationFormData.Integrity}
+                            onChange={(e) => handleRegularizationFormChange('Integrity', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 focus:border-transparent text-center"
+                          />
+                        </td>
+                        <td className="px-2 py-3 border-r border-gray-200">
+                          <input
+                            type="number"
+                            min="0"
+                            max="4"
+                            value={regularizationFormData.LoyaltySubmissionToCompanyGoals}
+                            onChange={(e) => handleRegularizationFormChange('LoyaltySubmissionToCompanyGoals', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-400 focus:border-transparent text-center"
+                          />
+                        </td>
+                        <td className="px-2 py-3 text-center border-r border-gray-300 bg-gray-50">
+                          <div className="font-semibold text-purple-600">
+                            {calculateRegularizationScores().integrityScore}
+                          </div>
+                        </td>
+
+                        {/* Final Score */}
+                        <td className="px-4 py-3 text-center bg-green-50 border-l border-gray-300">
+                          <div className="font-bold text-green-600 text-lg">
+                            {calculateRegularizationScores().finalPercentage}%
+                          </div>
+                        </td>
+
+                        {/* Final Remark */}
+                        <td className="px-4 py-3 bg-yellow-50 border-l border-gray-300">
+                          <textarea
+                            value={regularizationFormData.FinalRemark}
+                            onChange={(e) => handleRegularizationFormChange('FinalRemark', e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded resize-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                            rows="2"
+                            placeholder="Enter final remarks..."
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Submit Button */}
+                <div className="p-6 border-t border-gray-200 bg-gray-50">
+                  <div className="flex items-center justify-end gap-3">
+                    <button
+                      onClick={handleCancelRegularization}
+                      className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <motion.button
+                      onClick={handleSubmitRegularization}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      disabled={isSubmittingRegularization}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-md font-medium transition-colors ${isSubmittingRegularization
+                        ? 'bg-gray-400 cursor-not-allowed text-white'
+                        : 'bg-gray-600 hover:bg-blue-700 text-white'
+                        }`}
+                    >
+                      <Save className="h-4 w-4" />
+                      {isSubmittingRegularization ? 'Submitting...' : 'Save'}
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Right Column - Review Details Card */}
+          {selectedReviewDetail && (
+            <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-slate-100 rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6"
+              >
+                {/* <div className="grid grid-cols-2">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-4">Review Details</h2>
+                </div> */}
+                <div className="space-y-4">
+                  {/* Review Date */}
+                  <div className="pb-2 border-b border-gray-200 grid grid-cols-2">
+                    <div>
+                      <div className="text-sm text-gray-500">Submitted On</div>
+                      <div className="font-medium text-gray-800">
+                        {new Date(selectedReviewDetail.SubmittedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {selectedReviewDetail.Month}/{selectedReviewDetail.Year}
+                      </div>
+                    </div>
+                    {/* Final Score */}
+                    <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-2 border border-green-200 grid grid-cols-2 items-center">
+                      <div className="text-4xl font-bold text-green-600 text-center">
+                        {selectedReviewDetail.FinalPercentage}%
+                      </div>
+                      <div className="text-sm text-gray-600 ms-2 leading-tight text-left">
+                        Final <br /> Performance <br /> Score
+                      </div>
+                    </div>
+
+                  </div>
+
+
+                  {/* Performance Parameters */}
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-700 text-sm uppercase">Performance (60%)</h3>
+                    <div className="grid grid-cols-3 gap-3 text-sm">
+                      <div className="bg-gray-50 p-2  border-gray-300 rounded border">
+                        <div className="text-gray-600 text-xs">Self Development</div>
+                        <div className="font-semibold text-gray-800">{selectedReviewDetail.SelfDevelopment}/4</div>
+                      </div>
+                      <div className="bg-gray-50 p-2  border-gray-300 rounded border">
+                        <div className="text-gray-600 text-xs">Staff Development</div>
+                        <div className="font-semibold text-gray-800">{selectedReviewDetail.EmployeeStaffDevelopment}/4</div>
+                      </div>
+                      <div className="bg-gray-50 p-2  border-gray-300 rounded border">
+                        <div className="text-gray-600 text-xs">Decision Making</div>
+                        <div className="font-semibold text-gray-800">{selectedReviewDetail.DecisionMaking}/4</div>
+                      </div>
+                      <div className="bg-gray-50 p-2  border-gray-300 rounded border">
+                        <div className="text-gray-600 text-xs">Productivity</div>
+                        <div className="font-semibold text-gray-800">{selectedReviewDetail.ProductivityEfficiency}/4</div>
+                      </div>
+                      <div className="bg-gray-50 p-2  border-gray-300 rounded border">
+                        <div className="text-gray-600 text-xs">Call for Duty</div>
+                        <div className="font-semibold text-gray-800">{selectedReviewDetail.CallForDuty}/4</div>
+                      </div>
+                      <div className="bg-blue-100 p-2  border-gray-300 rounded border">
+                        <div className="text-blue-700 text-xs font-medium">Score</div>
+                        <div className="font-bold text-blue-800">{selectedReviewDetail.PerformanceScore}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Discipline Parameters */}
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-700 text-sm uppercase">Discipline (20%)</h3>
+                    <div className="grid grid-cols-3 gap-3 text-sm">
+                      <div className="bg-gray-50 p-2  border-gray-300 rounded border">
+                        <div className="text-gray-600 text-xs">Attendance</div>
+                        <div className="font-semibold text-gray-800">{selectedReviewDetail.AttendancePunctuality}/4</div>
+                      </div>
+                      <div className="bg-gray-50 p-2  border-gray-300 rounded border">
+                        <div className="text-gray-600 text-xs">Behaviour</div>
+                        <div className="font-semibold text-gray-800">{selectedReviewDetail.BehaviourOverallDiscipline}/4</div>
+                      </div>
+                      <div className="bg-orange-100 p-2  border-gray-300 rounded border">
+                        <div className="text-orange-700 text-xs font-medium">Score</div>
+                        <div className="font-bold text-orange-800">{selectedReviewDetail.DisciplineScore}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Integrity Parameters */}
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-700 text-sm uppercase">Integrity (20%)</h3>
+                    <div className="grid grid-cols-3 gap-3 text-sm">
+                      <div className="bg-gray-50 p-2  border-gray-300 rounded border">
+                        <div className="text-gray-600 text-xs">Integrity</div>
+                        <div className="font-semibold text-gray-800">{selectedReviewDetail.Integrity}/4</div>
+                      </div>
+                      <div className="bg-gray-50 p-2  border-gray-300 rounded border">
+                        <div className="text-gray-600 text-xs">Loyalty</div>
+                        <div className="font-semibold text-gray-800">{selectedReviewDetail.LoyaltySubmissionToCompanyGoals}/4</div>
+                      </div>
+                      <div className="bg-purple-100 p-2  border-gray-300 rounded border">
+                        <div className="text-purple-700 text-xs font-medium">Score</div>
+                        <div className="font-bold text-purple-800">{selectedReviewDetail.IntegrityScore}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Empty States when no session is selected */}
+      {!selectedSessionId && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-12"
+        >
+          <div className="text-center">
+            <FolderOpen className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Review Session Selected</h3>
+            <p className="text-gray-500 max-w-md mx-auto">
+              Please select a review session from the dropdown above to begin performance assessments and access all features.
+            </p>
+          </div>
+        </motion.div>
+      )}
+    </div>
+  )
+}
+
+export default HrSideForm
