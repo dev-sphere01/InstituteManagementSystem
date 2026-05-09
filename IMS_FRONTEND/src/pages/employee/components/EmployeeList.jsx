@@ -11,7 +11,47 @@ const Spinner = () => (
   </svg>
 );
 
-const EmployeeList = ({ onAdd, onView, onEdit }) => {
+const MASTERS = [
+  {
+    key: 'departments',
+    label: 'Departments',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    key: 'positions',
+    label: 'Positions',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    key: 'types',
+    label: 'Employee Types',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    key: 'branches',
+    label: 'Branches',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+];
+
+const EmployeeList = ({ onAdd, onView, onEdit, onMaster }) => {
   const { isDarkMode } = useThemeStore();
   const styles = getEmsStyles(isDarkMode);
   const { employees, locations, loading, error, fetchEmployees, toggleEmployeeStatus } = useEmployeeStore();
@@ -55,6 +95,26 @@ const EmployeeList = ({ onAdd, onView, onEdit }) => {
           </button>
         </PermissionGuard>
       </div>
+
+      {/* Masters quick-access */}
+      {onMaster && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          {MASTERS.map((m) => (
+            <button
+              key={m.key}
+              onClick={() => onMaster(m.key)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all hover:scale-[1.02] ${
+                isDarkMode
+                  ? 'bg-gray-800 border-gray-700 text-gray-300 hover:border-blue-500 hover:text-blue-400'
+                  : 'bg-white border-gray-200 text-gray-700 hover:border-blue-400 hover:text-blue-600 shadow-sm'
+              }`}
+            >
+              <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>{m.icon}</span>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-8 p-5 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-gray-700">

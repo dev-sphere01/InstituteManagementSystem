@@ -95,6 +95,7 @@ const Employee = () => {
               onAdd={() => goTo('new')}
               onView={(id) => goTo('profile', id)}
               onEdit={(id) => goTo('edit', id)}
+              onMaster={(master) => goTo(master)}
             />
           </PermissionGuard>
         );
