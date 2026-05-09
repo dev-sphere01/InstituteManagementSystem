@@ -6,7 +6,10 @@ import useEmployeeStore from '../../../../store/useEmployeeStore';
 const Step2DeptPosition = ({ data, onChange, onNext, onBack }) => {
   const { isDarkMode } = useThemeStore();
   const styles = getEmsStyles(isDarkMode);
-  const { departments, positions, employeeTypes, locations, fetchPositions } = useEmployeeStore();
+  const {
+    departments, positions, employeeTypes, locations,
+    fetchPositions, fetchDepartments, fetchEmployeeTypes, fetchLocations,
+  } = useEmployeeStore();
 
   const [form, setForm] = useState({
     LocationID: data.LocationID || '',
@@ -17,6 +20,12 @@ const Step2DeptPosition = ({ data, onChange, onNext, onBack }) => {
     WorkEmail: data.WorkEmail || '',
   });
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (!locations.length) fetchLocations();
+    if (!departments.length) fetchDepartments();
+    if (!employeeTypes.length) fetchEmployeeTypes();
+  }, []);
 
   useEffect(() => {
     if (form.DeptID) fetchPositions(form.DeptID);

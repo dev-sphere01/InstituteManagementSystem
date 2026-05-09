@@ -3,16 +3,41 @@ import { useThemeStore } from '../../../store';
 import { getEmsStyles } from '../emsStyles';
 import useEmployeeStore from '../../../store/useEmployeeStore';
 
+const EMPTY_FORM = { EmpTypeName: '', Description: '' };
+
 const EmployeeTypes = ({ onBack }) => {
   const { isDarkMode } = useThemeStore();
-  const styles = getEmsStyles(isDarkMode);
-  const { employeeTypes, fetchEmployeeTypes, createEmployeeType } = useEmployeeStore();
+  const s = getEmsStyles(isDarkMode);
+  const { employeeTypes, fetchEmployeeTypes, createEmployeeType, updateEmployeeType, deleteEmployeeType } = useEmployeeStore();
+
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ EmpTypeName: '', Description: '' });
+  const [editTarget, setEditTarget] = useState(null); // EmpType object being edited
+  const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => { fetchEmployeeTypes(); }, []);
+
+  const openAdd = () => {
+    setEditTarget(null);
+    setForm(EMPTY_FORM);
+    setError('');
+    setShowModal(true);
+  };
+
+  const openEdit = (type) => {
+    setEditTarget(type);
+    setForm({ EmpTypeName: type.EmpTypeName || '', Description: type.Description || '' });
+    setError('');
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditTarget(null);
+    setForm(EMPTY_FORM);
+    setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,87 +45,168 @@ const EmployeeTypes = ({ onBack }) => {
     setSaving(true);
     setError('');
     try {
-      await createEmployeeType(form);
-      setForm({ EmpTypeName: '', Description: '' });
-      setShowModal(false);
+      if (editTarget) {
+        await updateEmployeeType(editTarget.EmpTypeID, form);
+      } else {
+        await createEmployeeType(form);
+      }
+      closeModal();
     } catch (err) {
-      setError(err.message || 'Failed to create employee type.');
+      const msg = err.response?.data?.message || err.response?.data || err.message || 'Failed to save.';
+      setError(typeof msg === 'string' ? msg : 'Failed to save.');
     } finally {
       setSaving(false);
     }
   };
 
+  const handleDelete = async (type) => {
+    if (!window.confirm(`Delete "${type.EmpTypeName}"? This cannot be undone.`)) return;
+    try {
+      await deleteEmployeeType(type.EmpTypeID);
+    } catch (err) {
+      const msg = err.response?.data?.message || err.response?.data || err.message || 'Failed to delete.';
+      alert(typeof msg === 'string' ? msg : 'Failed to delete.');
+    }
+  };
+
   return (
-    <div className={styles.sectionCard}>
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <button onClick={onBack} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </button>
-            <h2 className={styles.stepTitle}>Employee Types</h2>
+    <div>
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+          >
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M15 19l-7-7 7-7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div>
+            <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Employee Types</h2>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              Define employment categories (e.g., Permanent, Contract, Consultant).
+            </p>
           </div>
-          <p className={styles.stepSubtitle}>Define employment categories (e.g., Full-time, Contract).</p>
         </div>
-        <button onClick={() => setShowModal(true)} className={styles.btnPrimary}>
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Add Type
-        </button>
+        <button onClick={openAdd} className={s.btnPrimary}>+ Add Type</button>
       </div>
 
-      <div className="overflow-hidden border border-gray-100 dark:border-gray-700 rounded-2xl">
-        <table className={styles.table}>
+      {/* Table */}
+      <div className={`rounded-xl border overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <table className={s.table}>
           <thead>
             <tr>
-              <th className={styles.th + " w-16"}>#</th>
-              <th className={styles.th}>Type Name</th>
-              <th className={styles.th}>Description</th>
+              <th className={`${s.th} w-12`}>#</th>
+              <th className={s.th}>Type Name</th>
+              <th className={s.th}>Description</th>
+              <th className={s.th}>Employees</th>
+              <th className={`${s.th} text-right`}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {employeeTypes.length === 0 ? (
-              <tr><td colSpan={3} className="py-20 text-center text-gray-400 italic">No types configured yet.</td></tr>
+              <tr>
+                <td colSpan={5} className={`${s.td} text-center py-16 text-gray-400 italic`}>
+                  No employee types configured yet. Click "Add Type" to get started.
+                </td>
+              </tr>
             ) : employeeTypes.map((t, i) => (
-              <tr key={t.EmpTypeID} className={styles.trHover}>
-                <td className={styles.td}><span className={styles.badge('gray')}>{i + 1}</span></td>
-                <td className={`${styles.td} font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t.EmpTypeName}</td>
-                <td className={styles.td}><span className="text-sm opacity-70">{t.Description || 'No description'}</span></td>
+              <tr key={t.EmpTypeID} className={s.trHover}>
+                <td className={`${s.td} text-gray-400 text-sm`}>{i + 1}</td>
+                <td className={`${s.td} font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {t.EmpTypeName}
+                </td>
+                <td className={`${s.td} ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
+                  {t.Description || <span className="italic opacity-40">No description</span>}
+                </td>
+                <td className={s.td}>
+                  <span className={s.badge('blue')}>{t.EmployeeCount ?? 0} staff</span>
+                </td>
+                <td className={`${s.td} text-right`}>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => openEdit(t)}
+                      className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                        isDarkMode ? 'text-blue-400 hover:bg-gray-700' : 'text-blue-600 hover:bg-blue-50'
+                      }`}
+                    >Edit</button>
+                    <button
+                      onClick={() => handleDelete(t)}
+                      disabled={(t.EmployeeCount ?? 0) > 0}
+                      title={(t.EmployeeCount ?? 0) > 0 ? 'Cannot delete — employees are assigned to this type' : ''}
+                      className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                        isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-500 hover:bg-red-50'
+                      }`}
+                    >Delete</button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
+      {/* Add / Edit Modal */}
       {showModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalBox}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className={styles.modalTitle}>Create Employment Type</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <div className={s.modalOverlay}>
+          <div className={s.modalBox}>
+            {/* Modal header */}
+            <div className="flex justify-between items-center mb-5">
+              <h3 className={s.modalTitle}>
+                {editTarget ? 'Edit Employee Type' : 'Add Employee Type'}
+              </h3>
+              <button
+                onClick={closeModal}
+                className={`p-1 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 18L18 6M6 6l12 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
             </div>
 
-            {error && <div className={styles.alertError + " mb-6"}>{error}</div>}
+            {error && <p className={s.alertError}>{error}</p>}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className={styles.label}>Type Name <span className="text-red-500 font-bold">*</span></label>
-                <input className={styles.input()} value={form.EmpTypeName} onChange={(e) => setForm((f) => ({ ...f, EmpTypeName: e.target.value }))} placeholder="e.g. Permanent, Consultant" required />
-              </div>
-              <div>
-                <label className={styles.label}>Description</label>
-                <textarea 
-                  className={styles.input() + " min-h-[100px] resize-none"} 
-                  value={form.Description} 
-                  onChange={(e) => setForm((f) => ({ ...f, Description: e.target.value }))} 
-                  placeholder="Optional details about this employment type..." 
+                <label className={s.label}>
+                  Type Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  className={s.input()}
+                  value={form.EmpTypeName}
+                  onChange={(e) => setForm((f) => ({ ...f, EmpTypeName: e.target.value }))}
+                  placeholder="e.g. Permanent, Contract, Consultant"
+                  required
+                  autoFocus
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className={styles.btnGhost(isDarkMode)}>Discard</button>
-                <button type="submit" disabled={saving} className={styles.btnPrimary}>
-                  {saving ? <><span className="loading loading-spinner loading-xs mr-2" /> Creating...</> : 'Create Type'}
+              <div>
+                <label className={s.label}>Description</label>
+                <textarea
+                  className={s.textarea()}
+                  rows={3}
+                  value={form.Description}
+                  onChange={(e) => setForm((f) => ({ ...f, Description: e.target.value }))}
+                  placeholder="Optional — describe this employment category..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={closeModal} className={s.btnGhost(isDarkMode)}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={saving} className={s.btnPrimary}>
+                  {saving ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : editTarget ? 'Save Changes' : 'Create Type'}
                 </button>
               </div>
             </form>
