@@ -5,11 +5,11 @@
   "scripts": {
     "ims": "concurrently --names \"IMS-API,EMS-API,UI\" --prefix-colors \"blue,yellow,green\" \"npm run backend\" \"npm run ems\" \"npm run frontend\"",
     "backend": "cd IMS_BACKEND && npm run dev",
-    "ems": "cd CUPLEMS/api/EMS && dotnet run --urls http://localhost:5001",
+    "ems": "cd EMS/api/EMS && dotnet run --urls http://localhost:5001",
     "frontend": "cd IMS_FRONTEND && npm run dev",
     "start": "concurrently --names \"IMS-API,EMS-API,UI\" --prefix-colors \"blue,yellow,green\" \"npm run backend:start\" \"npm run ems:start\" \"npm run frontend:start\"",
     "backend:start": "cd IMS_BACKEND && npm start",
-    "ems:start": "cd CUPLEMS/api/EMS && dotnet run --configuration Release",
+    "ems:start": "cd EMS/api/EMS && dotnet run --configuration Release",
     "frontend:start": "cd IMS_FRONTEND && npm run preview",
     "i": "npm install && cd IMS_BACKEND && npm install && cd ../IMS_FRONTEND && npm install",
     "build": "cd IMS_FRONTEND && npm run build",

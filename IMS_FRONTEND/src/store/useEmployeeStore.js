@@ -158,6 +158,44 @@ const useEmployeeStore = create((set, get) => ({
     set((state) => ({ employeeTypes: [...state.employeeTypes, data] }));
     return data;
   },
+
+  createLocation: async (location) => {
+    const { data } = await CUPLEMS_API.post('/api/Locations', location);
+    set((state) => ({ locations: [...state.locations, data] }));
+    return data;
+  },
+
+  updateLocation: async (id, location) => {
+    await CUPLEMS_API.put(`/api/Locations/${id}`, { LocationID: id, ...location });
+    set((state) => ({
+      locations: state.locations.map((l) =>
+        l.LocationID === id ? { ...l, ...location } : l
+      ),
+    }));
+  },
+
+  deleteLocation: async (id) => {
+    await CUPLEMS_API.delete(`/api/Locations/${id}`);
+    set((state) => ({
+      locations: state.locations.filter((l) => l.LocationID !== id),
+    }));
+  },
+
+  updateEmployeeType: async (id, type) => {
+    await CUPLEMS_API.put(`/api/EmpTypes/${id}`, { EmpTypeID: id, ...type });
+    set((state) => ({
+      employeeTypes: state.employeeTypes.map((t) =>
+        t.EmpTypeID === id ? { ...t, ...type } : t
+      ),
+    }));
+  },
+
+  deleteEmployeeType: async (id) => {
+    await CUPLEMS_API.delete(`/api/EmpTypes/${id}`);
+    set((state) => ({
+      employeeTypes: state.employeeTypes.filter((t) => t.EmpTypeID !== id),
+    }));
+  },
 }));
 
 export default useEmployeeStore;
