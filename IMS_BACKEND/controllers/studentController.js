@@ -11,7 +11,7 @@ const pickCurrentTask = (tasks = []) => {
   return active[0];
 };
 
-const buildWarnings = (tasks = [], feeSummary) => {
+const buildWarnings = (tasks = [], feeSummary, admission = null) => {
   const warnings = [];
   const feeTask = tasks.find((t) => t.taskName === 'Fee Collection');
   if (feeTask && feeSummary) {
@@ -20,9 +20,14 @@ const buildWarnings = (tasks = [], feeSummary) => {
     }
   }
 
-  const docsTask = tasks.find((t) => t.taskName === 'Document Verification');
-  if (docsTask && docsTask.status !== 'completed') {
-    warnings.push('Documents not verified');
+  if (admission) {
+    const statusesObj = admission.documentStatuses || {};
+    const statuses = Object.values(statusesObj).map(s => s.status);
+    // If there are no statuses yet or any status is 'pending', then documents are not fully verified
+    const isVerified = statuses.length > 0 && statuses.every(s => s !== 'pending');
+    if (!isVerified) {
+      warnings.push('Documents not verified');
+    }
   }
 
   return warnings;
@@ -85,7 +90,7 @@ exports.getStudentProfile = catchAsyncErrors(async (req, res, next) => {
       tasks,
       currentTask,
       fee: financeData,
-      warnings: buildWarnings(tasks, feeSummary)
+      warnings: buildWarnings(tasks, feeSummary, admission)
     }
   });
 });
@@ -185,23 +190,21 @@ exports.updateDocumentStatus = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler('Student not found', 404));
   }
 
-  if (!admission.documentStatuses) {
-    admission.documentStatuses = {};
-  }
-  
-  if (!admission.documentStatuses[docKey]) {
-      admission.documentStatuses[docKey] = {};
-  }
+  const updateQuery = {
+    $set: {
+      [`documentStatuses.${docKey}.status`]: status,
+      [`documentStatuses.${docKey}.remark`]: remark || ''
+    }
+  };
 
-  admission.documentStatuses[docKey].status = status;
-  admission.documentStatuses[docKey].remark = remark || '';
+  await AdmissionDetails.updateOne({ _id: id }, updateQuery);
 
-  admission.markModified('documentStatuses');
-  await admission.save();
+  // Fetch updated admission to return the new statuses
+  const updatedAdmission = await AdmissionDetails.findById(id).select('documentStatuses').lean();
 
   res.status(200).json({
     success: true,
     message: 'Document status updated successfully',
-    documentStatuses: admission.documentStatuses
+    documentStatuses: updatedAdmission.documentStatuses || {}
   });
 });

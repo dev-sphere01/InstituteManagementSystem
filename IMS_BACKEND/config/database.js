@@ -91,4 +91,4 @@ const connectDatabase = async (retryCount = 0, maxRetries = 3) => {
   }
 };
 
-module.exports = connectDatabase;
+module.exports = connectDatabase;

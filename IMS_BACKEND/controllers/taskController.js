@@ -50,6 +50,8 @@ exports.getTasksByTab = async (req, res) => {
     
     if (filterStatus === 'completed') {
       filter.status = 'completed';
+    } else if (filterStatus === 'not_completed') {
+      filter.status = { $ne: 'completed' };
     } else if (filterStatus === 'all') {
       // No additional status filter, just get all tasks for the taskName regardless of status or isCurrent
     } else {

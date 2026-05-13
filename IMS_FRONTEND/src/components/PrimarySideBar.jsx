@@ -10,7 +10,6 @@ const PrimarySideBar = () => {
   const [openMenu, setOpenMenu] = useState(null);
 
   const TAB_ROLE_MAP = {
-    "Fee Collection": ["Accountant"],
     "Document Verification": ["Verifier"],
     "Registration": ["Admin"],
     "Exam Form": ["Admin"],
