@@ -10,7 +10,7 @@ const useUserStore = create(
       currentUser: null,
       loading: false,
       error: null,
-      
+
       // Pagination
       pagination: {
         page: 1,
@@ -20,7 +20,7 @@ const useUserStore = create(
         hasNextPage: false,
         hasPrevPage: false
       },
-      
+
       // Filters and Search
       filters: {
         search: '',
@@ -32,13 +32,13 @@ const useUserStore = create(
         lastLoginTo: '',
         locked: null
       },
-      
+
       // Sorting
       sort: {
         sortBy: 'createdAt',
         sortOrder: 'desc'
       },
-      
+
       // Statistics
       stats: {
         total: 0,
@@ -47,16 +47,16 @@ const useUserStore = create(
         byStatus: [],
         byRole: []
       },
-      
+
       // Actions
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
-      
+
       // Fetch all users with pagination and filters
       fetchUsers: async (params = {}) => {
         set({ loading: true, error: null });
-        
+
         try {
           const queryParams = {
             ...get().filters,
@@ -65,16 +65,16 @@ const useUserStore = create(
             limit: get().pagination.limit,
             ...params
           };
-          
+
           // Remove empty values
           Object.keys(queryParams).forEach(key => {
             if (queryParams[key] === '' || queryParams[key] === null || queryParams[key] === undefined) {
               delete queryParams[key];
             }
           });
-          
+
           const response = await API.get('/users/admin/users', { params: queryParams });
-          
+
           if (response.success) {
             set({
               users: response.data || response.users || [],
@@ -92,14 +92,14 @@ const useUserStore = create(
           });
         }
       },
-      
+
       // Fetch user by ID
       fetchUserById: async (id) => {
         set({ loading: true, error: null });
-        
+
         try {
           const response = await API.get(`/users/admin/user/${id}`);
-          
+
           if (response.success) {
             set({
               currentUser: response.user,
@@ -118,18 +118,18 @@ const useUserStore = create(
           return null;
         }
       },
-      
+
       // Create new user
       createUser: async (userData) => {
         set({ loading: true, error: null });
-        
+
         try {
-          const response = await API.post('/users/register', userData);
-          
+          const response = await API.post('/users/admin/user', userData);
+
           if (response.success || response.user) {
             // Refresh users list
             await get().fetchUsers();
-            
+
             set({ loading: false });
             return { success: true, user: response.user || response };
           } else {
@@ -145,26 +145,26 @@ const useUserStore = create(
           return { success: false, error: errorMessage };
         }
       },
-      
+
       // Update user
       updateUser: async (id, userData) => {
         set({ loading: true, error: null });
-        
+
         try {
           const response = await API.put(`/users/admin/user/${id}`, userData);
-          
+
           if (response.success) {
             // Update user in the list
-            const users = get().users.map(user => 
+            const users = get().users.map(user =>
               user._id === id ? { ...user, ...response.user } : user
             );
-            
+
             set({
               users,
               currentUser: response.user,
               loading: false
             });
-            
+
             return { success: true, user: response.user };
           } else {
             throw new Error(response.message || 'Failed to update user');
@@ -179,23 +179,23 @@ const useUserStore = create(
           return { success: false, error: errorMessage };
         }
       },
-      
+
       // Delete user
       deleteUser: async (id) => {
         set({ loading: true, error: null });
-        
+
         try {
           const response = await API.delete(`/users/admin/user/${id}`);
-          
+
           if (response.success) {
             // Remove user from the list
             const users = get().users.filter(user => user._id !== id);
-            
+
             set({
               users,
               loading: false
             });
-            
+
             return { success: true };
           } else {
             throw new Error(response.message || 'Failed to delete user');
@@ -210,7 +210,7 @@ const useUserStore = create(
           return { success: false, error: errorMessage };
         }
       },
-      
+
       // Update user status
       updateUserStatus: async (id, isActive) => {
         set({ loading: true, error: null });
@@ -250,25 +250,25 @@ const useUserStore = create(
           return { success: false, error: errorMessage };
         }
       },
-      
+
       // Unlock user
       unlockUser: async (id) => {
         set({ loading: true, error: null });
-        
+
         try {
           const response = await API.put(`/users/admin/user/${id}/unlock`);
-          
+
           if (response.success) {
             // Update user in the list
-            const users = get().users.map(user => 
+            const users = get().users.map(user =>
               user._id === id ? { ...user, lockUntil: null, loginAttempts: 0 } : user
             );
-            
+
             set({
               users,
               loading: false
             });
-            
+
             return { success: true };
           } else {
             throw new Error(response.message || 'Failed to unlock user');
@@ -283,12 +283,12 @@ const useUserStore = create(
           return { success: false, error: errorMessage };
         }
       },
-      
+
       // Fetch user statistics
       fetchUserStats: async () => {
         try {
           const response = await API.get('/users/admin/stats');
-          
+
           if (response.success) {
             set({
               stats: response.stats
@@ -298,7 +298,7 @@ const useUserStore = create(
           console.error('Fetch user stats error:', error);
         }
       },
-      
+
       // Update filters
       updateFilters: (newFilters) => {
         set({
@@ -306,7 +306,7 @@ const useUserStore = create(
           pagination: { ...get().pagination, page: 1 } // Reset to first page
         });
       },
-      
+
       // Update sorting
       updateSort: (sortBy, sortOrder) => {
         set({
@@ -314,14 +314,14 @@ const useUserStore = create(
           pagination: { ...get().pagination, page: 1 } // Reset to first page
         });
       },
-      
+
       // Update pagination
       updatePagination: (page, limit) => {
         set({
           pagination: { ...get().pagination, page, limit }
         });
       },
-      
+
       // Clear filters
       clearFilters: () => {
         set({
@@ -338,7 +338,7 @@ const useUserStore = create(
           pagination: { ...get().pagination, page: 1 }
         });
       },
-      
+
       // Reset store
       reset: () => {
         set({
