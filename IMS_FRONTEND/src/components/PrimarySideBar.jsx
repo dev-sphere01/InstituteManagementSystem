@@ -10,11 +10,12 @@ const PrimarySideBar = () => {
   const [openMenu, setOpenMenu] = useState(null);
 
   const TAB_ROLE_MAP = {
+    "Fee": ["Admin", "Accountant"],
     "Document Verification": ["Verifier"],
     "Registration": ["Admin"],
     "Exam Form": ["Admin"],
     "Admit Card": ["Admin"],
-    "Certificate": ["Admin"]
+    "Certificate": ["Admin"],
   };
   const TABS = Object.keys(TAB_ROLE_MAP);
 
@@ -36,7 +37,6 @@ const PrimarySideBar = () => {
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
     { path: '/dashboard/admission', icon: 'document-add', label: 'Admission' },
     { path: '/dashboard/workflow', icon: 'collection', label: 'Office Workflow' },
-    { path: '/dashboard/fee', icon: 'document-add', label: 'Fee' },
     { path: '/dashboard/workflow/templates', icon: 'collection', label: 'Workflow Templates' },
     { path: '/dashboard/student-details', icon: 'users', label: 'Student Details' },
     { path: '/dashboard/reports', icon: 'document', label: 'Reports' },
