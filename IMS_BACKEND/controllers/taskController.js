@@ -45,7 +45,11 @@ const isAdminUser = async (user) => {
 // Filter tasks by taskName (tab) and assignedRole (or all if admin)
 exports.getTasksByTab = async (req, res) => {
   try {
-    const { taskName, filterStatus, course, batch } = req.query; // 'Fee Collection', 'Document Verification', etc.
+    const { taskName, filterStatus, course, batch, search } = req.query; // 'Fee Collection', 'Document Verification', etc.
+    const page = Number(req.query.page || 1);
+    const limit = Number(req.query.limit || 12);
+    const skip = (page - 1) * limit;
+    
     let filter = {};
     
     if (filterStatus === 'completed') {
@@ -76,6 +80,16 @@ exports.getTasksByTab = async (req, res) => {
     let studentMatch = {};
     if (course) studentMatch.courseApplied = course;
     if (batch) studentMatch.month = batch;
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      studentMatch.$or = [
+        { fullName: searchRegex },
+        { generatedRegNo: searchRegex },
+        { formNo: searchRegex },
+        { contactNumber: searchRegex },
+        { emailAddress: searchRegex }
+      ];
+    }
 
     let tasks = await Task.find(filter)
       .populate({
@@ -88,8 +102,22 @@ exports.getTasksByTab = async (req, res) => {
     if (Object.keys(studentMatch).length > 0) {
       tasks = tasks.filter(t => t.studentId != null);
     }
+    
+    const totalCount = tasks.length;
+    
+    // Apply pagination in memory because of the populated field match filtering
+    if (limit > 0) {
+      tasks = tasks.slice(skip, skip + limit);
+    }
 
-    return res.status(200).json({ success: true, count: tasks.length, data: tasks });
+    return res.status(200).json({ 
+      success: true, 
+      count: tasks.length, 
+      totalCount,
+      page,
+      limit,
+      data: tasks 
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

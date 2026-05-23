@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import API from "../../services/API";
 import { useNotification } from "../../services/NotificationService";
+import Pagination from "../../components/common/Pagination";
 
 const DocumentVerificationPanel = () => {
   const notify = useNotification();
@@ -9,20 +10,23 @@ const DocumentVerificationPanel = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
-    // Initial fetch to show some students or keep it empty
-    fetchStudents("");
-  }, []);
+    fetchStudents(searchQuery);
+  }, [currentPage, itemsPerPage]);
 
   const fetchStudents = async (query = "") => {
     setLoading(true);
     try {
       const response = await API.get("/students", {
-        params: { search: query, limit: 20 },
+        params: { search: query, limit: itemsPerPage, page: currentPage },
       });
       if (response.success || response.students) {
         setStudents(response.students || response.data || []);
+        setTotalItems(response.totalCount || response.students?.length || 0);
       }
     } catch (error) {
       notify(error.response?.data?.message || "Failed to fetch students", "error");
@@ -33,8 +37,15 @@ const DocumentVerificationPanel = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchStudents(searchQuery);
+    if (currentPage === 1) {
+      fetchStudents(searchQuery);
+    } else {
+      setCurrentPage(1); // Effect will trigger fetch
+    }
   };
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
 
   // Helper to get initials
   const getInitials = (name) => {
@@ -193,6 +204,18 @@ const DocumentVerificationPanel = () => {
           </table>
         </div>
       )}
+
+      {/* Pagination Controls */}
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        startIndex={startIndex}
+        endIndex={startIndex + itemsPerPage}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+        onPageSizeChange={setItemsPerPage}
+      />
     </div>
   );
 };

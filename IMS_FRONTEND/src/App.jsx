@@ -148,8 +148,7 @@ function App() {
                 {/* Workflow Routes */}
                 <Route path="workflow" element={<WorkflowDashboard />} />
 
-                {/* Fee Routes */}
-                <Route path="Fee" element={<Fee />} />
+                {/* Fee Routes removed as it's now in Workflow Tasks */}
                 {/* Workflow Routes */}
                 <Route path="workflow/tasks/:tabSlug?" element={<WorkflowTasks />} />
                 <Route path="workflow/document-verification/:id" element={<DocumentVerificationDetail />} />

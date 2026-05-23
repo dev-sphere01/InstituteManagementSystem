@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import workflowService from '../../services/workflowService';
 import { useNotification } from '../../services/NotificationService';
+import Pagination from '../../components/common/Pagination';
 
 const Fee = () => {
   const notify = useNotification();
@@ -11,6 +12,16 @@ const Fee = () => {
   const [admissions, setAdmissions] = useState([]);
   const [loadingAdmissions, setLoadingAdmissions] = useState(false);
   const [selectedId, setSelectedId] = useState('');
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [totalItems, setTotalItems] = useState(0);
+  const [debouncedSearchParams, setDebouncedSearchParams] = useState(searchParams);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearchParams(searchParams), 500);
+    return () => clearTimeout(t);
+  }, [searchParams]);
 
   const [loadingFee, setLoadingFee] = useState(false);
   const [finance, setFinance] = useState(null);
@@ -39,8 +50,19 @@ const Fee = () => {
   const loadAdmissions = async () => {
     setLoadingAdmissions(true);
     try {
-      const response = await workflowService.getAdmissions({ limit: 500, page: 1 });
+      const searchTerms = [];
+      if (debouncedSearchParams.name) searchTerms.push(debouncedSearchParams.name);
+      if (debouncedSearchParams.fatherName) searchTerms.push(debouncedSearchParams.fatherName);
+      if (debouncedSearchParams.course) searchTerms.push(debouncedSearchParams.course);
+      
+      const params = { limit: itemsPerPage, page: currentPage };
+      if (searchTerms.length > 0) {
+        params.keyword = searchTerms.join(' ');
+      }
+
+      const response = await workflowService.getAdmissions(params);
       setAdmissions(response?.admissions || response?.data?.admissions || response?.data || []);
+      setTotalItems(response?.totalCount || response?.admissions?.length || 0);
     } catch (error) {
       notify('Failed to load admissions', 'error');
     } finally {
@@ -70,7 +92,7 @@ const Fee = () => {
 
   useEffect(() => {
     loadAdmissions();
-  }, []);
+  }, [currentPage, itemsPerPage, debouncedSearchParams]);
 
   useEffect(() => {
     if (selectedId) {
@@ -82,18 +104,16 @@ const Fee = () => {
     }
   }, [selectedId]);
 
-  const filteredAdmissions = useMemo(() => {
-    return admissions.filter(a => {
-      const matchName = (a.fullName || '').toLowerCase().includes(searchParams.name.toLowerCase());
-      const matchFather = (a.fathersName || '').toLowerCase().includes(searchParams.fatherName.toLowerCase());
-      const matchCourse = (a.courseApplied || '').toLowerCase().includes(searchParams.course.toLowerCase());
-      return matchName && matchFather && matchCourse;
-    });
-  }, [admissions, searchParams]);
-
   const selectedAdmission = useMemo(() => {
     return admissions.find((a) => a._id === selectedId);
   }, [admissions, selectedId]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchParams]);
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
 
   const remaining = useMemo(() => {
     if (!finance) return 0;
@@ -351,7 +371,7 @@ const Fee = () => {
 
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex justify-between items-center mb-3">
-              <h2 className="text-base font-semibold text-gray-900">Found Students ({filteredAdmissions.length})</h2>
+              <h2 className="text-base font-semibold text-gray-900">Found Students ({totalItems})</h2>
               <div className="flex items-center gap-3">
                 {loadingAdmissions && <span className="text-sm text-indigo-600 animate-pulse">Loading dataset...</span>}
                 <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
@@ -367,7 +387,7 @@ const Fee = () => {
             
             {viewMode === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredAdmissions.slice(0, 100).map(student => (
+                {admissions.map(student => (
                   <div key={student._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-full">
                     <div>
                       <div className="flex items-start gap-3 mb-3">
@@ -408,14 +428,9 @@ const Fee = () => {
                     </button>
                   </div>
                 ))}
-                {filteredAdmissions.length === 0 && !loadingAdmissions && (
+                {admissions.length === 0 && !loadingAdmissions && (
                   <div className="col-span-full text-center py-6 text-gray-500 text-sm">
                     No students found matching the criteria.
-                  </div>
-                )}
-                {filteredAdmissions.length > 100 && (
-                  <div className="col-span-full text-center py-3 text-xs text-amber-600 bg-amber-50 rounded-lg">
-                    Showing top 100 results. Please refine your search.
                   </div>
                 )}
               </div>
@@ -433,7 +448,7 @@ const Fee = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAdmissions.slice(0, 100).map(student => (
+                    {admissions.map(student => (
                       <tr key={student._id} className="border-b hover:bg-slate-50 transition-colors">
                         <td className="px-3 py-2 font-medium text-gray-800">{student.fullName}</td>
                         <td className="px-3 py-2 text-gray-600">{student.fathersName || '-'}</td>
@@ -450,17 +465,10 @@ const Fee = () => {
                         </td>
                       </tr>
                     ))}
-                    {filteredAdmissions.length === 0 && !loadingAdmissions && (
+                    {admissions.length === 0 && !loadingAdmissions && (
                       <tr>
                         <td colSpan="6" className="text-center py-6 text-gray-500">
                           No students found matching the criteria.
-                        </td>
-                      </tr>
-                    )}
-                    {filteredAdmissions.length > 100 && (
-                      <tr>
-                        <td colSpan="6" className="text-center py-3 text-xs text-amber-600 bg-amber-50">
-                          Showing top 100 results. Please refine your search.
                         </td>
                       </tr>
                     )}
@@ -468,6 +476,18 @@ const Fee = () => {
                 </table>
               </div>
             )}
+
+            {/* Pagination Controls */}
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              startIndex={startIndex}
+              endIndex={startIndex + itemsPerPage}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageSizeChange={setItemsPerPage}
+            />
           </div>
         </div>
       )}

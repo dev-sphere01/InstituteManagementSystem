@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../services/API";
 import { useNotification } from "../../services/NotificationService";
+import Pagination from "../../components/common/Pagination";
 import * as XLSX from "xlsx";
 
 // ─── Tab Config ─────────────────────────────────────────────────────────────
@@ -312,24 +313,44 @@ const StatusManagementPanel = ({ activeTab, courseOptions = [], batchOptions = [
   const [filterCourse, setFilterCourse] = useState("");
   const [filterBatch, setFilterBatch] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // grid | table
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [totalItems, setTotalItems] = useState(0);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [confirmModal, setConfirmModal] = useState({ open: false, task: null });
   const [remarkModal, setRemarkModal] = useState({ open: false, taskId: null, text: "" });
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   const fetchTasks = useCallback(async () => {
     if (!activeTab) return;
     setLoading(true);
     try {
       const res = await API.get("/tasks", {
-        params: { taskName: activeTab, filterStatus, course: filterCourse, batch: filterBatch }
+        params: { 
+          taskName: activeTab, 
+          filterStatus, 
+          course: filterCourse, 
+          batch: filterBatch,
+          search: debouncedSearch,
+          page: currentPage,
+          limit: itemsPerPage
+        }
       });
-      if (res.success) setTasks(res.data || []);
+      if (res.success) {
+        setTasks(res.data || []);
+        setTotalItems(res.totalCount || res.data?.length || 0);
+      }
     } catch (e) {
       notify(e.response?.data?.message || "Failed to load tasks", "error");
     } finally {
       setLoading(false);
     }
-  }, [activeTab, filterStatus, filterCourse, filterBatch]);
+  }, [activeTab, filterStatus, filterCourse, filterBatch, debouncedSearch, currentPage, itemsPerPage]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
@@ -404,18 +425,19 @@ const StatusManagementPanel = ({ activeTab, courseOptions = [], batchOptions = [
     }
   };
 
-  const filtered = tasks.filter(t => {
-    const term = searchQuery.toLowerCase();
-    const nameOk = !term || t.studentId?.fullName?.toLowerCase().includes(term) || t.studentId?.formNo?.toLowerCase().includes(term);
-    return nameOk;
-  });
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, filterStatus, filterCourse, filterBatch, activeTab]);
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
 
   // Stats
   const stats = {
-    total: filtered.length,
-    pending: filtered.filter(t => t.status !== "completed").length,
-    inProgress: filtered.filter(t => t.status === "in_progress").length,
-    completed: filtered.filter(t => t.status === "completed").length,
+    total: totalItems,
+    pending: tasks.filter(t => t.status !== "completed").length, // This is an approximation of current page
+    inProgress: tasks.filter(t => t.status === "in_progress").length,
+    completed: tasks.filter(t => t.status === "completed").length,
   };
 
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -519,7 +541,7 @@ const StatusManagementPanel = ({ activeTab, courseOptions = [], batchOptions = [
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-100 border-t-indigo-600" />
           <p className="text-slate-400 text-xs font-semibold">Loading students...</p>
         </div>
-      ) : filtered.length === 0 ? (
+      ) : tasks.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 text-center">
           <svg className="w-12 h-12 text-slate-200 dark:text-slate-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -529,7 +551,7 @@ const StatusManagementPanel = ({ activeTab, courseOptions = [], batchOptions = [
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map(task => (
+          {tasks.map(task => (
             <StudentCard
               key={task._id}
               task={task}
@@ -557,7 +579,7 @@ const StatusManagementPanel = ({ activeTab, courseOptions = [], batchOptions = [
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filtered.map(task => {
+                {tasks.map(task => {
                   const s = task.studentId || {};
                   const lastRemark = task.remarks?.length ? task.remarks[task.remarks.length - 1] : null;
                   const isDone = task.status === "completed";
@@ -620,6 +642,18 @@ const StatusManagementPanel = ({ activeTab, courseOptions = [], batchOptions = [
           </div>
         </div>
       )}
+
+      {/* Pagination Controls */}
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        startIndex={startIndex}
+        endIndex={startIndex + itemsPerPage}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+        onPageSizeChange={setItemsPerPage}
+      />
 
       {/* ── Modals ── */}
       {confirmModal.open && (
