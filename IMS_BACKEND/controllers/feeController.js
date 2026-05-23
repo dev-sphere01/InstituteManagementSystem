@@ -1,6 +1,20 @@
 const ApplicationFinance = require('../models/applicationFinance');
 const Installment = require('../models/installment');
+const Task = require('../models/task');
+const { advanceTaskSequence } = require('./taskController');
 const { getFinanceByTarget, applyPaymentToInstallment, applyDirectPayment, recalculateTotals, buildFeeSummary } = require('../services/feeService');
+
+const autoAdvanceFeeTask = async (targetId, totalPaid) => {
+  if (Number(totalPaid) > 0) {
+     const feeTask = await Task.findOne({ studentId: targetId, taskName: 'Fee Collection', status: { $ne: 'completed' } });
+     if (feeTask) {
+        feeTask.status = 'completed';
+        feeTask.remarks.push({ text: 'Auto-completed via payment', by: 'System' });
+        await feeTask.save();
+        await advanceTaskSequence(feeTask);
+     }
+  }
+};
 
 exports.getFeeSummary = async (req, res) => {
   try {
@@ -98,6 +112,12 @@ exports.payInstallment = async (req, res) => {
       paymentDate,
       createdBy: req.user ? req.user._id : undefined
     });
+    
+    // Auto-advance if paid
+    if (result.finance && result.finance.targetType === 'admission') {
+       await autoAdvanceFeeTask(result.finance.targetId, result.finance.totalPaid);
+    }
+    
     return res.status(200).json({ success: true, data: result });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -121,6 +141,12 @@ exports.directPay = async (req, res) => {
       paymentDate,
       createdBy: req.user ? req.user._id : undefined
     });
+    
+    // Auto-advance if paid
+    if (result.finance && result.finance.targetType === 'admission') {
+       await autoAdvanceFeeTask(result.finance.targetId, result.finance.totalPaid);
+    }
+    
     return res.status(200).json({ success: true, data: result });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

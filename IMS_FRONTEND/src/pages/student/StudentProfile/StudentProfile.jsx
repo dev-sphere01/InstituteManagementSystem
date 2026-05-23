@@ -12,16 +12,7 @@ const STATUS_STYLES = {
   escalated: "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:border-rose-800",
 };
 
-const stepOrder = ["fee_collection", "document_verification", "registration", "exam_form", "admit_card", "certificate"];
-
-const DOC_NAMES = {
-  aadharPhoto: "Aadhar Photo",
-  candidatePhoto: "Candidate Photo",
-  candidateSignature: "Candidate Signature",
-  tenthMarksheet: "10th Marksheet",
-  twelfthMarksheet: "12th Marksheet",
-  incomeCertificate: "Income Certificate"
-};
+const stepOrder = ['Fee Collection', 'Document Verification', 'Registration', 'Exam Form', 'Admit Card', 'Certificate'];
 
 const StudentProfile = () => {
   const { id } = useParams();
@@ -29,6 +20,7 @@ const StudentProfile = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState(false);
+  const [documentFields, setDocumentFields] = useState([]);
 
   const loadData = async () => {
     setLoading(true);
@@ -42,6 +34,31 @@ const StudentProfile = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchMaster = async () => {
+      try {
+        const res = await API.get('/document-master');
+        if (res.success && res.data?.length > 0) {
+          const activeDocs = res.data.filter(d => d.isActive).map(d => ({ key: d.key, label: d.label, isRequired: d.isRequired }));
+          setDocumentFields(activeDocs);
+        } else {
+          setDocumentFields([
+            { key: "candidatePhoto", label: "Candidate Photo", isRequired: true },
+            { key: "candidateSignature", label: "Signature" },
+            { key: "aadharPhoto", label: "Aadhar Card", isRequired: true },
+            { key: "tenthMarksheet", label: "10th Marksheet" }
+          ]);
+        }
+      } catch {
+        setDocumentFields([
+          { key: "candidatePhoto", label: "Candidate Photo", isRequired: true },
+          { key: "aadharPhoto", label: "Aadhar Card", isRequired: true }
+        ]);
+      }
+    };
+    fetchMaster();
+  }, []);
+
   useEffect(() => { loadData(); }, [id]);
 
   const tasks = useMemo(() => data?.data?.tasks || data?.tasks || [], [data]);
@@ -51,46 +68,9 @@ const StudentProfile = () => {
   const admission = data?.data?.admission || data?.admission;
 
   const stepper = useMemo(() => {
-    const map = tasks.reduce((acc, task) => { acc[task.stepKey] = task; return acc; }, {});
+    const map = tasks.reduce((acc, task) => { acc[task.taskName] = task; return acc; }, {});
     return stepOrder.map((key) => map[key]).filter(Boolean);
   }, [tasks]);
-
-  const handleStatusChange = async (taskId, status) => {
-    setActionBusy(true);
-    try {
-      await workflowService.updateTaskStatus(taskId, status, `Status updated to ${status}`);
-      await loadData();
-    } finally { setActionBusy(false); }
-  };
-
-  const handleComplete = async (taskId) => {
-    setActionBusy(true);
-    try {
-      await workflowService.completeTask(taskId, "Completed");
-      await loadData();
-    } catch (err) {
-      const needsOverride = err?.response?.data?.message?.includes('Override') || err?.response?.status === 403;
-      if (needsOverride) {
-        const reason = window.prompt("Override reason required");
-        if (reason) {
-          await workflowService.completeTask(taskId, "Override complete", reason);
-          await loadData();
-        }
-      }
-    } finally { setActionBusy(false); }
-  };
-
-  const handleRemark = async (taskId) => {
-    const text = window.prompt("Add remark");
-    if (!text) return;
-    setActionBusy(true);
-    try {
-      await workflowService.updateTask(taskId, { remarks: text });
-      await loadData();
-    } finally { setActionBusy(false); }
-  };
-
-
 
   if (loading) return <div className="p-10 text-center text-slate-500 font-medium">Loading Student Profile...</div>;
   if (!admission) return <div className="p-10 text-center text-red-500 font-medium">Student not found</div>;
@@ -129,7 +109,7 @@ const StudentProfile = () => {
              <div className="flex gap-2 items-center">
                {stepper.map((t, i) => (
                  <div key={t._id} className="flex items-center gap-1">
-                    <div className={`w-3 h-3 rounded-full ${t.status === 'completed' ? 'bg-emerald-500' : t.status === 'in_progress' ? 'bg-blue-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-700'}`} title={t.title}></div>
+                    <div className={`w-3 h-3 rounded-full ${t.status === 'completed' ? 'bg-emerald-500' : t.status === 'in_progress' ? 'bg-blue-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-700'}`} title={t.taskName}></div>
                     {i < stepper.length -1 && <div className="w-3 h-px bg-slate-300 dark:bg-slate-700"></div>}
                  </div>
                ))}
@@ -244,31 +224,72 @@ const StudentProfile = () => {
              <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
              Document Status
           </h3>
-          <div className="space-y-3">
-             {Object.entries(DOC_NAMES).map(([key, label]) => {
-                const docStatusObj = admission.documentStatuses?.[key];
-                const st = docStatusObj?.status || 'pending';
-                const isVerified = st === 'verified' || st === 'approved';
-                const isRejected = st === 'rejected';
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+             {documentFields.map((field) => {
+                const docStatus = admission.documentStatuses?.[field.key] || { status: 'pending', remark: '' };
                 return (
-                  <div key={key} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2.5 px-3 border border-slate-100 dark:border-slate-800/60">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{label}</span>
-                    <span className={`flex items-center gap-1.5 text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full ${
-                      isVerified ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
-                      isRejected ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400' :
-                      'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
-                    }`}>
-                       {isVerified && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>}
-                       {isRejected && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"/></svg>}
-                       {!isVerified && !isRejected && <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />}
-                       {st}
-                    </span>
-                  </div>
+                   <div key={field.key} className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800/60">
+                      <div className="flex items-center gap-2">
+                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                           {field.label}
+                           {field.isRequired && <span className="ml-1 text-[9px] text-rose-500">*</span>}
+                         </span>
+                      </div>
+                      <span className={`w-fit px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full ${
+                         docStatus.status === 'received' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
+                         docStatus.status === 'not_needed' ? 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400' :
+                         docStatus.status === 'rejected' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400' :
+                         'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                      }`}>
+                         {docStatus.status.replace('_', ' ')}
+                      </span>
+                   </div>
                 );
              })}
           </div>
         </div>
 
+      </div>
+
+      {/* Workflow Progress Box */}
+      <div className="mt-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+             <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+             Workflow Progress
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+             {stepper.map((t) => (
+                <div key={t._id} className={`rounded-xl p-4 border shadow-sm transition-all ${
+                  t.status === 'completed' ? 'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-800/30' :
+                  t.status === 'in_progress' ? 'bg-blue-50/50 border-blue-100 dark:bg-blue-900/10 dark:border-blue-800/30' :
+                  'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800/60'
+                }`}>
+                   <div className="flex flex-col gap-2">
+                      <span className="text-xs font-black text-slate-700 dark:text-slate-300 line-clamp-1">{t.taskName}</span>
+                      <span className={`w-fit px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full ${
+                        t.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 
+                        t.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400' : 
+                        'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                      }`}>
+                        {t.status.replace('_', ' ')}
+                      </span>
+                   </div>
+                   {t.remarks && t.remarks.length > 0 && (
+                      <div className="mt-3 text-[10px] text-slate-500 italic border-t border-slate-200/50 dark:border-slate-700/50 pt-2">
+                         <span className="font-semibold text-slate-600 dark:text-slate-400 block mb-0.5">Latest Note:</span>
+                         <span className="line-clamp-2" title={t.remarks[t.remarks.length - 1].text}>{t.remarks[t.remarks.length - 1].text}</span>
+                      </div>
+                   )}
+                </div>
+             ))}
+             {stepper.length === 0 && (
+                <div className="col-span-full text-center py-6 text-sm text-slate-400 italic">
+                  No workflow tasks recorded for this student.
+                </div>
+             )}
+          </div>
+        </div>
       </div>
     </div>
   );

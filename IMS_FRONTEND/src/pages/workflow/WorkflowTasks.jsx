@@ -5,6 +5,7 @@ import { useNotification } from "../../services/NotificationService";
 
 import { useAuth } from "../../context/AuthContext";
 import StatusManagementPanel from "./StatusManagementPanel";
+import DocumentVerificationPanel from "./DocumentVerificationPanel";
 import * as XLSX from "xlsx";
 
 const TAB_ROLE_MAP = {
@@ -242,7 +243,9 @@ const WorkflowTasks = () => {
       <div className="fixed bottom-0 left-0 w-[20rem] h-[20rem] -mb-32 -ml-32 rounded-full bg-gradient-to-tr from-emerald-300/20 to-teal-400/20 blur-[80px] opacity-70 pointer-events-none z-0 dark:opacity-10 transition-all"></div>
 
       <div className="relative z-10 max-w-full mx-auto w-full">
-        {activeTab ? (
+        {activeTab === 'Document Verification' ? (
+          <DocumentVerificationPanel />
+        ) : activeTab ? (
           <StatusManagementPanel
             activeTab={activeTab}
             courseOptions={courseOptions}

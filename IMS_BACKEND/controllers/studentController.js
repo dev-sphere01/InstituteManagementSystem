@@ -3,7 +3,9 @@ const ErrorHandler = require('../utils/ErrorHandler');
 const Performance = require('../models/performanceModel');
 const AdmissionDetails = require('../models/admission');
 const Task = require('../models/task');
+const DocumentMaster = require('../models/documentMaster');
 const { getFinanceByTarget, buildFeeSummary } = require('../services/feeService');
+const { advanceTaskSequence } = require('./taskController');
 
 const pickCurrentTask = (tasks = []) => {
   const active = tasks.filter((t) => t.status !== 'completed');
@@ -201,6 +203,56 @@ exports.updateDocumentStatus = catchAsyncErrors(async (req, res, next) => {
 
   // Fetch updated admission to return the new statuses
   const updatedAdmission = await AdmissionDetails.findById(id).select('documentStatuses').lean();
+  
+  // Auto-advance logic
+  const allDocs = await DocumentMaster.find({ isActive: true });
+  // If the collection is empty, seed defaults for the check to work
+  let requiredKeys = [];
+  if (allDocs.length === 0) {
+    requiredKeys = ['candidatePhoto', 'aadharPhoto'];
+  } else {
+    requiredKeys = allDocs.filter(d => d.isRequired).map(d => d.key);
+  }
+
+  const statusesObj = updatedAdmission.documentStatuses || {};
+  let anyCollected = false;
+  let allRequiredCollected = true;
+
+  if (requiredKeys.length === 0) {
+     // If no required keys, maybe we don't auto-complete, or we do if ANY is collected.
+     // For safety, require at least one collection to auto-complete if no strict requirements.
+     allRequiredCollected = Object.values(statusesObj).some(s => s.status === 'received' || s.status === 'not_needed');
+  }
+
+  for (const key of requiredKeys) {
+     const st = statusesObj[key]?.status;
+     if (st === 'received' || st === 'not_needed') {
+        anyCollected = true;
+     } else {
+        allRequiredCollected = false;
+     }
+  }
+
+  // Also check if ANY doc at all is collected to mark as in_progress
+  if (!anyCollected) {
+     anyCollected = Object.values(statusesObj).some(s => s.status === 'received' || s.status === 'not_needed');
+  }
+
+  if (anyCollected) {
+     const docTask = await Task.findOne({ studentId: id, taskName: 'Document Verification', status: { $ne: 'completed' } });
+     if (docTask) {
+        if (allRequiredCollected) {
+           docTask.status = 'completed';
+           docTask.remarks.push({ text: 'Auto-completed via document collection', by: 'System' });
+           await docTask.save();
+           await advanceTaskSequence(docTask);
+        } else if (docTask.status === 'pending') {
+           docTask.status = 'in_progress';
+           docTask.remarks.push({ text: 'Auto-marked in progress', by: 'System' });
+           await docTask.save();
+        }
+     }
+  }
 
   res.status(200).json({
     success: true,

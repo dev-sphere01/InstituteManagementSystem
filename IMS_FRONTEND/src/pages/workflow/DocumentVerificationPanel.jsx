@@ -8,6 +8,7 @@ const DocumentVerificationPanel = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState("grid");
 
   useEffect(() => {
     // Initial fetch to show some students or keep it empty
@@ -79,35 +80,31 @@ const DocumentVerificationPanel = () => {
             </button>
           </form>
         </div>
+        <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+          <button onClick={() => setViewMode("grid")} type="button" className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-white shadow-sm text-indigo-600" : "text-slate-400 hover:text-slate-600"}`}>
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z" /></svg>
+          </button>
+          <button onClick={() => setViewMode("table")} type="button" className={`p-1.5 rounded-md transition-all ${viewMode === "table" ? "bg-white shadow-sm text-indigo-600" : "text-slate-400 hover:text-slate-600"}`}>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading ? (
-          <div className="col-span-full flex justify-center py-10 text-slate-400 text-sm font-bold">
-            Searching students...
-          </div>
-        ) : students.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center p-14 h-48 bg-white rounded-xl border border-dashed border-slate-300 text-center">
-            <svg
-              className="w-10 h-10 text-slate-300 mb-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-              ></path>
-            </svg>
-            <h3 className="text-sm font-bold text-slate-600">No Match</h3>
-            <p className="text-slate-400 mt-1 text-xs">
-              Try a different search query.
-            </p>
-          </div>
-        ) : (
-          students.map((student) => (
+      {loading ? (
+        <div className="flex justify-center py-10 text-slate-400 text-sm font-bold">
+          Searching students...
+        </div>
+      ) : students.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-14 h-48 bg-white rounded-xl border border-dashed border-slate-300 text-center">
+          <svg className="w-10 h-10 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+          </svg>
+          <h3 className="text-sm font-bold text-slate-600">No Match</h3>
+          <p className="text-slate-400 mt-1 text-xs">Try a different search query.</p>
+        </div>
+      ) : viewMode === "grid" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {students.map((student) => (
             <div
               key={student._id}
               className="bg-white border flex flex-col justify-between border-slate-200 rounded-xl p-4 hover:shadow-md transition-shadow group"
@@ -151,9 +148,51 @@ const DocumentVerificationPanel = () => {
                 </Link>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-50 text-slate-700">
+              <tr>
+                <th className="text-left px-4 py-3 border-b border-slate-200">Student Name</th>
+                <th className="text-left px-4 py-3 border-b border-slate-200">Course</th>
+                <th className="text-left px-4 py-3 border-b border-slate-200">Status</th>
+                <th className="text-right px-4 py-3 border-b border-slate-200">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map(student => (
+                <tr key={student._id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <td className="px-4 py-3 font-medium text-slate-800 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 font-bold text-[10px] text-indigo-600">
+                      {getInitials(student.name)}
+                    </div>
+                    {student.name}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">{student.course || '-'}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-100 px-2 py-1 rounded">
+                      {student.studentStatus || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      to={`/dashboard/workflow/document-verification/${student._id}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white border border-indigo-200 rounded-lg text-xs font-bold transition-all shadow-sm"
+                    >
+                      Verify
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                      </svg>
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

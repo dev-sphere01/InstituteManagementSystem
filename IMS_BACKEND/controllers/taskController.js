@@ -10,7 +10,7 @@ const TASK_ORDER = [
 ];
 
 // Helper to advance sequence
-const advanceTaskSequence = async (task) => {
+exports.advanceTaskSequence = async (task) => {
   if (task.status !== 'completed') return;
   const currentIndex = TASK_ORDER.indexOf(task.taskName);
   
@@ -125,7 +125,7 @@ exports.updateTask = async (req, res) => {
     await task.save();
     
     if (task.status === 'completed') {
-       await advanceTaskSequence(task);
+       await exports.advanceTaskSequence(task);
     }
     
     return res.status(200).json({ success: true, data: task });
@@ -151,7 +151,7 @@ exports.markAsDone = async (req, res) => {
     task.status = 'completed';
     await task.save();
     
-    await advanceTaskSequence(task);
+    await exports.advanceTaskSequence(task);
 
     return res.status(200).json({ success: true, data: task });
   } catch (error) {

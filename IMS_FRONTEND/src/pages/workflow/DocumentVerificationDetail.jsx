@@ -14,17 +14,32 @@ const DocumentVerificationDetail = () => {
   
   const [remarkModal, setRemarkModal] = useState({ isOpen: false, docKey: "", status: "", text: "" });
 
-  const documentFields = [
-    { key: "candidatePhoto", label: "Candidate Photo" },
-    { key: "candidateSignature", label: "Signature" },
-    { key: "candidateLeftThumbImpression", label: "Thumb Impression" },
-    { key: "aadharPhoto", label: "Aadhar Card" },
-    { key: "tenthMarksheet", label: "10th Marksheet" },
-    { key: "twelfthMarksheet", label: "12th Marksheet" },
-    { key: "incomeCertificate", label: "Income Certificate" },
-    { key: "exServicemen", label: "Ex-Servicemen Certificate" },
-    { key: "speciallyAbled", label: "Specially Abled Certificate" },
-  ];
+  const [documentFields, setDocumentFields] = useState([]);
+
+  useEffect(() => {
+    const fetchMaster = async () => {
+      try {
+        const res = await API.get('/document-master');
+        if (res.success && res.data?.length > 0) {
+          const activeDocs = res.data.filter(d => d.isActive).map(d => ({ key: d.key, label: d.label, isRequired: d.isRequired }));
+          setDocumentFields(activeDocs);
+        } else {
+          setDocumentFields([
+            { key: "candidatePhoto", label: "Candidate Photo", isRequired: true },
+            { key: "candidateSignature", label: "Signature" },
+            { key: "aadharPhoto", label: "Aadhar Card", isRequired: true },
+            { key: "tenthMarksheet", label: "10th Marksheet" }
+          ]);
+        }
+      } catch {
+        setDocumentFields([
+          { key: "candidatePhoto", label: "Candidate Photo", isRequired: true },
+          { key: "aadharPhoto", label: "Aadhar Card", isRequired: true }
+        ]);
+      }
+    };
+    fetchMaster();
+  }, []);
 
   useEffect(() => {
     fetchStudentProfile();
@@ -209,19 +224,22 @@ const DocumentVerificationDetail = () => {
             </div>
           </div>
           <div className="divide-y divide-slate-100">
-            {documentFields.map((doc) => {
-              const fileUrl = student[doc.key];
-              const docState = student.documentStatuses?.[doc.key] || { status: 'pending', remark: '' };
+            {documentFields.map((field) => {
+              const fileUrl = student[field.key];
+              const docState = student.documentStatuses?.[field.key] || { status: 'pending', remark: '' };
               const isPending = docState.status === 'pending';
               const isReceived = docState.status === 'received';
               const isNotNeeded = docState.status === 'not_needed';
 
               return (
-                <div key={doc.key} className="p-4 flex flex-col md:flex-row md:items-start justify-between gap-4 transition-colors hover:bg-slate-50/50">
+                <div key={field.key} className="p-4 flex flex-col md:flex-row md:items-start justify-between gap-4 transition-colors hover:bg-slate-50/50">
                   <div className="flex max-w-sm w-full shrink-0">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-slate-800">{doc.label}</h4>
+                        <h4 className="text-sm font-bold text-slate-800">{field.label}</h4>
+                        {field.isRequired && (
+                          <span className="text-[9px] font-black uppercase text-rose-500 tracking-wider">Required</span>
+                        )}
                         <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded text-white ${
                             isReceived ? 'bg-emerald-500' : 
                             isNotNeeded ? 'bg-slate-400' : 
@@ -260,19 +278,19 @@ const DocumentVerificationDetail = () => {
                     {isPending && (
                        <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                           <button 
-                            onClick={() => handleUpdateStatus(doc.key, 'received')}
+                            onClick={() => handleUpdateStatus(field.key, 'received')}
                             className="px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm shadow-emerald-500/20 whitespace-nowrap"
                           >
                             Received
                           </button>
                           <button 
-                            onClick={() => handleUpdateStatus(doc.key, 'not_needed')}
+                            onClick={() => handleUpdateStatus(field.key, 'not_needed')}
                             className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap"
                           >
                             Not Needed
                           </button>
                           <button 
-                            onClick={() => handleOpenRemarkModal(doc.key, 'rejected')}
+                            onClick={() => handleOpenRemarkModal(field.key, 'rejected')}
                             className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors border border-rose-200 whitespace-nowrap"
                           >
                             Reject
@@ -282,7 +300,7 @@ const DocumentVerificationDetail = () => {
                     
                     {!isPending && (
                        <button 
-                          onClick={() => handleUpdateStatus(doc.key, 'pending', '')}
+                          onClick={() => handleUpdateStatus(field.key, 'pending', '')}
                           className="px-3 py-2 text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
                           title="Reset to Pending"
                        >

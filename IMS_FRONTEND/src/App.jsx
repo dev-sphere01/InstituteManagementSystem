@@ -44,6 +44,7 @@ import CenterCode from "./pages/masters/centerCode/CenterCode.jsx";
 import CallingFormMaster from "./pages/masters/calling/CallingFormMaster.jsx";
 import CallingManagement from "./pages/masters/calling/CallingManagement.jsx";
 import ApplicationsList from "./pages/masters/applications/ApplicationsList.jsx";
+import DocumentMaster from "./pages/masters/DocumentMaster.jsx";
 
 // Student Pages
 import StudentDashboard from './pages/dashboard/StudentDashboard.jsx';
@@ -108,6 +109,7 @@ function App() {
                 <Route path="sessions" element={<Session />} />
                 <Route path="institution-type" element={<InstitutionType />} />
                 <Route path="additional-features" element={<AddistionalFeatures />} />
+                <Route path="document-master" element={<DocumentMaster />} />
 
                 {/* Enquiry Routes */}
                 <Route path="enquiry/create" element={<EnquiryForm />} />

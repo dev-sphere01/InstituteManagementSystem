@@ -43,28 +43,47 @@ exports.isAuthenticatedUser = catchAsyncErrors(
 )
 
 exports.authorizeRoles = (...roles) => {
-    return (req, res, next) => {
-        // Check if user exists and has a role
-        if (!req.user || (!req.user.role && (!req.user.roles || req.user.roles.length === 0))) {
-            return next(new ErrorHandler("User role not defined. Please login again", 401));
-        }
-
-        const userRoles = [];
-        if (req.user.role) userRoles.push(req.user.role);
-        if (Array.isArray(req.user.roles)) {
-            req.user.roles.forEach((r) => r && userRoles.push(r));
-        }
-
-        const roleIds = userRoles.map((r) => r._id ? r._id.toString() : r.toString());
-        const roleNames = userRoles.map((r) => r.RoleName || r.name).filter(Boolean).map((n) => n.toLowerCase());
-
-        const allowed = roles.some((role) => {
-            if (!role) return false;
-            if (typeof role === 'string') {
-                return roleNames.includes(role.toLowerCase()) || roleIds.includes(role);
+    return async (req, res, next) => {
+        try {
+            // Check if user exists and has a role
+            if (!req.user || (!req.user.role && (!req.user.roles || req.user.roles.length === 0))) {
+                return next(new ErrorHandler("User role not defined. Please login again", 401));
             }
-            return roleIds.includes(role.toString());
-        });
+
+            // Populate roles if they are not already populated
+            if (!req.user.populated('role') && req.user.role) {
+                await req.user.populate('role');
+            }
+            if (!req.user.populated('roles') && req.user.roles && req.user.roles.length > 0) {
+                await req.user.populate('roles');
+            }
+
+            const userRoles = [];
+            if (req.user.role) userRoles.push(req.user.role);
+            if (Array.isArray(req.user.roles)) {
+                req.user.roles.forEach((r) => r && userRoles.push(r));
+            }
+
+            const roleIds = userRoles.map((r) => r._id ? r._id.toString() : r.toString());
+            const roleNames = userRoles.map((r) => r.RoleName || r.name).filter(Boolean).map((n) => n.toLowerCase());
+
+            // Get all permissions to check for wildcard
+            const permissions = userRoles.reduce((acc, role) => {
+                if (role && Array.isArray(role.permissions)) {
+                    acc.push(...role.permissions);
+                }
+                return acc;
+            }, []);
+            
+            const hasWildcard = permissions.includes('*');
+
+            const allowed = hasWildcard || roles.some((role) => {
+                if (!role) return false;
+                if (typeof role === 'string') {
+                    return roleNames.includes(role.toLowerCase()) || roleIds.includes(role);
+                }
+                return roleIds.includes(role.toString());
+            });
 
         if (!allowed) {
             return next(new ErrorHandler(
@@ -74,5 +93,8 @@ exports.authorizeRoles = (...roles) => {
         }
 
         next();
+      } catch (err) {
+        next(err);
+      }
     }
 }

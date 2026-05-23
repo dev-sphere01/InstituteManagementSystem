@@ -25,6 +25,7 @@ const workflowRoutes = require('./workflowRoutes');
 const taskRoutes = require('./taskRoutes');
 const feeRoutes = require('./feeRoutes');
 const jobRoutes = require('./jobRoutes');
+const documentMasterRoutes = require('./documentMasterRoutes');
 //const otpRoutes = require('./otpRoutes');
 // Mount routes
 router.use('/users', userRoutes);
@@ -50,6 +51,7 @@ router.use('/workflows', workflowRoutes);
 router.use('/tasks', taskRoutes);
 router.use('/fees', feeRoutes);
 router.use('/jobs', jobRoutes);
+router.use('/document-master', documentMasterRoutes);
 
 
 module.exports = router;

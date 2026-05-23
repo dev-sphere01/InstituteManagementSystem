@@ -60,6 +60,7 @@ const PrimarySideBar = () => {
     { path: '/dashboard/batches', icon: 'collection', label: 'Batches' },
     { path: '/dashboard/sessions', icon: 'calendar', label: 'Sessions' },
     { path: '/dashboard/institution-type', icon: 'collection', label: 'Institution Type' },
+    { path: '/dashboard/document-master', icon: 'collection', label: 'Document Master' },
   ];
 
   // Enquiry navigation items
