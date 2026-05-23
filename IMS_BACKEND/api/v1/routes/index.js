@@ -26,6 +26,9 @@ const taskRoutes = require('./taskRoutes');
 const feeRoutes = require('./feeRoutes');
 const jobRoutes = require('./jobRoutes');
 const documentMasterRoutes = require('./documentMasterRoutes');
+const branchRoutes = require('./branchRoutes');
+const leadRoutes = require('./leadRoutes');
+const campaignRoutes = require('./campaignRoutes');
 //const otpRoutes = require('./otpRoutes');
 // Mount routes
 router.use('/users', userRoutes);
@@ -52,6 +55,10 @@ router.use('/tasks', taskRoutes);
 router.use('/fees', feeRoutes);
 router.use('/jobs', jobRoutes);
 router.use('/document-master', documentMasterRoutes);
+router.use('/dashboard', studentRoutes);
+router.use('/branches', branchRoutes);
+router.use('/leads', leadRoutes);
+router.use('/campaigns', campaignRoutes);
 
 
 module.exports = router;

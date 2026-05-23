@@ -16,8 +16,7 @@ const registerSchema = {
       isEmail: true
     },
     role: {
-      type: 'string',
-      enum: ['student', 'user', 'admin', 'manager']
+      type: 'string'
       // Optional field - will always default to 'student' in service layer for self-registration
     }
   }
@@ -108,7 +107,7 @@ const createUserAdminSchema = {
       isEmail: true
     },
     password: {
-      required: true,
+      required: false,
       type: 'string',
       minLength: 6  // Less strict for admin creation
     },
@@ -123,13 +122,12 @@ const createUserAdminSchema = {
           return null; // Valid ObjectId format
         }
 
-        // Check if it's a valid role name
-        const validRoleNames = ['student', 'user', 'admin', 'manager'];
-        if (validRoleNames.includes(value)) {
+        // Since roles are dynamic, accept any non-empty string (role name)
+        if (typeof value === 'string' && value.trim().length > 0) {
           return null; // Valid role name
         }
 
-        return 'Role must be a valid ObjectId or one of: student, user, admin, manager';
+        return 'Role must be a valid ObjectId or role name string';
       }
     },
     roles: {
@@ -183,13 +181,12 @@ const updateUserRoleSchema = {
           return null; // Valid ObjectId format
         }
 
-        // Check if it's a valid role name
-        const validRoleNames = ['student', 'user', 'admin', 'manager'];
-        if (validRoleNames.includes(value)) {
+        // Since roles are dynamic, accept any non-empty string (role name)
+        if (typeof value === 'string' && value.trim().length > 0) {
           return null; // Valid role name
         }
 
-        return 'Role must be a valid ObjectId or one of: student, user, admin, manager';
+        return 'Role must be a valid ObjectId or role name string';
       }
     },
     roles: {

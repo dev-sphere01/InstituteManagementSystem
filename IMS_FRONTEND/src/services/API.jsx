@@ -140,8 +140,43 @@ const API = {
     export: (params = {}) => instance.get('/logs/export', { params, responseType: 'blob' })
   },
 
+  // Branch management endpoints
+  branches: {
+    getAll: (params = {}) => instance.get('/branches', { params }),
+    getById: (id) => instance.get(`/branches/${id}`),
+    create: (data) => instance.post('/branches', data),
+    update: (id, data) => instance.put(`/branches/${id}`, data),
+    delete: (id) => instance.delete(`/branches/${id}`),
+  },
 
-  
+  // CRM endpoints
+  crm: {
+    leads: {
+      getAll: (params = {}) => instance.get('/leads', { params }),
+      getById: (id) => instance.get(`/leads/${id}`),
+      create: (data) => instance.post('/leads', data),
+      update: (id, data) => instance.put(`/leads/${id}`, data),
+      delete: (id) => instance.delete(`/leads/${id}`),
+      addInteraction: (id, data) => instance.post(`/leads/${id}/interactions`, data),
+      reassign: (id, assignedTo) => instance.put(`/leads/${id}/reassign`, { assignedTo }),
+      bulkImport: (file) => {
+        const form = new FormData();
+        form.append('file', file);
+        return instance.post('/leads/import', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      },
+      getPipelineStats: (params = {}) => instance.get('/leads/stats/pipeline', { params }),
+      runEscalation: () => instance.post('/leads/escalation/run'),
+    },
+    campaigns: {
+      getAll: (params = {}) => instance.get('/campaigns', { params }),
+      getById: (id) => instance.get(`/campaigns/${id}`),
+      create: (data) => instance.post('/campaigns', data),
+      update: (id, data) => instance.put(`/campaigns/${id}`, data),
+      delete: (id) => instance.delete(`/campaigns/${id}`),
+      getROI: (params = {}) => instance.get('/campaigns/roi', { params }),
+      getOverallROI: () => instance.get('/campaigns/roi/overall'),
+    },
+  },
 };
 
 export default API;

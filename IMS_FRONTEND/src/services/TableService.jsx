@@ -61,11 +61,11 @@ const TableService = ({
     debugTable: false,
   });
 
-  const tableBg = isDarkMode ? "bg-gray-900" : "bg-white";
+  const tableBg = isDarkMode ? "bg-gray-800" : "bg-white";
   const tableText = isDarkMode ? "text-gray-100" : "text-gray-900";
-  const headerBg = isDarkMode ? "bg-gray-800" : "bg-gray-100";
+  const headerBg = isDarkMode ? "bg-gray-700" : "bg-gray-100";
   const borderColor = isDarkMode ? "border-gray-700" : "border-gray-200";
-  const rowHover = isDarkMode ? "hover:bg-gray-800" : "hover:bg-blue-50";
+  const rowHover = isDarkMode ? "hover:bg-gray-700/50" : "hover:bg-blue-50";
 
   // Debounced global search
   const [searchValue, setSearchValue] = useState(globalFilter ?? "");
@@ -82,6 +82,12 @@ const TableService = ({
     return () => clearTimeout(handler);
   }, [searchValue]);
 
+  const paginationBtnClass = `px-2 py-1 rounded border transition-colors duration-150 disabled:opacity-50 ${
+    isDarkMode
+      ? "border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600"
+      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+  }`;
+
   return (
     <div className="w-full overflow-x-auto mt-2">
       {/* Global Search */}
@@ -91,18 +97,18 @@ const TableService = ({
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Search..."
-          className={`px-3 py-2 rounded border ${borderColor} ${tableText} ${
-            isDarkMode ? "bg-gray-800" : "bg-white"
-          } focus:outline-none focus:ring-2 focus:ring-blue-400`}
+          className={`px-3 py-2 rounded-lg border ${borderColor} ${tableText} ${
+            isDarkMode ? "bg-gray-700" : "bg-gray-50"
+          } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-150`}
           style={{ minWidth: 200 }}
         />
         {/* Page size selector */}
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           <span>Rows per page:</span>
           <select
-            className={`px-2 py-1 rounded border ${borderColor} ${tableText} ${
-              isDarkMode ? "bg-gray-800" : "bg-white"
-            }`}
+            className={`px-2 py-1 rounded-lg border ${borderColor} ${tableText} ${
+              isDarkMode ? "bg-gray-700" : "bg-gray-50"
+            } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-150`}
             value={table.getState().pagination.pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
           >
@@ -116,7 +122,7 @@ const TableService = ({
       </div>
 
       <table
-        className={`min-w-full ${tableBg} ${tableText} border ${borderColor} rounded-lg shadow-sm`}
+        className={`min-w-full ${tableBg} ${tableText} border ${borderColor} rounded-lg shadow-sm overflow-hidden`}
       >
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -125,7 +131,7 @@ const TableService = ({
                 <th
                   key={header.id}
                   colSpan={header.colSpan}
-                  className={`px-3 py-2 ${headerBg} ${borderColor} border-b text-left font-semibold select-none cursor-pointer`}
+                  className={`px-3 py-2 ${headerBg} ${borderColor} border-b text-left font-semibold select-none cursor-pointer text-xs uppercase tracking-wider`}
                   onClick={
                     header.column.getCanSort()
                       ? header.column.getToggleSortingHandler()
@@ -138,7 +144,7 @@ const TableService = ({
                       header.getContext()
                     )}
                     {header.column.getCanSort() && (
-                      <span>
+                      <span className="text-blue-500">
                         {header.column.getIsSorted() === "asc"
                           ? "▲"
                           : header.column.getIsSorted() === "desc"
@@ -157,8 +163,8 @@ const TableService = ({
                       }
                       placeholder={`Filter...`}
                       className={`mt-1 px-2 py-1 rounded border ${borderColor} ${tableText} ${
-                        isDarkMode ? "bg-gray-700" : "bg-white"
-                      } w-full text-xs`}
+                        isDarkMode ? "bg-gray-800" : "bg-white"
+                      } w-full text-[10px] font-normal focus:outline-none focus:ring-1 focus:ring-blue-400`}
                     />
                   )}
                 </th>
@@ -180,7 +186,7 @@ const TableService = ({
             <tr>
               <td
                 colSpan={columns.length}
-                className="text-center py-6 text-gray-400"
+                className={`text-center py-10 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}
               >
                 No data found.
               </td>
@@ -191,7 +197,7 @@ const TableService = ({
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className={`px-3 py-2 border-b ${borderColor} align-middle`}
+                    className={`px-3 py-2 border-b ${borderColor} align-middle text-sm`}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
@@ -203,25 +209,25 @@ const TableService = ({
       </table>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-3">
+      <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
         <div className="flex items-center gap-2">
           <button
-            className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50"
+            className={paginationBtnClass}
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
           >
             {"<<"}
           </button>
           <button
-            className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50"
+            className={paginationBtnClass}
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
             {"<"}
           </button>
-          <span>
+          <span className="mx-2">
             Page{" "}
-            <strong>
+            <strong className={isDarkMode ? 'text-white' : 'text-gray-900'}>
               {table.getState().pagination.pageIndex + 1} of{" "}
               {serverPagination && controlledPageCount
                 ? controlledPageCount
@@ -229,14 +235,14 @@ const TableService = ({
             </strong>
           </span>
           <button
-            className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50"
+            className={paginationBtnClass}
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
             {">"}
           </button>
           <button
-            className="px-2 py-1 rounded border border-gray-300 disabled:opacity-50"
+            className={paginationBtnClass}
             onClick={() =>
               table.setPageIndex(
                 (serverPagination && controlledPageCount
@@ -249,8 +255,8 @@ const TableService = ({
             {">>"}
           </button>
         </div>
-        <div>
-          Go to page:{" "}
+        <div className="flex items-center gap-2">
+          <span>Go to page:</span>
           <input
             type="number"
             min={1}
@@ -264,7 +270,9 @@ const TableService = ({
               const page = e.target.value ? Number(e.target.value) - 1 : 0;
               table.setPageIndex(page);
             }}
-            className="w-16 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-16 px-2 py-1 rounded border ${borderColor} ${tableText} ${
+              isDarkMode ? "bg-gray-700" : "bg-gray-50"
+            } focus:outline-none focus:ring-2 focus:ring-blue-500 text-center transition-all duration-150`}
           />
         </div>
       </div>

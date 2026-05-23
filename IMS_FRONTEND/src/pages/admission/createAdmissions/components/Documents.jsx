@@ -99,7 +99,7 @@ const Documents = ({ formId, formData, setFormData, onNext, onBack, validationsE
         {fields.map(({ name, label }) => (
           <div key={name}>
             <label
-              className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              className={`block text-sm font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
                 }`}
             >
               {label}
@@ -108,7 +108,7 @@ const Documents = ({ formId, formData, setFormData, onNext, onBack, validationsE
               type="file"
               accept="image/*,application/pdf"
               onChange={(e) => handleFileChange(e, name)}
-              className={`w-full text-sm px-3 py-1.5 rounded-lg border ${isDarkMode
+              className={`w-full text-sm px-3 py-1.5 rounded-lg border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isDarkMode
                   ? 'bg-gray-700 text-white border-gray-600'
                   : 'bg-gray-50 text-gray-900 border-gray-300'
                 }`}

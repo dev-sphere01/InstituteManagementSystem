@@ -64,6 +64,20 @@ import LeadProfile from "./pages/calling/LeadProfile.jsx";
 import WorkflowTasks from "./pages/workflow/WorkflowTasks.jsx";
 import WorkflowTemplates from "./pages/workflow/WorkflowTemplates.jsx";
 import DocumentVerificationDetail from "./pages/workflow/DocumentVerificationDetail.jsx";
+// Employee Module
+import Employee from "./pages/employee/Employee.jsx";
+
+// Payroll Module
+import Payroll from "./pages/payroll/Payroll.jsx";
+
+// CRM Module
+import LeadPipeline from "./pages/crm/leads/LeadPipeline.jsx";
+import CrmAnalytics from "./pages/crm/analytics/CrmAnalytics.jsx";
+import Campaigns from "./pages/crm/campaigns/Campaigns.jsx";
+
+// Public Pages
+import ContactUs from "./pages/public/ContactUs.jsx";
+
 
 function App() {
   return (
@@ -148,6 +162,20 @@ function App() {
                   path="student-details/:id"
                   element={<StudentProfile />}
                 />
+
+                {/* Employee Module */}
+                <Route path="employees" element={<Employee />} />
+                <Route path="employees/:view" element={<Employee />} />
+                <Route path="employees/:view/:id" element={<Employee />} />
+
+                {/* Payroll Module */}
+                <Route path="payroll" element={<Payroll />} />
+                <Route path="payroll/:tab" element={<Payroll />} />
+
+                {/* CRM Module */}
+                <Route path="crm/leads" element={<LeadPipeline />} />
+                <Route path="crm/analytics" element={<CrmAnalytics />} />
+                <Route path="crm/campaigns" element={<Campaigns />} />
               </Route>
 
               {/* Calling detail routes (protected) */}
@@ -160,6 +188,9 @@ function App() {
 
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />
+
+              {/* Public routes — no auth required */}
+              <Route path="/contact" element={<ContactUs />} />
             </Routes>
           </Router>
         </NotificationProvider>

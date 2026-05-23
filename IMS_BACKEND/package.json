@@ -25,13 +25,14 @@
     "mongoose": "^8.4.1",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
-    "nodemailer": "^6.9.16",
+    "nodemailer": "^8.0.7",
     "react-router-dom": "^7.6.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "validator": "^13.12.0",
     "winston": "^3.17.0",
-    "winston-transport": "^4.9.0"
+    "winston-transport": "^4.9.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.3"
