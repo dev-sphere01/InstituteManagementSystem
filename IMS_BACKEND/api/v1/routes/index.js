@@ -21,6 +21,7 @@ const studentRoutes = require('./studentRoutes');
 const branchRoutes = require('./branchRoutes');
 const leadRoutes = require('./leadRoutes');
 const campaignRoutes = require('./campaignRoutes');
+const workflowChecklistRoutes = require('./workflowChecklistRoutes');
 //const otpRoutes = require('./otpRoutes');
 // Mount routes
 router.use('/users', userRoutes);
@@ -42,6 +43,7 @@ router.use('/dashboard', studentRoutes);
 router.use('/branches', branchRoutes);
 router.use('/leads', leadRoutes);
 router.use('/campaigns', campaignRoutes);
+router.use('/workflows', workflowChecklistRoutes);
 
 
 module.exports = router;

@@ -44,6 +44,7 @@ import CenterCode from "./pages/masters/centerCode/CenterCode.jsx";
 // Student Pages
 import StudentDashboard from './pages/dashboard/StudentDashboard.jsx';
 import Admission from "./pages/admission/createAdmissions/Admission.jsx";
+import WorkflowDashboard from "./pages/workflow/WorkflowDashboard.jsx";
 import Fee from "./pages/fee/Fee.jsx";
 
 import StudentDetails from "./pages/student/AllStudents/StudentDetails.jsx";
@@ -120,6 +121,9 @@ function App() {
 
                 {/* Admission Routes */}
                 <Route path="admission" element={<Admission />} />
+
+                {/* Workflow Routes */}
+                <Route path="workflow" element={<WorkflowDashboard />} />
 
                 {/* Fee Routes */}
                 <Route path="Fee" element={<Fee />} />

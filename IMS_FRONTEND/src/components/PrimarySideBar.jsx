@@ -11,6 +11,7 @@ const PrimarySideBar = () => {
   const mainNavItems = [
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
     { path: '/dashboard/admission', icon: 'document-add', label: 'Admission' },
+    { path: '/dashboard/workflow', icon: 'collection', label: 'Office Workflow' },
     { path: '/dashboard/fee', icon: 'document-add', label: 'Fee' },
     { path: '/dashboard/student-details', icon: 'users', label: 'Student Details' },
     { path: '/dashboard/reports', icon: 'document', label: 'Reports' },

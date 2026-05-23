@@ -77,6 +77,12 @@ const admissionDetailsSchema = new mongoose.Schema({
 
   // Status and Registration
   status: { type: String, default: 'Pending' },
+  lifecycleStatus: {
+    type: String,
+    enum: ['Prospect', 'Applied', 'Admitted', 'Active', 'Inactive', 'Dropped', 'Completed'],
+    default: 'Applied',
+    index: true
+  },
   // regNo: { type: String, required: true },//not sure about this one
   month: { type: String, required: true },
 

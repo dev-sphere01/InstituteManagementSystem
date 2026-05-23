@@ -19,19 +19,19 @@ const StudentProfile = () => {
 
   const { isDarkMode, colors } = useThemeStore(); // ✅ Use theme values
 
-  useEffect(() => {
-    const fetchStudent = async () => {
-      try {
-        const res = await API.get(`/admissions/${id}`);
-        setStudent(res);
-        console.log("Student loaded successfully", res.data);
-      } catch (err) {
-        console.error("Failed to load student", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchStudent = async () => {
+    try {
+      const res = await API.get(`/admissions/${id}`);
+      setStudent(res);
+      console.log("Student loaded successfully", res.data);
+    } catch (err) {
+      console.error("Failed to load student", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchStudent();
   }, [id]);
 
@@ -101,7 +101,7 @@ const StudentProfile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Compact Profile Summary */}
           <div className="lg:col-span-1">
-            <Summary student={student} />
+            <Summary student={student} onUpdate={fetchStudent} />
           </div>
 
           {/* Main Content */}
