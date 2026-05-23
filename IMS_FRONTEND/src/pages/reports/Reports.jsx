@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
   TrendingUp, Users, Target, DollarSign, Award, Trophy,
   Zap, Calendar, Plus, RefreshCw, Send, CheckCircle, AlertCircle, Sparkles, ChevronRight,
@@ -40,6 +40,7 @@ const initialBranchAdmissions = [
   { branch: 'Indira Nagar', admissions: 85, target: 90, revenue: 680000, dues: 95000, ccc: 22, tally: 20, python: 18, webdev: 15, olevel: 10 },
   { branch: 'Noida Extension', admissions: 110, target: 120, revenue: 880000, dues: 125000, ccc: 28, tally: 25, python: 24, webdev: 20, olevel: 13 }
 ];
+
 
 // Report 3: Pending Office Tasks + Overdue List (Office Workflow module)
 const initialOfficeTasks = [

@@ -1,11 +1,23 @@
 const AdmissionDetails = require('../models/admission');
-const ApiFeatures = require("../utils/apiFeatures"); 
+const ApiFeatures = require("../utils/apiFeatures");
+const { createLifecycleForAdmission } = require('../services/studentWorkflowService');
+
+const shouldCreateLifecycle = (admission) => {
+  if (!admission) return false;
+  return true; // We want all admissions to show up in workflows
+};
+
+const ensureLifecycle = async (admission, user) => {
+  if (!shouldCreateLifecycle(admission)) return;
+  await createLifecycleForAdmission({ admission, userId: user?._id });
+};
 
 // Create a new admission
 exports.createAdmission = async (req, res) => {
   try {
     const admission = new AdmissionDetails(req.body);
     await admission.save({ validateBeforeSave: false });
+    await ensureLifecycle(admission, req.user);
     res.status(201).json(admission);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -51,7 +63,7 @@ exports.getAdmissionById = async (req, res) => {
   }
 };
 
-// 🔍 Search admission by formNo, fullName, contactNumber, emailAddress, or aadharNo
+// Search admission by formNo, fullName, contactNumber, emailAddress, or aadharNo
 exports.searchAdmission = async (req, res) => {
   try {
     const { query } = req.query;
@@ -83,7 +95,7 @@ exports.searchAdmission = async (req, res) => {
 };
 
 
-// ✏️ Update step-wise (partial save)
+// Update step-wise (partial save)
 exports.updateAdmissionStep = async (req, res) => {
   try {
     const { formNo } = req.params;
@@ -101,13 +113,14 @@ exports.updateAdmissionStep = async (req, res) => {
     );
 
     if (!updated) return res.status(404).json({ message: 'Form not found' });
+    await ensureLifecycle(updated, req.user);
     res.status(200).json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// ✅ Finalize submission
+// Finalize submission
 exports.finalizeAdmission = async (req, res) => {
   try {
     const { formNo } = req.params;
@@ -223,6 +236,7 @@ exports.updateAdmission = async (req, res) => {
     if (!updated) {
       return res.status(404).json({ message: 'Admission not found' });
     }
+    await ensureLifecycle(updated, req.user);
     res.status(200).json(updated);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -250,6 +264,7 @@ exports.patchAdmission = async (req, res) => {
     if (!updated) {
       return res.status(404).json({ message: 'Admission not found' });
     }
+    await ensureLifecycle(updated, req.user);
     res.status(200).json(updated);
   } catch (err) {
     console.error('Patch error:', err);

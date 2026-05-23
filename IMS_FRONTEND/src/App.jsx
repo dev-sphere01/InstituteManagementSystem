@@ -12,6 +12,7 @@ import RoleBasedRoutes from "./routes/RoleBasedRoutes";
 // Pages
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
+import DynamicFormView from "./pages/forms/DynamicFormView.jsx";
 
 // Enquiry Pages
 import EnquiryForm from "./pages/enquiry/addEnquiry/EnquiryForm.jsx";
@@ -40,6 +41,10 @@ import Batch from "./pages/masters/batch/Batch.jsx";
 import Session from "./pages/masters/session/Session.jsx";
 import InstitutionType from "./pages/masters/institutionType/InstitutionType.jsx";
 import CenterCode from "./pages/masters/centerCode/CenterCode.jsx";
+import CallingFormMaster from "./pages/masters/calling/CallingFormMaster.jsx";
+import CallingManagement from "./pages/masters/calling/CallingManagement.jsx";
+import ApplicationsList from "./pages/masters/applications/ApplicationsList.jsx";
+import DocumentMaster from "./pages/masters/DocumentMaster.jsx";
 
 // Student Pages
 import StudentDashboard from './pages/dashboard/StudentDashboard.jsx';
@@ -51,6 +56,15 @@ import StudentDetails from "./pages/student/AllStudents/StudentDetails.jsx";
 import StudentProfile from "./pages/student/StudentProfile/StudentProfile.jsx";
 import AddistionalFeatures from "./pages/masters/additionalFeatures/AdditionalFeatures.jsx";
 
+// Calling pages
+import BulkUpload from "./pages/calling/BulkUpload.jsx";
+import EmployeeCalling from "./pages/calling/EmployeeCalling.jsx";
+import ApplicationCallingQueue from "./pages/calling/ApplicationCallingQueue.jsx";
+import LeadDetails from "./pages/calling/LeadDetails.jsx";
+import LeadProfile from "./pages/calling/LeadProfile.jsx";
+import WorkflowTasks from "./pages/workflow/WorkflowTasks.jsx";
+import WorkflowTemplates from "./pages/workflow/WorkflowTemplates.jsx";
+import DocumentVerificationDetail from "./pages/workflow/DocumentVerificationDetail.jsx";
 // Employee Module
 import Employee from "./pages/employee/Employee.jsx";
 
@@ -110,6 +124,7 @@ function App() {
                 <Route path="sessions" element={<Session />} />
                 <Route path="institution-type" element={<InstitutionType />} />
                 <Route path="additional-features" element={<AddistionalFeatures />} />
+                <Route path="document-master" element={<DocumentMaster />} />
 
                 {/* Enquiry Routes */}
                 <Route path="enquiry/create" element={<EnquiryForm />} />
@@ -119,6 +134,14 @@ function App() {
                   element={<EnquiryDetails />}
                 />
 
+                {/* Calling Routes */}
+                <Route path="calling-management" element={<CallingManagement />} />
+                <Route path="calling-form-master" element={<CallingFormMaster />} />
+                <Route path="calling-management/bulk-upload" element={<BulkUpload />} />
+                <Route path="applications" element={<ApplicationsList />} />
+                <Route path="my-calls" element={<EmployeeCalling />} />
+                <Route path="my-application-queue" element={<ApplicationCallingQueue />} />
+
                 {/* Admission Routes */}
                 <Route path="admission" element={<Admission />} />
 
@@ -127,6 +150,10 @@ function App() {
 
                 {/* Fee Routes */}
                 <Route path="Fee" element={<Fee />} />
+                {/* Workflow Routes */}
+                <Route path="workflow/tasks/:tabSlug?" element={<WorkflowTasks />} />
+                <Route path="workflow/document-verification/:id" element={<DocumentVerificationDetail />} />
+                <Route path="workflow/templates" element={<WorkflowTemplates />} />
 
                 {/* Change Password - now protected */}
                 <Route path="change-password" element={<ChangePassword />} />
@@ -154,6 +181,14 @@ function App() {
                 <Route path="crm/analytics" element={<CrmAnalytics />} />
                 <Route path="crm/campaigns" element={<Campaigns />} />
               </Route>
+
+              {/* Calling detail routes (protected) */}
+              <Route element={<RoleBasedRoutes />}>
+                <Route path="/calling/lead/:leadId" element={<LeadDetails />} />
+                <Route path="/calling/profile/:leadId" element={<LeadProfile />} />
+              </Route>
+
+              <Route path="/form/:encryptedData" element={<DynamicFormView />} />
 
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />

@@ -125,7 +125,7 @@ const useUserStore = create(
 
         try {
           const response = await API.post('/users/admin/user', userData);
-
+          
           if (response.success || response.user) {
             // Refresh users list
             await get().fetchUsers();

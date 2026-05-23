@@ -637,7 +637,9 @@ const AllUsers = ({ onAdd, onEdit, onView }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {user.role?.RoleName || 'No Role'}
+                        {(user.roles || []).length > 0
+                          ? user.roles.map((r) => r?.RoleName).filter(Boolean).join(', ')
+                          : (user.role?.RoleName || 'No Role')}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

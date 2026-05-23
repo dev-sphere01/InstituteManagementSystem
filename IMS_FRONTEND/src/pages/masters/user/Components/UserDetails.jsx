@@ -203,10 +203,12 @@ const UserDetails = ({ userId, onBack, onEdit }) => {
             </div>
             <div>
               <dt className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Role
+                Roles
               </dt>
               <dd className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                {currentUser.role?.RoleName || 'No Role Assigned'}
+                {(currentUser.roles || []).length > 0
+                  ? currentUser.roles.map((r) => r?.RoleName).filter(Boolean).join(', ')
+                  : (currentUser.role?.RoleName || 'No Role Assigned')}
               </dd>
             </div>
             <div>

@@ -130,6 +130,22 @@ const createUserAdminSchema = {
         return 'Role must be a valid ObjectId or role name string';
       }
     },
+    roles: {
+      type: 'object',
+      custom: (value) => {
+        if (!value) return null;
+        if (!Array.isArray(value)) return 'roles must be an array';
+        const objectIdPattern = /^[0-9a-fA-F]{24}$/;
+        const validRoleNames = ['student', 'user', 'admin', 'manager'];
+        for (const item of value) {
+          if (typeof item !== 'string') return 'roles entries must be strings';
+          if (objectIdPattern.test(item)) continue;
+          if (validRoleNames.includes(item)) continue;
+          return 'roles entries must be a valid ObjectId or role name';
+        }
+        return null;
+      }
+    },
     isActive: {
       type: 'boolean'
     }
@@ -171,6 +187,22 @@ const updateUserRoleSchema = {
         }
 
         return 'Role must be a valid ObjectId or role name string';
+      }
+    },
+    roles: {
+      type: 'object',
+      custom: (value) => {
+        if (!value) return null;
+        if (!Array.isArray(value)) return 'roles must be an array';
+        const objectIdPattern = /^[0-9a-fA-F]{24}$/;
+        const validRoleNames = ['student', 'user', 'admin', 'manager'];
+        for (const item of value) {
+          if (typeof item !== 'string') return 'roles entries must be strings';
+          if (objectIdPattern.test(item)) continue;
+          if (validRoleNames.includes(item)) continue;
+          return 'roles entries must be a valid ObjectId or role name';
+        }
+        return null;
       }
     },
     isActive: {

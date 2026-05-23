@@ -66,13 +66,25 @@ const Contact = ({ onNext, onBack, validationsEnabled = true, formData = {}, adm
         ) || countryData[0];
         
         if (indiaData?.states) {
-          setStatesData(indiaData.states);
-          console.log("States from array:", indiaData.states);
+          const normalizedStates = indiaData.states.map((state) => ({
+            name: state.stateName || state.name,
+            cities: (state.cityNames || state.cities || []).map((city) => ({
+              name: city.name || city
+            }))
+          }));
+          setStatesData(normalizedStates);
+          console.log("States from array:", normalizedStates);
         }
       } else if (countryData?.states) {
         // Single country object
-        setStatesData(countryData.states);
-        console.log("States from single object:", countryData.states);
+        const normalizedStates = countryData.states.map((state) => ({
+          name: state.stateName || state.name,
+          cities: (state.cityNames || state.cities || []).map((city) => ({
+            name: city.name || city
+          }))
+        }));
+        setStatesData(normalizedStates);
+        console.log("States from single object:", normalizedStates);
       }
     } catch (error) {
       console.error("Failed to fetch country, states, and cities", error);

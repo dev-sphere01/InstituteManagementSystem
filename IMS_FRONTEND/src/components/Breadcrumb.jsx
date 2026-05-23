@@ -19,6 +19,7 @@ const Breadcrumb = () => {
     'courses': 'Courses',
     'batches': 'Batches',
     'sessions': 'Sessions',
+    'calling-form-master': 'Calling Form Master',
     // Add more mappings as needed
   };
 

@@ -4,6 +4,7 @@ const ErrorHandler = require('../utils/ErrorHandler');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const generatePassword = require('./generatePassword');
+const mongoose = require('mongoose');
 
 /**
  * Service layer for user-related operations
@@ -22,6 +23,49 @@ const getDefaultStudentRole = async () => {
   return studentRole._id;
 };
 
+const resolveRoleId = async (roleValue) => {
+  if (!roleValue) return null;
+  if (typeof roleValue === 'string') {
+    if (mongoose.Types.ObjectId.isValid(roleValue)) {
+      const role = await Role.findById(roleValue);
+      if (!role) {
+        throw new ErrorHandler(`Role with ID '${roleValue}' not found`, 400);
+      }
+      if (!role.isActive) {
+        throw new ErrorHandler(`Role '${role.RoleName}' is inactive`, 400);
+      }
+      return role._id;
+    }
+    const role = await Role.findOne({ RoleName: roleValue, isActive: true });
+    if (!role) {
+      throw new ErrorHandler(`Role '${roleValue}' not found`, 400);
+    }
+    return role._id;
+  }
+  if (mongoose.Types.ObjectId.isValid(roleValue)) {
+    const role = await Role.findById(roleValue);
+    if (!role) {
+      throw new ErrorHandler(`Role with ID '${roleValue}' not found`, 400);
+    }
+    if (!role.isActive) {
+      throw new ErrorHandler(`Role '${role.RoleName}' is inactive`, 400);
+    }
+    return role._id;
+  }
+  return null;
+};
+
+const resolveRoleIds = async (rolesInput) => {
+  if (!rolesInput) return [];
+  const rolesArray = Array.isArray(rolesInput) ? rolesInput : [rolesInput];
+  const resolved = [];
+  for (const item of rolesArray) {
+    const roleId = await resolveRoleId(item);
+    if (roleId) resolved.push(roleId);
+  }
+  return Array.from(new Set(resolved.map((id) => id.toString()))).map((id) => mongoose.Types.ObjectId(id));
+};
+
 /**
  * Create a new user
  * @param {Object} userData - User data including name, email, password, etc.
@@ -31,37 +75,27 @@ const getDefaultStudentRole = async () => {
  */
 exports.createUser = async (userData, options = {}) => {
   let roleId = userData.role;
+  let roleIds = [];
 
   if (!roleId) {
     // If no role provided, get default student role
     roleId = await getDefaultStudentRole();
   } else if (options.isAdminCreation) {
     // Admin creation: role can be ObjectId or string
-    if (typeof roleId === 'string') {
-      // Check if it's a valid ObjectId format
-      const mongoose = require('mongoose');
-      if (mongoose.Types.ObjectId.isValid(roleId)) {
-        // It's an ObjectId, verify it exists
-        const role = await Role.findById(roleId);
-        if (!role) {
-          throw new ErrorHandler(`Role with ID '${roleId}' not found`, 400);
-        }
-        if (!role.isActive) {
-          throw new ErrorHandler(`Role '${role.RoleName}' is inactive`, 400);
-        }
-        roleId = role._id;
-      } else {
-        // It's a role name, find the role ObjectId
-        const role = await Role.findOne({ RoleName: roleId, isActive: true });
-        if (!role) {
-          throw new ErrorHandler(`Role '${roleId}' not found`, 400);
-        }
-        roleId = role._id;
-      }
-    }
+    roleId = await resolveRoleId(roleId);
   } else {
     // Self-registration: always use student role regardless of provided role
     roleId = await getDefaultStudentRole();
+  }
+
+  if (options.isAdminCreation && userData.roles) {
+    roleIds = await resolveRoleIds(userData.roles);
+  }
+
+  if (roleId && roleIds.length === 0) {
+    roleIds = [roleId];
+  } else if (roleId && !roleIds.some((id) => id.toString() === roleId.toString())) {
+    roleIds.unshift(roleId);
   }
 
   // Always generate a password, ignore any password from frontend
@@ -74,6 +108,7 @@ exports.createUser = async (userData, options = {}) => {
     email: userData.email,
     password: passwordToUse, // pass plain password, let pre-save hook hash it
     role: roleId,
+    roles: roleIds,
     avatar: {
       public_id: userData.avatar?.public_id || "default_id",
       url: userData.avatar?.url || "default_url"
@@ -88,10 +123,10 @@ exports.createUser = async (userData, options = {}) => {
   await sendEmail(user.email, subject, html);
 
   // Populate role data with permissions before returning
-  await user.populate({
-    path: 'role',
-    select: 'RoleName description level permissions isActive'
-  });
+  await user.populate([
+    { path: 'role', select: 'RoleName description level permissions isActive' },
+    { path: 'roles', select: 'RoleName description level permissions isActive' }
+  ]);
 
   return user;
 };
@@ -111,10 +146,10 @@ exports.authenticateUser = async (email, password) => {
   // Find user by email and populate role with permissions
   const user = await User.findOne({ email })
     .select("+password")
-    .populate({
-      path: 'role',
-      select: 'RoleName description level permissions isActive'
-    });
+    .populate([
+      { path: 'role', select: 'RoleName description level permissions isActive' },
+      { path: 'roles', select: 'RoleName description level permissions isActive' }
+    ]);
 
   if (!user) {
     throw new ErrorHandler("Invalid email or password", 401);
@@ -133,13 +168,17 @@ exports.authenticateUser = async (email, password) => {
   }
 
   // Check if user has a role assigned
-  if (!user.role) {
+  if (!user.role && (!user.roles || user.roles.length === 0)) {
     throw new ErrorHandler("User role not found. Please contact administrator.", 403);
   }
 
   // Check if role is active
-  if (!user.role.isActive) {
-    throw new ErrorHandler("Your role is inactive. Please contact administrator to activate your role.", 403);
+  const roleDocs = [];
+  if (user.role) roleDocs.push(user.role);
+  if (Array.isArray(user.roles)) user.roles.forEach((r) => r && roleDocs.push(r));
+  const hasActiveRole = roleDocs.some((r) => r.isActive);
+  if (!hasActiveRole) {
+    throw new ErrorHandler("Your roles are inactive. Please contact administrator to activate your role.", 403);
   }
 
   // Update last login timestamp
@@ -156,10 +195,10 @@ exports.authenticateUser = async (email, password) => {
  */
 exports.getUserProfile = async (userId) => {
   const user = await User.findById(userId)
-    .populate({
-      path: 'role',
-      select: 'RoleName description level permissions isActive'
-    });
+    .populate([
+      { path: 'role', select: 'RoleName description level permissions isActive' },
+      { path: 'roles', select: 'RoleName description level permissions isActive' }
+    ]);
 
   if (!user) {
     throw new ErrorHandler("User not found", 404);
@@ -180,6 +219,10 @@ exports.getAllUsers = async (queryParams = {}) => {
     populate: [
       {
         path: 'role',
+        select: 'RoleName description level permissions isActive'
+      },
+      {
+        path: 'roles',
         select: 'RoleName description level permissions isActive'
       }
     ],
@@ -221,33 +264,24 @@ exports.updateUser = async (userId, userData) => {
   }
 
   // Handle role validation and conversion
-  if (userData.role !== undefined) {
-    let roleId = userData.role;
-
-    if (roleId) {
-      const mongoose = require('mongoose');
-      if (typeof roleId === 'string') {
-        if (mongoose.Types.ObjectId.isValid(roleId)) {
-          // It's an ObjectId, verify it exists
-          const role = await Role.findById(roleId);
-          if (!role) {
-            throw new ErrorHandler(`Role with ID '${roleId}' not found`, 400);
-          }
-          if (!role.isActive) {
-            throw new ErrorHandler(`Role '${role.RoleName}' is inactive`, 400);
-          }
-          roleId = role._id;
-        } else {
-          // It's a role name, find the role ObjectId
-          const role = await Role.findOne({ RoleName: roleId, isActive: true });
-          if (!role) {
-            throw new ErrorHandler(`Role '${roleId}' not found`, 400);
-          }
-          roleId = role._id;
-        }
-      }
+  if (userData.roles !== undefined) {
+    const roleIds = await resolveRoleIds(userData.roles);
+    updateData.roles = roleIds;
+    if (!userData.role && roleIds.length > 0) {
+      updateData.role = roleIds[0];
     }
+  }
+
+  if (userData.role !== undefined) {
+    const roleId = await resolveRoleId(userData.role);
     updateData.role = roleId;
+    if (roleId && Array.isArray(updateData.roles)) {
+      if (!updateData.roles.some((id) => id.toString() === roleId.toString())) {
+        updateData.roles.unshift(roleId);
+      }
+    } else if (roleId && updateData.roles === undefined) {
+      updateData.roles = [roleId];
+    }
   }
 
   const user = await User.findByIdAndUpdate(
@@ -258,10 +292,10 @@ exports.updateUser = async (userId, userData) => {
       runValidators: true,
       useFindAndModify: false
     }
-  ).populate({
-    path: 'role',
-    select: 'RoleName description level permissions isActive'
-  });
+  ).populate([
+    { path: 'role', select: 'RoleName description level permissions isActive' },
+    { path: 'roles', select: 'RoleName description level permissions isActive' }
+  ]);
 
   if (!user) {
     throw new ErrorHandler("User not found", 404);
@@ -310,10 +344,10 @@ exports.changePassword = async (userId, oldPassword, newPassword) => {
   await user.save();
 
   // Populate role data before returning
-  await user.populate({
-    path: 'role',
-    select: 'RoleName description level permissions isActive'
-  });
+  await user.populate([
+    { path: 'role', select: 'RoleName description level permissions isActive' },
+    { path: 'roles', select: 'RoleName description level permissions isActive' }
+  ]);
 
   return user;
 };
@@ -572,10 +606,10 @@ exports.resetPassword = async (token, newPassword) => {
   await user.save();
 
   // Populate role data before returning
-  await user.populate({
-    path: 'role',
-    select: 'RoleName description level permissions isActive'
-  });
+  await user.populate([
+    { path: 'role', select: 'RoleName description level permissions isActive' },
+    { path: 'roles', select: 'RoleName description level permissions isActive' }
+  ]);
 
   return user;
 };

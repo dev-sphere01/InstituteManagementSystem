@@ -244,16 +244,30 @@ const requireRoleLevel = (minLevel) => {
       }
 
       // Populate role if not already populated
-      if (!req.user.populated('role')) {
+      if (!req.user.populated('role') && req.user.role) {
         await req.user.populate('role');
       }
+      if (!req.user.populated('roles') && req.user.roles && req.user.roles.length > 0) {
+        await req.user.populate('roles');
+      }
 
-      if (!req.user.role || req.user.role.level < minLevel) {
+      const roleDocs = [];
+      if (req.user.role) roleDocs.push(req.user.role);
+      if (Array.isArray(req.user.roles)) {
+        req.user.roles.forEach((r) => r && roleDocs.push(r));
+      }
+
+      const maxLevel = roleDocs.reduce((acc, role) => {
+        const level = role && typeof role.level === 'number' ? role.level : 0;
+        return Math.max(acc, level);
+      }, 0);
+
+      if (!roleDocs.length || maxLevel < minLevel) {
         return res.status(403).json({
           success: false,
           message: 'Insufficient role level',
           required: minLevel,
-          current: req.user.role ? req.user.role.level : 0
+          current: roleDocs.length ? maxLevel : 0
         });
       }
 

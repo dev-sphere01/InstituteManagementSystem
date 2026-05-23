@@ -47,6 +47,16 @@ const admissionDetailsSchema = new mongoose.Schema({
   speciallyAbled: { type: String },//url , to be stored in root folder
   incomeCertificate: { type: String },//add income certificate url if EWS enabled
 
+  // Document Verification Statuses
+  documentStatuses: {
+      aadharPhoto: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+      candidatePhoto: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+      candidateSignature: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+      tenthMarksheet: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+      twelfthMarksheet: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+      incomeCertificate: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } }
+  },
+
   // Education & Course
   highestEducationalQualification: { type: String, required: true },//text data
   boardOrUniversity: { type: String, required: true },//text data
@@ -82,6 +92,10 @@ const admissionDetailsSchema = new mongoose.Schema({
     enum: ['Prospect', 'Applied', 'Admitted', 'Active', 'Inactive', 'Dropped', 'Completed'],
     default: 'Applied',
     index: true
+  },
+  studentStatusUpdatedAt: {
+    type: Date,
+    default: Date.now
   },
   // regNo: { type: String, required: true },//not sure about this one
   month: { type: String, required: true },

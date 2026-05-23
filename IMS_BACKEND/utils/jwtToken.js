@@ -16,6 +16,7 @@ const sendToken = (user, statusCode, res) => {
         name: user.name,
         email: user.email,
         role: user.role, // This will include full role data with permissions
+        roles: user.roles,
         isActive: user.isActive,
         lastLogin: user.lastLogin,
         loginAttempts: user.loginAttempts,
