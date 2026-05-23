@@ -87,7 +87,7 @@ const admissionDetailsSchema = new mongoose.Schema({
 
   // Status and Registration
   status: { type: String, default: 'Pending' },
-  studentStatus: {
+  lifecycleStatus: {
     type: String,
     enum: ['Prospect', 'Applied', 'Admitted', 'Active', 'Inactive', 'Dropped', 'Completed'],
     default: 'Applied',

@@ -127,15 +127,98 @@ exports.finalizeAdmission = async (req, res) => {
 
     const updated = await AdmissionDetails.findOneAndUpdate(
       { formNo },
-      { $set: { isCompleted: true, currentStep: 'submitted', status: 'Submitted' } },
+      { $set: { isCompleted: true, currentStep: 'submitted', status: 'Submitted', lifecycleStatus: 'Admitted' } },
       { new: true }
     );
 
     if (!updated) return res.status(404).json({ message: 'Form not found' });
-    await ensureLifecycle(updated, req.user);
+
+    // Auto-create Workflow Checklist for the admitted student
+    const WorkflowChecklist = require('../models/workflowChecklist');
+    const existingChecklist = await WorkflowChecklist.findOne({ admission: updated._id });
+    if (!existingChecklist) {
+      const baseDate = new Date();
+      const defaultTasks = [
+        {
+          taskType: 'fee_collection',
+          title: 'Fee collection and receipt',
+          dueDate: new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000), // +3 days
+          responsibleTeam: 'Finance',
+          status: 'Pending'
+        },
+        {
+          taskType: 'documentation_verification',
+          title: 'Documentation verification',
+          dueDate: new Date(baseDate.getTime() + 5 * 24 * 60 * 60 * 1000), // +5 days
+          responsibleTeam: 'Back Office',
+          status: 'Pending'
+        },
+        {
+          taskType: 'registration_creation',
+          title: 'Registration creation',
+          dueDate: new Date(baseDate.getTime() + 10 * 24 * 60 * 60 * 1000), // +10 days
+          responsibleTeam: 'Back Office',
+          status: 'Pending'
+        },
+        {
+          taskType: 'exam_form_filling',
+          title: 'Exam form filling',
+          dueDate: new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000), // +30 days
+          responsibleTeam: 'Academics',
+          status: 'Pending'
+        },
+        {
+          taskType: 'admit_card_distribution',
+          title: 'Admit card distribution',
+          dueDate: new Date(baseDate.getTime() + 45 * 24 * 60 * 60 * 1000), // +45 days
+          responsibleTeam: 'Academics',
+          status: 'Pending'
+        },
+        {
+          taskType: 'certificate_distribution',
+          title: 'Certificate distribution',
+          dueDate: new Date(baseDate.getTime() + 90 * 24 * 60 * 60 * 1000), // +90 days
+          responsibleTeam: 'Back Office',
+          status: 'Pending'
+        }
+      ];
+
+      await WorkflowChecklist.create({
+        admission: updated._id,
+        tasks: defaultTasks
+      });
+    }
+
     res.status(200).json({ message: 'Form submitted successfully', data: updated });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+// 🔄 Manually update student lifecycle status
+exports.updateAdmissionLifecycle = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { lifecycleStatus } = req.body;
+
+    const validStatuses = ['Prospect', 'Applied', 'Admitted', 'Active', 'Inactive', 'Dropped', 'Completed'];
+    if (!validStatuses.includes(lifecycleStatus)) {
+      return res.status(400).json({ success: false, message: 'Invalid lifecycle status' });
+    }
+
+    const updated = await AdmissionDetails.findByIdAndUpdate(
+      id,
+      { $set: { lifecycleStatus } },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Student admission not found' });
+    }
+
+    res.status(200).json({ success: true, message: 'Lifecycle status updated successfully', admission: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

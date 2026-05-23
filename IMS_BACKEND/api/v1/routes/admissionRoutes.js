@@ -29,6 +29,9 @@ router.put('/:id', validateAdmission, admissionController.updateAdmission);
 // PATCH admission (step update) by ID — ✅ FIXED PATH
 router.patch('/:id', admissionController.patchAdmission);
 
+// PATCH manual lifecycle status update by ID
+router.patch('/:id/lifecycle', admissionController.updateAdmissionLifecycle);
+
 // DELETE admission by ID
 router.delete('/:id', admissionController.deleteAdmission);
 

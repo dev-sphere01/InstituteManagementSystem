@@ -177,6 +177,18 @@ const API = {
       getOverallROI: () => instance.get('/campaigns/roi/overall'),
     },
   },
+  workflows: {
+    getAll: (params = {}) => instance.get('/workflows', { params }),
+    getByAdmissionId: (admissionId) => instance.get(`/workflows/admission/${admissionId}`),
+    updateTask: (id, taskId, taskData) => instance.patch(`/workflows/${id}/tasks/${taskId}`, taskData),
+    sendReminder: (id, reminderData) => instance.post(`/workflows/${id}/reminders`, reminderData),
+    escalateTask: (id, taskId, escalationData) => instance.post(`/workflows/${id}/tasks/${taskId}/escalate`, escalationData),
+  },
+  admissions: {
+    getAll: (params = {}) => instance.get('/admissions', { params }),
+    getById: (id) => instance.get(`/admissions/${id}`),
+    updateLifecycleStatus: (id, status) => instance.patch(`/admissions/${id}/lifecycle`, { lifecycleStatus: status })
+  }
 };
 
 export default API;
