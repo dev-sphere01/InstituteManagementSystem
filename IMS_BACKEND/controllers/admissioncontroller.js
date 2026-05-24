@@ -36,8 +36,9 @@ exports.getAllAdmissions = async (req, res) => {
 
     const admissions = await apiFeature.query;
 
-    // Optional: Total count for frontend pagination control
-    const totalCount = await AdmissionDetails.countDocuments();
+    // Total count for frontend pagination control
+    const countQuery = new ApiFeatures(AdmissionDetails.find(), req.query).search().filter();
+    const totalCount = await countQuery.query.countDocuments();
 
     res.status(200).json({
       success: true,

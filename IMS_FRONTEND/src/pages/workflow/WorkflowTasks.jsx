@@ -6,6 +6,7 @@ import { useNotification } from "../../services/NotificationService";
 import { useAuth } from "../../context/AuthContext";
 import StatusManagementPanel from "./StatusManagementPanel";
 import DocumentVerificationPanel from "./DocumentVerificationPanel";
+import Fee from "../fee/Fee";
 import * as XLSX from "xlsx";
 
 const TAB_ROLE_MAP = {
@@ -13,7 +14,8 @@ const TAB_ROLE_MAP = {
   "Registration": ["Admin"],
   "Exam Form": ["Admin"],
   "Admit Card": ["Admin"],
-  "Certificate": ["Admin"]
+  "Certificate": ["Admin"],
+  "Fee": ["Admin", "Accountant"]
 };
 
 const TABS = Object.keys(TAB_ROLE_MAP);
@@ -84,7 +86,7 @@ const WorkflowTasks = () => {
   }, [tabSlug, visibleTabs.length, filterParam]);
 
   useEffect(() => {
-    if (activeTab && activeTab !== 'Document Verification') {
+    if (activeTab && activeTab !== 'Document Verification' && activeTab !== 'Fee') {
       fetchTasks();
     } else {
       setTasks([]);
@@ -245,6 +247,8 @@ const WorkflowTasks = () => {
       <div className="relative z-10 max-w-full mx-auto w-full">
         {activeTab === 'Document Verification' ? (
           <DocumentVerificationPanel />
+        ) : activeTab === 'Fee' ? (
+          <Fee />
         ) : activeTab ? (
           <StatusManagementPanel
             activeTab={activeTab}
