@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import React, { useState, useMemo, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   TrendingUp, Users, Target, DollarSign, Award, Trophy,
   Zap, Calendar, Plus, RefreshCw, Send, CheckCircle, AlertCircle, Sparkles, ChevronRight,
@@ -10,6 +10,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { useThemeStore } from '../../store';
+import API from '../../services/API';
+import CUPLEMS_API from '../../services/CUPLEMS_API';
 
 // ==========================================
 // 1. SLEEK SANDBOX DATA DESIGN FOR ALL 7 REPORTS
@@ -118,6 +120,147 @@ export default function Reports() {
   const [attendanceLate, setAttendanceLate] = useState(initialAttendanceLate);
   const [appraisalScores, setAppraisalScores] = useState(initialAppraisalScores);
   const [campaignROI, setCampaignROI] = useState(initialCampaignROI);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchReportData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (activeReportTab === 'leads') {
+        const res = await API.reports.getLeads();
+        if (res.success && res.data) {
+          setDailyLeads(res.data);
+        }
+      } else if (activeReportTab === 'branches') {
+        const res = await API.reports.getBranches();
+        if (res.success && res.data) {
+          setBranchAdmissions(res.data);
+        }
+      } else if (activeReportTab === 'tasks') {
+        const res = await API.reports.getTasks();
+        if (res.success && res.data) {
+          setOfficeTasks(res.data);
+        }
+      } else if (activeReportTab === 'fees') {
+        const res = await API.reports.getFees();
+        if (res.success && res.data) {
+          setFeesDues(res.data);
+        }
+      } else if (activeReportTab === 'roi') {
+        const res = await API.crm.campaigns.getROI();
+        if (res.success && res.data) {
+          setCampaignROI(res.data);
+        }
+      } else if (activeReportTab === 'attendance') {
+        const [empRes, attRes, deptRes] = await Promise.all([
+          CUPLEMS_API.get('/api/Employees'),
+          CUPLEMS_API.get('/api/Attendances'),
+          CUPLEMS_API.get('/api/Departments')
+        ]);
+
+        const employees = empRes.data || [];
+        const attendances = attRes.data || [];
+        const departments = deptRes.data || [];
+
+        const deptMap = Object.fromEntries(departments.map(d => [d.DeptID, d.DeptName]));
+
+        const attendanceStats = employees.map((emp) => {
+          const empAtt = attendances.filter(a => a.AtdEmpCode === emp.AtdEmpCode);
+          const workingDays = empAtt.length;
+          
+          let lateDays = 0;
+          let checkInMinutesSum = 0;
+          let checkInCount = 0;
+
+          empAtt.forEach(a => {
+            if (a.CheckInTime) {
+              const [h, m] = a.CheckInTime.split(':').map(Number);
+              if (h > 9 || (h === 9 && m > 30)) {
+                lateDays++;
+              }
+              checkInMinutesSum += h * 60 + m;
+              checkInCount++;
+            }
+          });
+
+          const onTimeDays = workingDays - lateDays;
+          let avgCheckIn = '-';
+          if (checkInCount > 0) {
+            const avgMins = Math.round(checkInMinutesSum / checkInCount);
+            const hour = Math.floor(avgMins / 60);
+            const min = avgMins % 60;
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+            avgCheckIn = `${String(displayHour).padStart(2, '0')}:${String(min).padStart(2, '0')} ${ampm}`;
+          }
+
+          return {
+            empId: `EMP-${String(emp.EmpID).padStart(3, '0')}`,
+            name: `${emp.FirstName} ${emp.LastName}`,
+            department: deptMap[emp.LocationID] || 'Operations',
+            onTimeDays,
+            lateDays,
+            workingDays,
+            avgCheckIn,
+            lateRank: 0,
+            branch: emp.LocationID === 1 ? 'Lucknow Main' : 'Hazratganj Centre'
+          };
+        });
+
+        const sortedByLateness = [...attendanceStats].sort((a, b) => b.lateDays - a.lateDays);
+        sortedByLateness.forEach((stat, idx) => {
+          stat.lateRank = idx + 1;
+        });
+
+        setAttendanceLate(sortedByLateness);
+      } else if (activeReportTab === 'performance') {
+        const [assessRes, empRes, deptRes] = await Promise.all([
+          CUPLEMS_API.get('/api/EmpAssessments'),
+          CUPLEMS_API.get('/api/Employees'),
+          CUPLEMS_API.get('/api/Departments')
+        ]);
+
+        const assessments = assessRes.data || [];
+        const employees = empRes.data || [];
+        const departments = deptRes.data || [];
+
+        const empMap = Object.fromEntries(employees.map(e => [e.EmpID, `${e.FirstName} ${e.LastName}`]));
+        const deptMap = Object.fromEntries(departments.map(d => [d.DeptID, d.DeptName]));
+
+        const appraisalStats = assessments.map(a => {
+          const emp = employees.find(e => e.EmpID === a.EmpID) || {};
+          return {
+            empId: `EMP-${String(a.EmpID).padStart(3, '0')}`,
+            employeeName: empMap[a.EmpID] || 'Unknown',
+            department: deptMap[emp.LocationID] || 'Operations',
+            selfDevelopment: a.SelfDevelopment || 0,
+            decisionMaking: a.DecisionMaking || 0,
+            productivityEfficiency: a.ProductivityEfficiency || 0,
+            finalScore: a.FinalPercentage || 0,
+            rating: a.Rating || 'Average',
+            comments: a.FinalRemark || 'No comments',
+            reviewedBy: empMap[a.SubmittedBy] || 'Dr. R. K. Pathak',
+            month: a.Month || 5,
+            year: a.Year || 2026,
+            branch: emp.LocationID === 1 ? 'Lucknow Main' : 'Hazratganj Centre'
+          };
+        }).sort((a, b) => b.finalScore - a.finalScore);
+
+        setAppraisalScores(appraisalStats);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to fetch live report data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReportData();
+  }, [activeReportTab]);
 
   // Filters State
   const [selectedBranchFilter, setSelectedBranchFilter] = useState('All');
@@ -649,8 +792,26 @@ export default function Reports() {
             </div>
           </div>
 
-          {/* KPI METRIC CARDS ROW */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-155 dark:border-gray-800">
+              <RefreshCw className="h-8 w-8 text-blue-500 animate-spin mb-3" />
+              <p className="text-sm font-semibold text-gray-505">Synchronizing live records from database...</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-24 text-red-500 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-155 dark:border-gray-800">
+              <AlertCircle className="h-8 w-8 mb-3 text-red-500" />
+              <p className="text-sm font-semibold">{error}</p>
+              <button
+                onClick={fetchReportData}
+                className="mt-4 flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-xs px-4 py-2 rounded-xl shadow cursor-pointer"
+              >
+                <RefreshCw className="h-3 w-3" /> Retry Sync
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* KPI METRIC CARDS ROW */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {summaryStats.map((kpi, idx) => {
               const IconKpi = kpi.icon;
               return (
@@ -1055,6 +1216,8 @@ export default function Reports() {
               </table>
             </div>
           </div>
+          </>
+          )}
 
         </div>
       </div>

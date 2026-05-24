@@ -30,6 +30,7 @@ const branchRoutes = require('./branchRoutes');
 const leadRoutes = require('./leadRoutes');
 const campaignRoutes = require('./campaignRoutes');
 const workflowChecklistRoutes = require('./workflowChecklistRoutes');
+const reportsRoutes = require('./reportsRoutes');
 //const otpRoutes = require('./otpRoutes');
 // Mount routes
 router.use('/users', userRoutes);
@@ -61,6 +62,7 @@ router.use('/branches', branchRoutes);
 router.use('/leads', leadRoutes);
 router.use('/campaigns', campaignRoutes);
 router.use('/workflows', workflowChecklistRoutes);
+router.use('/reports', reportsRoutes);
 
 
 module.exports = router;

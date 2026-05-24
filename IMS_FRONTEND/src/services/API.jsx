@@ -188,6 +188,12 @@ const API = {
     getAll: (params = {}) => instance.get('/admissions', { params }),
     getById: (id) => instance.get(`/admissions/${id}`),
     updateLifecycleStatus: (id, status) => instance.patch(`/admissions/${id}/lifecycle`, { lifecycleStatus: status })
+  },
+  reports: {
+    getLeads: (params = {}) => instance.get('/reports/leads', { params }),
+    getBranches: (params = {}) => instance.get('/reports/branches', { params }),
+    getTasks: (params = {}) => instance.get('/reports/tasks', { params }),
+    getFees: (params = {}) => instance.get('/reports/fees', { params })
   }
 };
 
