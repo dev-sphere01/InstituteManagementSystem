@@ -9,7 +9,10 @@ import AssignLeadsModal from './components/AssignLeadsModal';
 import { FaPlus, FaFileImport, FaUserCheck, FaExchangeAlt } from 'react-icons/fa';
 import useTableSessionStorage from '@/hooks/useTableSessionStorage';
 
+import { useThemeStore } from '@/store';
+
 const CallingManagement = () => {
+  const { isDarkMode } = useThemeStore();
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -408,8 +411,8 @@ const CallingManagement = () => {
     <div className="p-6">
       <div className="flex flex-col gap-4 mb-6">
         <div>
-          <h6 className="text-2xl font-bold text-gray-900">Lead Management</h6>
-          <p className="text-sm text-gray-600">Add leads, bulk upload, multi-select, and assign to staff.</p>
+          <h6 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Lead Management</h6>
+          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Add leads, bulk upload, multi-select, and assign to staff.</p>
         </div>
 
         <div className="flex flex-wrap gap-2 items-center">

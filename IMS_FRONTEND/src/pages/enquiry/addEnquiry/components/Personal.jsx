@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react';
+import DatePicker from '../../../../components/common/DatePicker';
 
 const Personal = ({ sectionTitleClass, labelClass, formData, errorClass, inputClass, handleInputChange, validationErrors, radioCheckClass, isDarkMode }) => {
     return (
@@ -12,7 +13,14 @@ const Personal = ({ sectionTitleClass, labelClass, formData, errorClass, inputCl
                 </div>
                 <div>
                     <label className={labelClass}>Date of Birth</label>
-                    <input type="date" name="dob" value={formData.dob} onChange={handleInputChange} className={inputClass} />
+                    <DatePicker
+                        name="dob"
+                        value={formData.dob || ''}
+                        onChange={handleInputChange}
+                        placeholder="dd-mm-yyyy"
+                        className={inputClass}
+                        isDarkMode={isDarkMode}
+                    />
                 </div>
                 <div>
                     <label className={labelClass}>Gender</label>

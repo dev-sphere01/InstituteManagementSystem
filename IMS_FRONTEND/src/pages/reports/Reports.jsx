@@ -459,7 +459,7 @@ export default function Reports() {
         if (activeReportTab === 'fees') return item.student.toLowerCase().includes(q) || item.invoiceNo.toLowerCase().includes(q) || item.course.toLowerCase().includes(q);
         if (activeReportTab === 'attendance') return item.name.toLowerCase().includes(q) || item.department.toLowerCase().includes(q);
         if (activeReportTab === 'performance') return item.employeeName.toLowerCase().includes(q) || item.department.toLowerCase().includes(q);
-        if (activeReportTab === 'roi') return item.campaignName.toLowerCase().includes(q) || item.channel.toLowerCase().includes(q);
+        if (activeReportTab === 'roi') return (item.campaignName || item.name || '').toLowerCase().includes(q) || (item.channel || '').toLowerCase().includes(q);
         return false;
       });
     }
@@ -591,9 +591,9 @@ export default function Reports() {
       ];
     }
     if (activeReportTab === 'roi') {
-      const budget = processedData.reduce((acc, item) => acc + item.budget, 0);
-      const leads = processedData.reduce((acc, item) => acc + item.leads, 0);
-      const conversions = processedData.reduce((acc, item) => acc + item.conversions, 0);
+      const budget = processedData.reduce((acc, item) => acc + (item.budget || 0), 0);
+      const leads = processedData.reduce((acc, item) => acc + (item.leads ?? item.totalLeads ?? 0), 0);
+      const conversions = processedData.reduce((acc, item) => acc + (item.conversions || 0), 0);
       const revenue = processedData.reduce((acc, item) => acc + item.revenue, 0);
       const cpl = leads > 0 ? Math.round(budget / leads) : 0;
       const roi = budget > 0 ? Math.round(((revenue - budget) / budget) * 100) : 0;
@@ -636,7 +636,7 @@ export default function Reports() {
         const cBudget = item.budget || 0;
         const cRev = item.revenue || 0;
         const roiVal = cBudget > 0 ? Math.round(((cRev - cBudget) / cBudget) * 100) : 0;
-        return [item.campaignName, item.channel, item.budget, item.leads, item.conversions, item.revenue, `${roiVal}%`, item.isActive];
+        return [item.campaignName || item.name || 'Unnamed Campaign', item.channel, item.budget, item.leads ?? item.totalLeads ?? 0, item.conversions, item.revenue, `${roiVal}%`, item.isActive ? 'Active' : 'Inactive'];
       }
       return [];
     });
@@ -1187,16 +1187,16 @@ export default function Reports() {
                           <>
                             <td className="px-4 py-3.5 font-semibold">
                               <div>
-                                <p className="font-semibold text-sm leading-snug">{item.campaignName}</p>
+                                <p className="font-semibold text-sm leading-snug">{item.campaignName || item.name || 'Unnamed Campaign'}</p>
                                 <p className={`text-[10px] uppercase font-bold mt-0.5 ${
                                   item.channel === 'Meta' ? 'text-blue-500' : item.channel === 'Google' ? 'text-green-500' : 'text-purple-500'
                                 }`}>{item.channel} Channel</p>
                               </div>
                             </td>
                             <td className="px-4 py-3.5 text-xs text-gray-400">{item.channel}</td>
-                            <td className="px-4 py-3.5 font-semibold">₹{item.budget.toLocaleString()}</td>
-                            <td className="px-4 py-3.5 text-blue-500 font-semibold">{item.leads}</td>
-                            <td className="px-4 py-3.5 text-green-500 font-bold">{item.conversions}</td>
+                            <td className="px-4 py-3.5 font-semibold">₹{(item.budget || 0).toLocaleString()}</td>
+                            <td className="px-4 py-3.5 text-blue-500 font-semibold">{item.leads ?? item.totalLeads ?? 0}</td>
+                            <td className="px-4 py-3.5 text-green-500 font-bold">{item.conversions || 0}</td>
                             <td className="px-4 py-3.5 font-bold">
                               {(() => {
                                 const roiVal = item.budget > 0 ? Math.round(((item.revenue - item.budget) / item.budget) * 100) : 0;

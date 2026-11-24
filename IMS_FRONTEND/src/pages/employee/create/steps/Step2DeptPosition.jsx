@@ -32,7 +32,11 @@ const Step2DeptPosition = ({ data, onChange, onNext, onBack }) => {
   }, [form.DeptID]);
 
   const set = (field, value) => {
-    setForm((f) => ({ ...f, [field]: value }));
+    setForm((f) => {
+      const updated = { ...f, [field]: value };
+      if (onChange) onChange(updated);
+      return updated;
+    });
     if (errors[field]) setErrors((e) => ({ ...e, [field]: '' }));
   };
 

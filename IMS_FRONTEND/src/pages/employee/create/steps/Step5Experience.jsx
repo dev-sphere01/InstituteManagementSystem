@@ -9,11 +9,22 @@ const Step5Experience = ({ data, onChange, onNext, onBack, onSkip }) => {
   const [rows, setRows] = useState(data.length ? data : [{ Company: '', JobTitle: '', StartDate: '', EndDate: '', Description: '' }]);
 
   const update = (idx, field, value) => {
-    setRows(rows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+    const updated = rows.map((row, i) => i === idx ? { ...row, [field]: value } : row);
+    setRows(updated);
+    if (onChange) onChange(updated);
   };
 
-  const addRow = () => setRows([...rows, { Company: '', JobTitle: '', StartDate: '', EndDate: '', Description: '' }]);
-  const removeRow = (idx) => setRows(rows.filter((_, i) => i !== idx));
+  const addRow = () => {
+    const updated = [...rows, { Company: '', JobTitle: '', StartDate: '', EndDate: '', Description: '' }];
+    setRows(updated);
+    if (onChange) onChange(updated);
+  };
+
+  const removeRow = (idx) => {
+    const updated = rows.filter((_, i) => i !== idx);
+    setRows(updated);
+    if (onChange) onChange(updated);
+  };
 
   const handleNext = () => {
     onChange(rows.filter(r => r.Company.trim()));
@@ -35,7 +46,7 @@ const Step5Experience = ({ data, onChange, onNext, onBack, onSkip }) => {
                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 pr-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6 pr-8">
               <div>
                 <label className={styles.label}>Company Name</label>
                 <input className={styles.input()} value={row.Company} onChange={(e) => update(idx, 'Company', e.target.value)} placeholder="e.g. Acme Corp" />
@@ -44,15 +55,13 @@ const Step5Experience = ({ data, onChange, onNext, onBack, onSkip }) => {
                 <label className={styles.label}>Designation</label>
                 <input className={styles.input()} value={row.JobTitle} onChange={(e) => update(idx, 'JobTitle', e.target.value)} placeholder="e.g. Sales Manager" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={styles.label}>Start Date</label>
-                  <input type="date" className={styles.input()} value={row.StartDate} onChange={(e) => update(idx, 'StartDate', e.target.value)} />
-                </div>
-                <div>
-                  <label className={styles.label}>End Date</label>
-                  <input type="date" className={styles.input()} value={row.EndDate} onChange={(e) => update(idx, 'EndDate', e.target.value)} />
-                </div>
+              <div>
+                <label className={styles.label}>Start Date</label>
+                <input type="date" className={styles.input()} value={row.StartDate} onChange={(e) => update(idx, 'StartDate', e.target.value)} />
+              </div>
+              <div>
+                <label className={styles.label}>End Date</label>
+                <input type="date" className={styles.input()} value={row.EndDate} onChange={(e) => update(idx, 'EndDate', e.target.value)} />
               </div>
             </div>
             <div>

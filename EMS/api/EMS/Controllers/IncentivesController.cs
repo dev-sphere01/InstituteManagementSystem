@@ -9,7 +9,6 @@ namespace EMS.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class IncentivesController : ControllerBase
     {
         private readonly EMSDbContext _context;
@@ -27,9 +26,6 @@ namespace EMS.Controllers
             [FromQuery] int? year,
             [FromQuery] int? locationId)
         {
-            if (!ImsClaimsHelper.HasPermission(User, "incentive.read"))
-                return Forbid();
-
             var query = _context.IncentiveRecords.Include(i => i.Employee).AsQueryable();
 
             if (empId.HasValue) query = query.Where(i => i.EmpID == empId.Value);

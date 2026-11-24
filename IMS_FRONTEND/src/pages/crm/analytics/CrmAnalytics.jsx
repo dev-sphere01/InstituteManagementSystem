@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useThemeStore } from '../../../store';
 import useCrmStore from '../../../store/useCrmStore';
+import API from '../../../services/API';
 
 // Mock campaigns with financial figures for Marketing ROI Dashboard
 const initialCampaigns = [
@@ -92,6 +93,42 @@ export default function CrmAnalytics() {
   const [campaigns, setCampaigns] = useState(initialCampaigns);
   const [counsellors, setCounsellors] = useState(initialCounsellors);
   const [selectedCounsellorId, setSelectedCounsellorId] = useState('s1');
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchAnalyticsData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (activeTab === 'roi') {
+        const res = await API.crm.campaigns.getROI();
+        if (res.success && res.data) {
+          setCampaigns(res.data);
+        }
+      } else if (activeTab === 'sales') {
+        const res = await API.reports.getSalesCompetition();
+        if (res.success && res.data) {
+          setCounsellors(res.data);
+          if (res.data.length > 0) {
+            const currentExists = res.data.some(c => c.id === selectedCounsellorId);
+            if (!currentExists) {
+              setSelectedCounsellorId(res.data[0].id);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to sync live analytics data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [activeTab]);
   
   // Competition settings state
   const [congratsMsg, setCongratsMsg] = useState("Outstanding hustle Priya! Gold Closer badge unlocked! Keep setting standards!");
@@ -282,8 +319,26 @@ export default function CrmAnalytics() {
         </div>
       </div>
 
-      {/* 🟢 TAB 1: MARKETING CAMPAIGN ROI ANALYTICS (MODULE 6.4) */}
-      {activeTab === 'roi' && (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-gray-800 rounded-xl shadow-lg border dark:border-gray-700">
+          <RefreshCw className="h-8 w-8 text-blue-500 animate-spin mb-3" />
+          <p className="text-sm font-semibold text-gray-505">Synchronizing live crm analytics from database...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-24 text-red-500 bg-white dark:bg-gray-800 rounded-xl shadow-lg border dark:border-gray-700">
+          <AlertCircle className="h-8 w-8 mb-3 text-red-500" />
+          <p className="text-sm font-semibold">{error}</p>
+          <button
+            onClick={fetchAnalyticsData}
+            className="mt-4 flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-xs px-4 py-2 rounded-xl shadow cursor-pointer"
+          >
+            <RefreshCw className="h-3 w-3" /> Retry Sync
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* 🟢 TAB 1: MARKETING CAMPAIGN ROI ANALYTICS (MODULE 6.4) */}
+          {activeTab === 'roi' && (
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           {/* ROI KPI Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -393,13 +448,14 @@ export default function CrmAnalytics() {
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                   {campaigns.map(c => {
-                    const cpl = c.leads > 0 ? Math.round(c.budget / c.leads) : 0;
-                    const cpa = c.conversions > 0 ? Math.round(c.budget / c.conversions) : 0;
-                    const roi = c.budget > 0 ? Math.round(((c.revenue - c.budget) / c.budget) * 100) : 0;
+                    const leadsCount = c.leads ?? c.totalLeads ?? 0;
+                    const cpl = leadsCount > 0 ? Math.round((c.budget || 0) / leadsCount) : 0;
+                    const cpa = c.conversions > 0 ? Math.round((c.budget || 0) / c.conversions) : 0;
+                    const roi = c.budget > 0 ? Math.round((((c.revenue || 0) - c.budget) / c.budget) * 100) : 0;
 
                     return (
                       <tr key={c._id} className={`transition ${isDarkMode ? 'hover:bg-gray-700/30' : 'hover:bg-gray-50/50'}`}>
-                        <td className="px-6 py-4 text-sm font-semibold max-w-[200px] truncate">{c.name}</td>
+                        <td className="px-6 py-4 text-sm font-semibold max-w-[200px] truncate">{c.name || c.campaignName}</td>
                         <td className="px-6 py-4 text-sm font-medium">
                           <span className={`px-2 py-0.5 rounded text-xs ${
                             c.channel === 'Meta' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
@@ -408,8 +464,8 @@ export default function CrmAnalytics() {
                             'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
                           }`}>{c.channel}</span>
                         </td>
-                        <td className="px-6 py-4 text-sm font-medium">₹{c.budget.toLocaleString()}</td>
-                        <td className="px-6 py-4 text-sm">{c.leads}</td>
+                        <td className="px-6 py-4 text-sm font-medium">₹{(c.budget || 0).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-sm">{leadsCount}</td>
                         <td className="px-6 py-4 text-sm font-semibold text-green-600 dark:text-green-400">{c.conversions}</td>
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">₹{cpl}</td>
                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">₹{cpa.toLocaleString()}</td>
@@ -824,6 +880,8 @@ export default function CrmAnalytics() {
             </motion.div>
           )}
         </motion.div>
+      )}
+        </>
       )}
 
       {/* 🔮 MODAL: SIMULATE NEW CAMPAIGN (SANDBOX ADDER) */}

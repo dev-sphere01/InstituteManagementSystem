@@ -10,8 +10,11 @@ const EditCourse = ({ course, onCourseUpdated, onCancel, loading: parentLoading 
     description: course.description || "",
     duration: course.duration || "",
     fee: course.fee || 0,
+    enableEmi: course.enableEmi || false,
+    maxEmiInstallments: course.maxEmiInstallments || 3,
+    emiAmount: course.emiAmount || (course.fee ? Math.ceil(course.fee / (course.maxEmiInstallments || 3)) : 0),
     level: course.level || "beginner",
-    isActive: course.isActive || true,
+    isActive: course.isActive !== undefined ? course.isActive : true,
   });
 
   const [errors, setErrors] = useState({});
@@ -26,7 +29,6 @@ const EditCourse = ({ course, onCourseUpdated, onCancel, loading: parentLoading 
         setCentres(response.data);
       } catch (error) {
         console.error("Failed to fetch centres:", error);
-        // Optionally, display an error notification to the user
       }
     };
 
@@ -45,7 +47,18 @@ const EditCourse = ({ course, onCourseUpdated, onCancel, loading: parentLoading 
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+    const updatedValue = type === "checkbox" ? checked : value;
+
+    setForm((prev) => {
+      const nextForm = { ...prev, [name]: updatedValue };
+      if (name === "fee" || name === "maxEmiInstallments" || name === "enableEmi") {
+        const feeVal = Number(name === "fee" ? updatedValue : prev.fee) || 0;
+        const emiCount = Number(name === "maxEmiInstallments" ? updatedValue : prev.maxEmiInstallments) || 1;
+        nextForm.emiAmount = Math.ceil(feeVal / (emiCount || 1));
+      }
+      return nextForm;
+    });
+
     if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
 
@@ -145,9 +158,10 @@ const EditCourse = ({ course, onCourseUpdated, onCancel, loading: parentLoading 
           {/* Fee */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-              Fee
+              Fee <span className="text-red-500">*</span>
             </label>
             <input
+              type="number"
               name="fee"
               value={form.fee}
               onChange={handleChange}
@@ -155,6 +169,65 @@ const EditCourse = ({ course, onCourseUpdated, onCancel, loading: parentLoading 
               className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
+        </div>
+
+        {/* EMI / Installment Option */}
+        <div className="p-4 rounded-xl border border-blue-100 dark:border-gray-700 bg-blue-50/50 dark:bg-gray-700/50 space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="enableEmi"
+                checked={form.enableEmi}
+                onChange={handleChange}
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm font-bold text-slate-800 dark:text-white">
+                Divide Fee in EMI / Installment Option
+              </span>
+            </label>
+            {form.enableEmi && Number(form.fee) > 0 && (
+              <span className="px-2.5 py-1 text-xs font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 rounded-lg">
+                ₹{form.emiAmount || Math.ceil(form.fee / (form.maxEmiInstallments || 1))} / month ({form.maxEmiInstallments} EMIs)
+              </span>
+            )}
+          </div>
+
+          {form.enableEmi && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">
+                  Max EMI Installments
+                </label>
+                <select
+                  name="maxEmiInstallments"
+                  value={form.maxEmiInstallments}
+                  onChange={handleChange}
+                  className="block w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value={2}>2 Installments (Monthly)</option>
+                  <option value={3}>3 Installments (Monthly)</option>
+                  <option value={4}>4 Installments (Monthly)</option>
+                  <option value={6}>6 Installments (Monthly)</option>
+                  <option value={12}>12 Installments (Monthly)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">
+                  Amount Per EMI (₹)
+                </label>
+                <input
+                  type="number"
+                  name="emiAmount"
+                  value={form.emiAmount}
+                  onChange={handleChange}
+                  placeholder="Auto-calculated"
+                  className="block w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

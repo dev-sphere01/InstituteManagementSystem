@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import BasicInfo from './components/BasicInfo';
 import Contact from './components/Contact';
 import Education from './components/Education';
 import Extras from './components/Extras/Extras';
+import FeePlanStep from './components/FeePlanStep';
 import Documents from './components/Documents';
 import Review from './components/Review';
 import Stepper from './components/Stepper';
 import API from './../../../services/API';
 import { useNotification } from './../../../services/NotificationService';
 
-const steps = ['basic', 'contact', 'education', 'extras', 'documents', 'review'];
+const steps = ['basic', 'contact', 'education', 'extras', 'fee', 'documents', 'review'];
 
 
 const Admission = () => {
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState('basic');
   const [completedSteps, setCompletedSteps] = useState([]);
   const notify = useNotification();
@@ -87,6 +90,7 @@ const Admission = () => {
     referralSource: '',
     referralSourceOther: '',
     referalName: '',
+    referralCode: '',
 
     // Computer Access
     computerAccess: false,
@@ -123,12 +127,26 @@ const Admission = () => {
   };
 
   useEffect(() => {
-    const savedId = localStorage.getItem('admissionFormId');
-    if (savedId) {
-      setFormId(savedId);
-      fetchFormData(savedId);
+    const leadData = location.state?.leadData;
+    if (leadData) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: leadData.name || leadData.fullName || prev.fullName || '',
+        contactNumber: leadData.phone || leadData.contactNumber || prev.contactNumber || '',
+        emailAddress: leadData.email || leadData.emailAddress || prev.emailAddress || '',
+        courseApplied: leadData.course || leadData.courseApplied || prev.courseApplied || '',
+        address: leadData.address || leadData.city || prev.address || '',
+        otherInfo: prev.otherInfo || `Transferred from Converted Lead: ${leadData.name || 'Lead'} (${leadData.source || 'CRM'})`,
+      }));
+      notify(`Pre-filled Admission form for converted lead "${leadData.name || leadData.fullName}"`, 'success');
+    } else {
+      const savedId = localStorage.getItem('admissionFormId');
+      if (savedId) {
+        setFormId(savedId);
+        fetchFormData(savedId);
+      }
     }
-  }, []);
+  }, [location.state]);
 
   useEffect(() => {
     if (formId) {
@@ -256,6 +274,16 @@ const Admission = () => {
         )}
         {currentStep === 'extras' && (
           <Extras
+            formId={formId}
+            formData={formData}
+            setFormData={setFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+            validationsEnabled={validationsEnabled}
+          />
+        )}
+        {currentStep === 'fee' && (
+          <FeePlanStep
             formId={formId}
             formData={formData}
             setFormData={setFormData}

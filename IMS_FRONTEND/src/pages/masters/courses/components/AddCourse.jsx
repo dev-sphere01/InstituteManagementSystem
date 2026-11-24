@@ -15,6 +15,9 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
     description: "",
     duration: "",
     fee: 0,
+    enableEmi: false,
+    maxEmiInstallments: 3,
+    emiAmount: 0,
     level: "beginner",
     isActive: true,
   });
@@ -48,7 +51,18 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+    const updatedValue = type === "checkbox" ? checked : value;
+
+    setForm((prev) => {
+      const nextForm = { ...prev, [name]: updatedValue };
+      if (name === "fee" || name === "maxEmiInstallments" || name === "enableEmi") {
+        const feeVal = Number(name === "fee" ? updatedValue : prev.fee) || 0;
+        const emiCount = Number(name === "maxEmiInstallments" ? updatedValue : prev.maxEmiInstallments) || 1;
+        nextForm.emiAmount = Math.ceil(feeVal / (emiCount || 1));
+      }
+      return nextForm;
+    });
+
     if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
 
@@ -193,6 +207,69 @@ const AddCourse = ({ onCourseCreated, onCancel, loading: parentLoading }) => {
             />
             {errors.fee && <p className="mt-1 text-sm text-red-500">{errors.fee}</p>}
           </div>
+        </div>
+
+        {/* EMI / Installment Option */}
+        <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-blue-50/50 border-blue-100'} space-y-4`}>
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="enableEmi"
+                checked={form.enableEmi}
+                onChange={handleChange}
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                Divide Fee in EMI / Installment Option
+              </span>
+            </label>
+            {form.enableEmi && Number(form.fee) > 0 && (
+              <span className="px-2.5 py-1 text-xs font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 rounded-lg">
+                ₹{form.emiAmount || Math.ceil(form.fee / (form.maxEmiInstallments || 1))} / month ({form.maxEmiInstallments} EMIs)
+              </span>
+            )}
+          </div>
+
+          {form.enableEmi && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Max EMI Installments
+                </label>
+                <select
+                  name="maxEmiInstallments"
+                  value={form.maxEmiInstallments}
+                  onChange={handleChange}
+                  className={`block w-full px-3 py-2 text-sm border rounded-md shadow-sm ${
+                    isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+                  }`}
+                >
+                  <option value={2}>2 Installments (Monthly)</option>
+                  <option value={3}>3 Installments (Monthly)</option>
+                  <option value={4}>4 Installments (Monthly)</option>
+                  <option value={6}>6 Installments (Monthly)</option>
+                  <option value={12}>12 Installments (Monthly)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Amount Per EMI (₹)
+                </label>
+                <input
+                  type="number"
+                  name="emiAmount"
+                  value={form.emiAmount}
+                  onChange={handleChange}
+                  placeholder="Auto-calculated"
+                  className={`block w-full px-3 py-2 text-sm border rounded-md shadow-sm ${
+                    isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
+                  }`}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

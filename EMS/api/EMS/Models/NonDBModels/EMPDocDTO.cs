@@ -1,4 +1,4 @@
-﻿namespace EMS.Models.NonDBModels
+namespace EMS.Models.NonDBModels
 {
     public class EMPDocDTO
     {
@@ -8,6 +8,6 @@
 
         public string? DocIDNumber { get; set; }
 
-        public IFormFile DocFile { get; set; }
+        public IFormFile? DocFile { get; set; }
     }
 }

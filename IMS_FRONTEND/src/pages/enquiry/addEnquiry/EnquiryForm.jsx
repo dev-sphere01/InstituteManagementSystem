@@ -186,11 +186,28 @@ const EnquiryForm = () => {
   const { isDarkMode } = useThemeStore();
   const notify = useNotification();
   const [formData, setFormData] = useState(initialState);
+  const [centreCodes, setCentreCodes] = useState([]);
+  const [loadingCentres, setLoadingCentres] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [eduType, setEduType] = useState('board');
   // 'board' or 'university'
+
+  useEffect(() => {
+    const fetchCentres = async () => {
+      try {
+        setLoadingCentres(true);
+        const res = await API.get('/centre-codes');
+        setCentreCodes(res.data || []);
+      } catch (err) {
+        console.error('Failed to fetch centre codes:', err);
+      } finally {
+        setLoadingCentres(false);
+      }
+    };
+    fetchCentres();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -252,13 +269,13 @@ const EnquiryForm = () => {
   // Transform flat formData to backend structure
   const transformFormData = (formData) => ({
     registrationInfo: {
-      centerCode: formData.centerCode,
-      employeeId: formData.employeeId,
-      otherInfo: formData.otherInfo,
+      centerCode: formData.centerCode || undefined,
+      employeeId: formData.employeeId || undefined,
+      otherInfo: formData.otherInfo || undefined,
     },
     personalInfo: {
       fullName: formData.fullName,
-      dob: formData.dob,
+      dob: formData.dob || undefined,
       gender: genderMap[formData.gender] || undefined,
       category: categoryMap[formData.category] || undefined,
       exServicemen: !!formData.isExServiceMan,
@@ -266,16 +283,16 @@ const EnquiryForm = () => {
     },
     contactInfo: {
       contactNumber: formData.contactNumber,
-      alternateContactNumber: formData.altContactNumber,
-      email: formData.email,
-      address: formData.address,
-      pinCode: formData.pinCode,
+      alternateContactNumber: formData.altContactNumber || undefined,
+      email: formData.email || undefined,
+      address: formData.address || undefined,
+      pinCode: formData.pinCode || undefined,
     },
     educationInfo: {
-      qualification: formData.qualification,
+      qualification: formData.qualification || undefined,
       boardId: formData.board ? SAMPLE_BOARD_ID : undefined,
       universityId: formData.university ? UNIVERSITY_ID_MAP[formData.university] : undefined,
-      yearOfPassing: formData.passingYear,
+      yearOfPassing: formData.passingYear ? Number(formData.passingYear) : undefined,
       subjectIds: formData.subjects && formData.subjects.length > 0 ? SAMPLE_SUBJECT_IDS : [],
     },
     coursePreferences: {
@@ -284,16 +301,16 @@ const EnquiryForm = () => {
       courseLevel: toEnumOrUndefined(formData.courseLevel), // Map if needed
     },
     schedulePreferences: {
-      preferredBatchTime: formData.preferredBatchTime,
+      preferredBatchTime: formData.preferredBatchTime || undefined,
     },
     referralInfo: {
       referralSource: toEnumOrUndefined(formData.referralSource), // Map if needed
-      sourceName: formData.sourceName,
-      referralCode: formData.referralCode,
+      sourceName: formData.sourceName || undefined,
+      referralCode: formData.referralCode || undefined,
     },
     goalsRequirements: {
-      courseGoal: formData.courseGoals,
-      futureGoals: formData.futureGoals,
+      courseGoal: formData.courseGoals || undefined,
+      futureGoals: formData.futureGoals || [],
       hasComputerAccess: toEnumOrUndefined(formData.hasComputerAccess),
     }
   });
@@ -357,7 +374,9 @@ const EnquiryForm = () => {
             sectionTitleClass={sectionTitleClass}
             labelClass={labelClass}
             handleInputChange={handleInputChange}
-            inputClass={inputClass} />
+            inputClass={inputClass}
+            centreCodes={centreCodes}
+            loadingCentres={loadingCentres} />
 
           <hr className={dividerClass} />
 

@@ -8,15 +8,47 @@ const Step4AcademicDetails = ({ data, onChange, onNext, onBack, onSkip }) => {
 
   const [rows, setRows] = useState(data.length ? data : [{ Degree: '', Institution: '', YearOfPassing: '', Percentage: '' }]);
 
+  const currentYear = new Date().getFullYear();
+  const [errors, setErrors] = useState({});
+
   const update = (idx, field, value) => {
-    setRows(rows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+    const updated = rows.map((row, i) => i === idx ? { ...row, [field]: value } : row);
+    setRows(updated);
+    if (errors[idx]) setErrors((e) => ({ ...e, [idx]: '' }));
+    if (onChange) onChange(updated);
   };
 
-  const addRow = () => setRows([...rows, { Degree: '', Institution: '', YearOfPassing: '', Percentage: '' }]);
-  const removeRow = (idx) => setRows(rows.filter((_, i) => i !== idx));
+  const addRow = () => {
+    const updated = [...rows, { Degree: '', Institution: '', YearOfPassing: '', Percentage: '' }];
+    setRows(updated);
+    if (onChange) onChange(updated);
+  };
+
+  const removeRow = (idx) => {
+    const updated = rows.filter((_, i) => i !== idx);
+    setRows(updated);
+    if (errors[idx]) setErrors((e) => ({ ...e, [idx]: '' }));
+    if (onChange) onChange(updated);
+  };
 
   const handleNext = () => {
-    onChange(rows.filter(r => r.Degree.trim()));
+    const newErrors = {};
+    const validRows = rows.filter(r => r.Degree.trim());
+
+    validRows.forEach((r, idx) => {
+      const year = Number(r.YearOfPassing);
+      if (year && year > currentYear) {
+        newErrors[idx] = `Year cannot be greater than ${currentYear}.`;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+    onChange(validRows);
     onNext();
   };
 
@@ -38,7 +70,7 @@ const Step4AcademicDetails = ({ data, onChange, onNext, onBack, onSkip }) => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pr-8">
               <div>
                 <label className={styles.label}>Degree/Qualification</label>
-                <input className={styles.input()} value={row.Degree} onChange={(e) => update(idx, 'Degree', e.target.value)} placeholder="e.g. MBA" />
+                <input className={styles.input() + " uppercase"} value={row.Degree} onChange={(e) => update(idx, 'Degree', e.target.value.toUpperCase())} placeholder="e.g. MBA" />
               </div>
               <div>
                 <label className={styles.label}>Institution/University</label>
@@ -46,7 +78,8 @@ const Step4AcademicDetails = ({ data, onChange, onNext, onBack, onSkip }) => {
               </div>
               <div>
                 <label className={styles.label}>Year of Passing</label>
-                <input type="number" className={styles.input()} value={row.YearOfPassing} onChange={(e) => update(idx, 'YearOfPassing', e.target.value)} placeholder="2022" />
+                <input type="number" max={currentYear} className={styles.input(!!errors[idx])} value={row.YearOfPassing} onChange={(e) => update(idx, 'YearOfPassing', e.target.value)} placeholder={String(currentYear)} />
+                {errors[idx] && <p className={styles.error}>{errors[idx]}</p>}
               </div>
               <div>
                 <label className={styles.label}>Score/Percentage (%)</label>

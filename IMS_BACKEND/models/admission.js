@@ -11,9 +11,26 @@ const admissionDetailsSchema = new mongoose.Schema({
   fullName: { type: String, required: true },//text data
   dob: { type: Date, required: true },//date format - dd/mm/yyyy
   gender: { type: String, required: true },//Male/Female/Others only
-  category: { type: String, required: true },//GEN/ST/SC/OBC only
+  category: { type: String, required: true },//GEN/ST/SC/OBC/EWS/OTHER
   aadharNo: { type: String, required: true },//12 digit numeric data
   religion: { type: String, required: true },//text data
+
+  // New B-section fields (all optional — safe defaults for existing records)
+  maritalStatus: { type: String, enum: ['Single','Married','Divorced','Widowed','Other',''] },
+  exServiceman: { type: String, enum: ['Yes','No',''] },
+  isHandicapped: { type: String, enum: ['Yes','No',''] },
+  handicapType: { type: String },
+  handicapPercentage: { type: Number },
+  visibleMark: { type: String },
+  fathersOccupationOther: { type: String },
+
+  // Minor / Guardian consent (populated only when student age < 18)
+  guardianType: { type: String },
+  guardianName: { type: String },
+  guardianContactNumber: { type: String },
+  guardianCategory: { type: String },
+  guardianConsent: { type: Boolean, default: false },
+  guardianConsentDate: { type: Date },
 
   // Contact Details
   contactNumber: { type: String, required: true },//requried 10 digit numeric data
@@ -33,28 +50,38 @@ const admissionDetailsSchema = new mongoose.Schema({
   mothersDepartmentOrCompany: { type: String },//optional text data
   guardianName: { type: String },//optional text data
   guardianRelation: { type: String },//optional text data
-  guardianContactNumber: { type: Number },//optinal 10 digit numeric data
+  guardianContactNumber: { type: String },//optional 10 digit numeric data
 
   // Documents
   aadharPhoto: { type: String }, //   url , to be stored in root folder
   candidatePhoto: { type: String },//   url , to be stored in root folder
   candidateSignature: { type: String },// url , to be stored in root folder
   candidateLeftThumbImpression: { type: String },// for now base64 , later url
-  apaarId: { type: Number },//12 digit optional numeric data
+  apaarId: { type: String },//12 digit optional string
   tenthMarksheet: { type: String },// for now base64 , later url
   twelfthMarksheet: { type: String },// for now base64 , later url
   exServicemen: { type: String },//url , to be stored in root folder
   speciallyAbled: { type: String },//url , to be stored in root folder
   incomeCertificate: { type: String },//add income certificate url if EWS enabled
 
+  // ID Proofs (Section B: At least one required)
+  panCardNumber: { type: String, trim: true },
+  panCardDoc: { type: String },
+  drivingLicenceNumber: { type: String, trim: true },
+  drivingLicenceDoc: { type: String },
+  passportNumber: { type: String, trim: true },
+  passportDoc: { type: String },
+  epicNumber: { type: String, trim: true },
+  epicDoc: { type: String },
+
   // Document Verification Statuses
   documentStatuses: {
-      aadharPhoto: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
-      candidatePhoto: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
-      candidateSignature: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
-      tenthMarksheet: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
-      twelfthMarksheet: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
-      incomeCertificate: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } }
+    aadharPhoto: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+    candidatePhoto: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+    candidateSignature: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+    tenthMarksheet: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+    twelfthMarksheet: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } },
+    incomeCertificate: { status: { type: String, default: 'pending' }, remark: { type: String, default: '' } }
   },
 
   // Education & Course
@@ -80,6 +107,7 @@ const admissionDetailsSchema = new mongoose.Schema({
   referralSource: { type: String },//text data
   referralSourceOther: { type: String },//text data
   referalName: { type: String },//text data
+  referralCode: { type: String },//text data
 
   // Computer Access
   computerAccess: { type: Boolean, default: false },//yes or no
@@ -89,7 +117,7 @@ const admissionDetailsSchema = new mongoose.Schema({
   status: { type: String, default: 'Pending' },
   lifecycleStatus: {
     type: String,
-    enum: ['Prospect', 'Applied', 'Admitted', 'Active', 'Inactive', 'Dropped', 'Completed'],
+    enum: ['Prospect', 'Applied', 'Admitted', 'Active', 'Inactive', 'Dropped', 'Completed', 'Incomplete', 'OnHold'],
     default: 'Applied',
     index: true
   },
@@ -102,12 +130,85 @@ const admissionDetailsSchema = new mongoose.Schema({
 
   //Track Step wise data and completed status
   currentStep: { type: String, default: 'basic' }, // values: 'basic', 'contact', 'education', 'extras', 'review', 'submitted'
-  isCompleted: { type: Boolean, default: false }
+  isCompleted: { type: Boolean, default: false },
+
+  // Lifecycle change reason and date (E)
+  lifecycleStatusReason: { type: String },
+  lifecycleStatusChangedAt: { type: Date },
+
+  // Batch Info & History (E)
+  batchId: { type: String },
+  batchName: { type: String },
+  batchHistory: [{
+    batchId: { type: String },
+    batchName: { type: String },
+    action: { type: String, enum: ['Assigned','Upgraded','Downgraded','Transferred'] },
+    reason: { type: String },
+    changedAt: { type: Date, default: Date.now },
+    changedBy: { type: String }
+  }]
 
 
 
 }, {
   timestamps: true // Adds createdAt and updatedAt fields
+});
+
+// Text formatting & case normalization (Section F)
+const toTitleCaseServer = (val) => {
+  if (typeof val !== 'string') return val;
+  return val.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+};
+
+const normalizeAdmissionData = (data) => {
+  if (!data) return;
+
+  // 1. Email: always lowercase
+  if (data.emailAddress && typeof data.emailAddress === 'string') {
+    data.emailAddress = data.emailAddress.toLowerCase().trim();
+  }
+
+  // 2. Address: Title Case
+  if (data.address && typeof data.address === 'string') {
+    data.address = toTitleCaseServer(data.address.trim());
+  }
+
+  // 3. Uppercase text fields (excludes notes, URLs, dates, numbers, dropdowns)
+  const upperFields = [
+    'fullName', 'fathersName', 'mothersName', 'guardianName', 'guardianRelation',
+    'fathersDepartmentOrCompany', 'fathersOccupationOther', 'state', 'district',
+    'visibleMark', 'handicapType', 'highestEducationalQualification',
+    'boardOrUniversity', 'referalName', 'referralSourceOther', 'computerAccessOther',
+    'panCardNumber', 'drivingLicenceNumber', 'passportNumber', 'epicNumber'
+  ];
+
+  upperFields.forEach((field) => {
+    if (data[field] && typeof data[field] === 'string') {
+      data[field] = data[field].toUpperCase().trim();
+    }
+  });
+
+  // Subjects Studied array: UPPERCASE
+  if (Array.isArray(data.subjectsStudied)) {
+    data.subjectsStudied = data.subjectsStudied.map((s) => (typeof s === 'string' ? s.toUpperCase().trim() : s));
+  }
+};
+
+admissionDetailsSchema.pre('save', function (next) {
+  normalizeAdmissionData(this);
+  next();
+});
+
+admissionDetailsSchema.pre(['findOneAndUpdate', 'updateOne'], function (next) {
+  const update = this.getUpdate();
+  if (update) {
+    if (update.$set) {
+      normalizeAdmissionData(update.$set);
+    } else {
+      normalizeAdmissionData(update);
+    }
+  }
+  next();
 });
 
 module.exports = mongoose.model('AdmissionDetails', admissionDetailsSchema);

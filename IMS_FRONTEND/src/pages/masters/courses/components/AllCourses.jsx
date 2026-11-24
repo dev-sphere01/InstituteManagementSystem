@@ -53,8 +53,23 @@ const AllCourses = ({ courses, onEditCourse, onDeleteCourse, loading, error }) =
      },
      {
        accessorKey: 'fee',
-       header: 'Fee',
-       cell: info => info.row.original?.fee || 'N/A',
+       header: 'Fee & EMI',
+       cell: info => {
+         const course = info.row.original;
+         if (!course || course.fee === undefined) return 'N/A';
+         return (
+           <div className="flex flex-col gap-0.5">
+             <span className="font-bold text-gray-900 dark:text-white">₹{course.fee}</span>
+             {course.enableEmi ? (
+               <span className="inline-flex text-[10px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 px-1.5 py-0.5 rounded w-fit">
+                 ₹{course.emiAmount || Math.ceil(course.fee / (course.maxEmiInstallments || 1))} x {course.maxEmiInstallments || 1} EMIs
+               </span>
+             ) : (
+               <span className="text-[10px] text-gray-400 font-medium">One-time</span>
+             )}
+           </div>
+         );
+       },
        enableSorting: true,
        enableColumnFilter: true,
      },

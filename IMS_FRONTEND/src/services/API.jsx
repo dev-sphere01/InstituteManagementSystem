@@ -36,9 +36,9 @@ instance.interceptors.response.use(
 
       // Only redirect if not already on auth pages
       const currentPath = window.location.pathname;
-      const authPaths = ['/login', '/register', '/forgot-password', '/', '/reset-password'];
+      const authPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
 
-      if (!authPaths.some(path => currentPath.startsWith(path))) {
+      if (!authPaths.some(path => currentPath === path || currentPath.startsWith(path + '/'))) {
         console.log('401 error - redirecting to login');
         window.location.href = '/login';
       }
@@ -193,7 +193,8 @@ const API = {
     getLeads: (params = {}) => instance.get('/reports/leads', { params }),
     getBranches: (params = {}) => instance.get('/reports/branches', { params }),
     getTasks: (params = {}) => instance.get('/reports/tasks', { params }),
-    getFees: (params = {}) => instance.get('/reports/fees', { params })
+    getFees: (params = {}) => instance.get('/reports/fees', { params }),
+    getSalesCompetition: (params = {}) => instance.get('/reports/sales-competition', { params })
   }
 };
 

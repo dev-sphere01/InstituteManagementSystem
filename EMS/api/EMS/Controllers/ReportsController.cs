@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using EMS.Data;
-using EMS.Migrations;
 using EMS.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -234,7 +233,7 @@ namespace EMS.Controllers
         {
             try
             {
-                // Step 1️⃣: Base employee query
+                // Step 1??: Base employee query
                 var employeesQuery =
                     from e in _context.Employees
                     join edp in _context.EmpDeptPositions on e.EmpID equals edp.EmpID
@@ -414,10 +413,10 @@ namespace EMS.Controllers
                             .FirstOrDefault()
                     };
 
-                // Step 2️⃣: Execute the query
+                // Step 2??: Execute the query
                 var result = await employeesQuery.ToListAsync();
 
-                // Step 3️⃣: Filter by date if provided
+                // Step 3??: Filter by date if provided
                 if (request.StartDate.HasValue && request.EndDate.HasValue)
                 {
                     result = result
@@ -432,10 +431,10 @@ namespace EMS.Controllers
                         .ToList();
                 }
 
-                // Step 4️⃣: Convert each record to dynamic object using selected fields
+                // Step 4??: Convert each record to dynamic object using selected fields
                 var data = result.Select(x => BuildDynamicObject(x, request.Fields)).ToList();
 
-                // Step 5️⃣: Return either JSON or Excel
+                // Step 5??: Return either JSON or Excel
                 if (request.Format?.ToLower() == "excel")
                 {
                     var headers = request.Fields;
@@ -456,12 +455,12 @@ namespace EMS.Controllers
         {
             try
             {
-                // 🧩 Step 0️⃣: Build a dictionary for employee names (EmpID → FullName)
+                // ?? Step 0??: Build a dictionary for employee names (EmpID ? FullName)
                 var employeeDictionary = await _context.Employees
             .ToDictionaryAsync(e => e.EmpID, e => e.FirstName + " " + (e.LastName ?? ""));
 
                 bool active = request.Status?.ToLower() == "active";
-                // Step 1️⃣: Base employee query
+                // Step 1??: Base employee query
                 var employeesQuery =
                     from e in _context.Employees
                     join edp in _context.EmpDeptPositions on e.EmpID equals edp.EmpID
@@ -699,10 +698,10 @@ namespace EMS.Controllers
 
                     };
 
-                // Step 2️⃣: Execute query
+                // Step 2??: Execute query
                 var result = await employeesQuery.ToListAsync();
 
-                // Step 3️⃣: Add ReportsTo (manager names)
+                // Step 3??: Add ReportsTo (manager names)
                 var processedResult = result.Select(x =>
                 {
                     var reportIds = x.ReportsTo ?? new List<int>();
@@ -758,7 +757,7 @@ namespace EMS.Controllers
                     };
                 }).ToList();
 
-                // Step 4️⃣: Filter by DateOfJoining (if provided)
+                // Step 4??: Filter by DateOfJoining (if provided)
                 if (request.StartDate.HasValue && request.EndDate.HasValue)
                 {
                     processedResult = processedResult
@@ -774,10 +773,10 @@ namespace EMS.Controllers
                         .ToList();
                 }
 
-                // Step 5️⃣: Select requested fields dynamically
+                // Step 5??: Select requested fields dynamically
                 var data = processedResult.Select(x => BuildDynamicObject(x, request.Fields)).ToList();
 
-                // Step 6️⃣: Return Excel or JSON
+                // Step 6??: Return Excel or JSON
                 if (request.Format?.ToLower() == "excel")
                 {
                     var headers = request.Fields;
@@ -831,7 +830,7 @@ namespace EMS.Controllers
 
                 if (source == null) continue;
 
-                // ✅ Special handling for ReportingManagers
+                // ? Special handling for ReportingManagers
                 if (propName == "ReportingManagers")
                 {
                     var prop = source.GetType().GetProperty("ReportsTo");
@@ -849,7 +848,7 @@ namespace EMS.Controllers
 
                 var value = property.GetValue(source);
 
-                // ✅ KEY FIX: DO NOT convert to string
+                // ? KEY FIX: DO NOT convert to string
                 expando[field] = value;
             }
 

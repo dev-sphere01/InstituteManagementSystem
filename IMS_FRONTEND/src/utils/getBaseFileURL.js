@@ -22,7 +22,7 @@ const getBaseFileURL = () => {
   }
 
   // Remove trailing '/api' if present in either environment
-  let baseURL = rawURL.replace(/\/api\/?$/, '');
+  let baseURL = (rawURL || 'http://localhost:4000/api/v1').replace(/\/api\/v\d+\/?$/, '').replace(/\/api\/?$/, '');
 
   // Remove trailing slash for consistency
   baseURL = baseURL.replace(/\/$/, '');

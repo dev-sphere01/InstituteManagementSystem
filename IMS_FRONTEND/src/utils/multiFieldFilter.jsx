@@ -42,7 +42,7 @@ export const createMultiFieldFilter = (columnId, placeholder = 'Filter...') => {
       onClick={(e) => e.stopPropagation()}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="px-2 py-1 pr-6 rounded border border-slate-300 bg-white w-full text-xs"
+      className="px-2 py-1 pr-6 rounded border border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 w-full text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
       title={`Search across: ${getSearchableFields(columnId).join(', ')}`}
     />
   );

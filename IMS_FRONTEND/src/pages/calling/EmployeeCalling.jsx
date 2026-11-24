@@ -8,8 +8,10 @@ import { FaPhone, FaEye, FaClock, FaUser } from 'react-icons/fa';
 import { ActionButton } from '@/components/permissions';
 import useTableSessionStorage from '@/hooks/useTableSessionStorage';
 import { createMultiFieldFilter } from '@/utils/multiFieldFilter.jsx';
+import { useThemeStore } from '@/store';
 
 const EmployeeCalling = () => {
+  const { isDarkMode } = useThemeStore();
   const navigate = useNavigate();
   const {
     leads,
@@ -45,128 +47,19 @@ const EmployeeCalling = () => {
   const debounceTimeoutRef = useRef(null);
 
   useEffect(() => {
-    // Restore any active calling session on page load
     restoreSession();
-    
-    // Initial load will be triggered by TableService's onStateChange
   }, []);
 
-  const loadInitialDataWithState = async (savedState) => {
-    if (isLoadingRef.current) return;
-
-    try {
-      isLoadingRef.current = true;
-      setLoading(true);
-
-      // Build query parameters from saved state
-      const queryParams = {
-        assignedToMe: true,
-        page: (savedState.pagination?.pageIndex || 0) + 1,
-        limit: savedState.pagination?.pageSize || 10,
-        search: savedState.globalFilter || '',
-        sortBy: savedState.sorting?.[0]?.id || '',
-        sortOrder: savedState.sorting?.[0]?.desc ? 'desc' : 'asc'
-      };
-
-      // Add column filters
-      if (savedState.columnFilters) {
-        savedState.columnFilters.forEach(filter => {
-          queryParams[filter.id] = filter.value;
-        });
-      }
-
-      // Load both leads and stats in parallel
-      const [leadsData, statsData] = await Promise.all([
-        callingService.getLeads(queryParams),
-        callingService.getMyStats()
-      ]);
-
-      setLeads(leadsData.leads || []);
-      setPagination({
-        pageIndex: (leadsData.pagination?.page || leadsData.currentPage || 1) - 1,
-        pageSize: leadsData.pagination?.limit || leadsData.limit || 10,
-        totalItems: leadsData.pagination?.total || leadsData.totalItems || 0,
-        totalPages: leadsData.pagination?.pages || leadsData.totalPages || 0
-      });
-
-      if (leadsData.filters) {
-        setAvailableFilters({
-          statuses: leadsData.filters.availableStatuses || [],
-          services: leadsData.filters.availableServices || []
-        });
-      }
-
-      setStats(statsData);
-      setIsInitialized(true);
-    } catch (error) {
-      console.error('Error loading assigned leads:', error);
-      setLeads([]);
-    } finally {
-      setLoading(false);
-      isLoadingRef.current = false;
-    }
-  };
-
-  const loadInitialData = async () => {
-    if (isLoadingRef.current) return;
-
-    try {
-      isLoadingRef.current = true;
-      setLoading(true);
-      
-      // Load both leads and stats in parallel
-      const [leadsData, statsData] = await Promise.all([
-        callingService.getLeads({
-          assignedToMe: true,
-          page: 1,
-          limit: 10
-        }),
-        callingService.getMyStats()
-      ]);
-      
-      setLeads(leadsData.leads || []);
-      setPagination({
-        pageIndex: 0,
-        pageSize: 10,
-        totalItems: leadsData.pagination?.total || leadsData.totalItems || 0,
-        totalPages: leadsData.pagination?.pages || leadsData.totalPages || 0
-      });
-      // Store available filters from API response
-      if (leadsData.filters) {
-        setAvailableFilters({
-          statuses: leadsData.filters.availableStatuses || [],
-          services: leadsData.filters.availableServices || []
-        });
-      }
-      setStats(statsData);
-      setIsInitialized(true);
-    } catch (error) {
-      console.error('Error loading assigned leads:', error);
-      setLeads([]);
-    } finally {
-      setLoading(false);
-      isLoadingRef.current = false;
-    }
-  };
-
   const handleTableStateChange = async (params = {}) => {
-    // Prevent concurrent calls
-    if (isLoadingRef.current) {
-      return;
-    }
+    if (isLoadingRef.current) return;
 
-    // Clear any existing debounce timeout
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
 
-    // Prevent duplicate calls with same parameters
     const paramsString = JSON.stringify(params);
-    if (lastParamsRef.current === paramsString) {
-      return;
-    }
+    if (lastParamsRef.current === paramsString) return;
 
-    // Debounce the API call
     debounceTimeoutRef.current = setTimeout(async () => {
       lastParamsRef.current = paramsString;
       setIsInitialized(true);
@@ -175,9 +68,8 @@ const EmployeeCalling = () => {
         isLoadingRef.current = true;
         setLoading(true);
 
-        // Build query parameters with safe defaults
         const queryParams = {
-          assignedToMe: true, // Always filter for current user
+          assignedToMe: true,
           page: (params.pagination?.pageIndex ?? 0) + 1,
           limit: params.pagination?.pageSize ?? 10,
           search: params.globalFilter || '',
@@ -185,7 +77,6 @@ const EmployeeCalling = () => {
           sortOrder: params.sorting?.[0]?.desc ? 'desc' : 'asc'
         };
 
-        // Add column filters
         if (params.columnFilters && Array.isArray(params.columnFilters)) {
           params.columnFilters.forEach(filter => {
             if (filter.id && filter.value !== undefined && filter.value !== null && filter.value !== '') {
@@ -194,7 +85,6 @@ const EmployeeCalling = () => {
           });
         }
 
-        // Save table state to session storage
         saveTableState(params);
 
         const data = await callingService.getLeads(queryParams);
@@ -205,7 +95,6 @@ const EmployeeCalling = () => {
           totalItems: data.pagination?.total || data.totalItems || 0,
           totalPages: data.pagination?.pages || data.totalPages || 0
         });
-        // Update available filters from API response
         if (data.filters) {
           setAvailableFilters({
             statuses: data.filters.availableStatuses || [],
@@ -224,15 +113,15 @@ const EmployeeCalling = () => {
         setLoading(false);
         isLoadingRef.current = false;
       }
-    }, 300); // 300ms debounce
+    }, 300);
   };
 
   const getStatusBadge = (status) => {
     const statusStyles = {
-      assigned: 'bg-blue-100 text-blue-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      completed: 'bg-green-100 text-green-800',
-      failed: 'bg-red-100 text-red-800'
+      assigned: 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200',
+      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-200',
+      completed: 'bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-200',
+      failed: 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-200'
     };
 
     return (
@@ -263,16 +152,16 @@ const EmployeeCalling = () => {
         return (
           <div className="flex items-center">
             <div className="flex-shrink-0 h-10 w-10">
-              <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                <FaUser className="h-5 w-5 text-gray-600" />
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
+                <FaUser className="h-5 w-5" />
               </div>
             </div>
             <div className="ml-4">
-              <div className="text-sm font-medium text-gray-900">
+              <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 {lead.name}
               </div>
               <div className="text-sm">
-                <PhoneLink phone={lead.contactNo} className="text-gray-500" showIcon={true} />
+                <PhoneLink phone={lead.contactNo} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} showIcon={true} />
               </div>
             </div>
           </div>
@@ -288,9 +177,9 @@ const EmployeeCalling = () => {
         const lead = row.original;
         return (
           <div>
-            <div className="text-sm text-gray-900">{lead.selectedService}</div>
+            <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{lead.selectedService}</div>
             {lead.serviceSubcategory && (
-              <div className="text-sm text-gray-500">{lead.serviceSubcategory}</div>
+              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{lead.serviceSubcategory}</div>
             )}
           </div>
         );
@@ -300,7 +189,7 @@ const EmployeeCalling = () => {
           value={value || ''}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange(e.target.value)}
-          className="px-2 py-1 rounded border border-slate-300 bg-white w-full text-xs"
+          className={`px-2 py-1 rounded border text-xs w-full ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-slate-300 bg-white text-gray-900'}`}
         >
           <option value="">All Services</option>
           {availableFilters.services.map((service) => (
@@ -320,7 +209,7 @@ const EmployeeCalling = () => {
           value={value || ''}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange(e.target.value)}
-          className="px-2 py-1 rounded border border-slate-300 bg-white w-full text-xs"
+          className={`px-2 py-1 rounded border text-xs w-full ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-slate-300 bg-white text-gray-900'}`}
         >
           <option value="">All Statuses</option>
           {availableFilters.statuses.map((status) => (
@@ -335,7 +224,7 @@ const EmployeeCalling = () => {
       accessorKey: 'assignedAt',
       header: 'Assigned',
       cell: ({ getValue }) => (
-        <div className="text-sm text-gray-500 flex items-center">
+        <div className={`text-sm flex items-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           <FaClock className="h-3 w-3 mr-1" />
           {formatDate(getValue())}
         </div>
@@ -345,7 +234,7 @@ const EmployeeCalling = () => {
       accessorKey: 'lastCallAt',
       header: 'Last Call',
       cell: ({ getValue }) => (
-        <div className="text-sm text-gray-500">
+        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           {getValue() ? formatDate(getValue()) : 'Never'}
         </div>
       ),
@@ -384,7 +273,7 @@ const EmployeeCalling = () => {
       enableSorting: false,
       enableColumnFilter: false,
     },
-  ], [availableFilters]);
+  ], [availableFilters, isDarkMode]);
 
   const handleStartCall = (lead) => {
     navigate(`/calling/lead/${lead.id}?startCall=false`);
@@ -398,29 +287,27 @@ const EmployeeCalling = () => {
     handleViewDetails(row.original);
   };
 
-
-
   return (
     <div className="p-6">
       {/* Header with Stats Chips */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Calling Queue</h1>
-            <p className="text-gray-600 mt-1">Manage your assigned leads and calling activities</p>
+            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>My Calling Queue</h1>
+            <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Manage your assigned leads and calling activities</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <div className="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-medium rounded-full">
+            <div className={`px-3 py-1 text-sm font-medium rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>
               {stats.total} Total
             </div>
-            <div className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">
+            <div className={`px-3 py-1 text-sm font-medium rounded-full ${isDarkMode ? 'bg-yellow-900/60 text-yellow-200' : 'bg-yellow-100 text-yellow-800'}`}>
               {stats.pending} Pending
             </div>
-            <div className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+            <div className={`px-3 py-1 text-sm font-medium rounded-full ${isDarkMode ? 'bg-green-900/60 text-green-200' : 'bg-green-100 text-green-800'}`}>
               {stats.completed} Completed
             </div>
-            <div className="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
+            <div className={`px-3 py-1 text-sm font-medium rounded-full ${isDarkMode ? 'bg-red-900/60 text-red-200' : 'bg-red-100 text-red-800'}`}>
               {stats.failed} Failed
             </div>
           </div>
@@ -428,7 +315,7 @@ const EmployeeCalling = () => {
       </div>
 
       {/* Leads Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className={`rounded-xl shadow border overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <TableService
           columns={columns}
           data={leads}
@@ -449,4 +336,4 @@ const EmployeeCalling = () => {
   );
 };
 
-export default EmployeeCalling;
+export default EmployeeCalling;

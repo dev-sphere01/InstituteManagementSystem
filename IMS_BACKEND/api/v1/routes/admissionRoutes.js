@@ -16,6 +16,9 @@ router.get('/', admissionController.getAllAdmissions);
 // router.get('/search/query', admissionController.searchAdmission);
 
 // Student status routes (admission-linked)
+router.get('/next-form-no/:centerCode', admissionController.getNextFormNo);
+router.get('/next-reg-no/:centerCode', admissionController.getNextRegNo);
+
 router.get('/:id/status', studentStatusController.getStatus);
 router.patch('/:id/status', studentStatusController.updateStatus);
 router.get('/:id/status/history', studentStatusController.getHistory);

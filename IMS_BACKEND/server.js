@@ -1,4 +1,4 @@
-// Import required modules
+// Import required modules (triggered restart to load updated config.env)
 const app = require("./app"); // Import the Express app instance
 const dotenv = require("dotenv"); // Import the dotenv module for environment variable management
 const connectDatabase = require("./config/database"); // Import the database connection module
@@ -50,6 +50,18 @@ async function startServer() {
 
       const escalationInterval = Number(process.env.ESCALATION_INTERVAL_MINUTES || 5);
       startEscalationScheduler(escalationInterval);
+
+      // Start overdue check scheduler (Section D)
+      const { runOverdueJob } = require("./services/overdueJob");
+      const overdueIntervalHours = Number(process.env.OVERDUE_INTERVAL_HOURS || 24);
+      setInterval(() => {
+        runOverdueJob().catch(err => logger.error(`Overdue job error: ${err.message}`));
+      }, overdueIntervalHours * 60 * 60 * 1000);
+
+      // Run once on initial startup after brief delay
+      setTimeout(() => {
+        runOverdueJob().catch(err => logger.error(`Initial overdue job error: ${err.message}`));
+      }, 10000);
     } else {
       logger.error("Failed to connect to database - server will not start");
       process.exit(1);

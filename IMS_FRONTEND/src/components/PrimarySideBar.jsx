@@ -35,6 +35,7 @@ const PrimarySideBar = () => {
   // Main navigation items (remove flat Enquiry)
   const mainNavItems = [
     { path: '/dashboard', icon: 'home', label: 'Dashboard' },
+    { path: '/dashboard/tickets', icon: 'ticket', label: 'Tickets & Tasks' },
     { path: '/dashboard/admission', icon: 'document-add', label: 'Admission' },
     { path: '/dashboard/workflow', icon: 'collection', label: 'Office Workflow' },
     { path: '/dashboard/workflow/templates', icon: 'collection', label: 'Workflow Templates' },
@@ -57,7 +58,6 @@ const PrimarySideBar = () => {
     { path: '/dashboard/courses', icon: 'book', label: 'Courses' },
     { path: '/dashboard/calling-form-master', icon: 'document-add', label: 'Calling Form Master' },
     { path: '/dashboard/center-code', icon: 'collection', label: 'Center Code' },
-    { path: '/dashboard/employees/branches', icon: 'collection', label: 'Branch' },
     { path: '/dashboard/additional-features', icon: 'collection', label: 'Additional Features' },
     { path: '/dashboard/batches', icon: 'collection', label: 'Batches' },
     { path: '/dashboard/sessions', icon: 'calendar', label: 'Sessions' },
@@ -76,6 +76,9 @@ const PrimarySideBar = () => {
     { path: '/dashboard/employees', icon: 'users', label: 'All Employees' },
     { path: '/dashboard/employees/new', icon: 'document-add', label: 'Add Employee' },
     { path: '/dashboard/employees/departments', icon: 'collection', label: 'Departments' },
+    { path: '/dashboard/employees/positions', icon: 'collection', label: 'Positions' },
+    { path: '/dashboard/employees/types', icon: 'collection', label: 'Employee Types' },
+    { path: '/dashboard/employees/branches', icon: 'collection', label: 'Branches' },
   ];
 
   // Payroll navigation items
@@ -164,6 +167,12 @@ const PrimarySideBar = () => {
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        );
+      case 'ticket':
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
           </svg>
         );
       case 'chart':
@@ -502,7 +511,7 @@ const PrimarySideBar = () => {
                 <button
                   onClick={() => setOpenMenu(openMenu === 'calling' ? null : 'calling')}
                   className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${callingNavItems.some(item => isActive(item.path)) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
-                > 
+                >
                   <div className="flex items-center">
                     <span className="inline-flex">{renderIcon('folder')}</span>
                     <span className="ml-3">Calling</span>
@@ -537,7 +546,7 @@ const PrimarySideBar = () => {
                 <button
                   onClick={() => setOpenMenu(openMenu === 'workflow' ? null : 'workflow')}
                   className={`w-full flex items-center justify-between p-2 rounded-md transition-colors ${isWorkflowActive() ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
-                > 
+                >
                   <div className="flex items-center">
                     <span className="inline-flex">{renderIcon('folder')}</span>
                     <span className="ml-3">Workflow Tasks</span>

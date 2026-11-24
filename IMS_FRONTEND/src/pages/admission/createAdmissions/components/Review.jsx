@@ -53,6 +53,7 @@ const Review = ({formId, formData = {}, onBack, onSubmit }) => {
         { label: 'Computer Access', value: formData.computerAccessOther || '-' },
         { label: 'Referral Source', value: formData.referralSource || '-' },
         { label: 'Referral - Other', value: formData.referralSourceOther || '-' },
+        { label: 'Referral Code', value: formData.referralCode || '-' },
         { label: 'Referred By (Name)', value: formData.referalName || '-' },
       ],
     }

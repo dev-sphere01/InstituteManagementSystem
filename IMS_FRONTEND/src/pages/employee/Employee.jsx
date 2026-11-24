@@ -77,8 +77,9 @@ const Employee = () => {
           </PermissionGuard>
         );
       case 'types':
+      case 'employee-types':
         return (
-          <PermissionGuard permissions={['department.read']}>
+          <PermissionGuard permissions={['department.read', 'employee.read']}>
             <EmployeeTypes onBack={() => goTo('list')} />
           </PermissionGuard>
         );

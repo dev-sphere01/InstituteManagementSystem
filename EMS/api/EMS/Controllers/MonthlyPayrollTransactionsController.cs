@@ -1,5 +1,4 @@
-﻿using EMS.Data;
-using EMS.Migrations;
+using EMS.Data;
 using EMS.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -184,7 +183,7 @@ namespace EMS.Controllers
                 decimal rd = payrollData.RD ?? 0;
                 decimal healthInsurance = payrollData.HealthInsurance ?? 0;
 
-                // ✅ Fetch penalty & other allowance
+                // ? Fetch penalty & other allowance
                 decimal penalty = penalties.FirstOrDefault(p =>
                     p.EmpID == empId &&
                     p.DeductionDate.Month == month &&
@@ -213,7 +212,7 @@ namespace EMS.Controllers
                     TotalHours = totalHours
                 };
 
-                // ✅ NetPay includes allowance & excludes penalty
+                // ? NetPay includes allowance & excludes penalty
                 transaction.NetPay = Math.Round(
                     netSalaryPayment
                     + (transaction.HRA ?? 0)
@@ -233,7 +232,7 @@ namespace EMS.Controllers
                 transaction.NetPay -= transaction.LoanAndAdvanceRepayment;
                 transaction.Deductions += transaction.LoanAndAdvanceRepayment;
 
-                // ✅ Arrears calculation
+                // ? Arrears calculation
                 var pendingArrears = await _context.EmpIncrements
                     .Where(i => i.EmpID == empId && i.IsProcessed && !i.ArrearsPaid && i.ArrearsAmount > 0)
                     .ToListAsync();
@@ -269,7 +268,7 @@ namespace EMS.Controllers
                 decimal rd = payrollData.RD ?? 0;
                 decimal healthInsurance = payrollData.HealthInsurance ?? 0;
 
-                // ✅ Fetch penalty & other allowance for fixed employees too
+                // ? Fetch penalty & other allowance for fixed employees too
                 decimal penalty = penalties.FirstOrDefault(p =>
                     p.EmpID == emp.EmpID &&
                     p.DeductionDate.Month == month &&
@@ -315,7 +314,7 @@ namespace EMS.Controllers
                 transaction.NetPay -= transaction.LoanAndAdvanceRepayment;
                 transaction.Deductions += transaction.LoanAndAdvanceRepayment;
 
-                // ✅ Arrears calculation
+                // ? Arrears calculation
                 var pendingArrears = await _context.EmpIncrements
                     .Where(i => i.EmpID == emp.EmpID && i.IsProcessed && !i.ArrearsPaid && i.ArrearsAmount > 0)
                     .ToListAsync();

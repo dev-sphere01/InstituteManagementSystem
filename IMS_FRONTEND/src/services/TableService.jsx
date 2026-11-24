@@ -89,31 +89,31 @@ const TableService = ({
   }`;
 
   return (
-    <div className="w-full overflow-x-auto mt-2">
+    <div className={`w-full overflow-x-auto mt-2 p-3 rounded-xl border ${borderColor} ${tableBg} ${tableText}`}>
       {/* Global Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 m-1">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
         <input
           type="text"
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Search..."
           className={`px-3 py-2 rounded-lg border ${borderColor} ${tableText} ${
-            isDarkMode ? "bg-gray-700" : "bg-gray-50"
-          } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-150`}
-          style={{ minWidth: 200 }}
+            isDarkMode ? "bg-gray-700/80 placeholder-gray-400" : "bg-gray-50 placeholder-gray-500"
+          } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-150 text-sm`}
+          style={{ minWidth: 220 }}
         />
         {/* Page size selector */}
         <div className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           <span>Rows per page:</span>
           <select
-            className={`px-2 py-1 rounded-lg border ${borderColor} ${tableText} ${
+            className={`px-2 py-1.5 rounded-lg border ${borderColor} ${tableText} ${
               isDarkMode ? "bg-gray-700" : "bg-gray-50"
-            } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-150`}
+            } focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-150 text-xs font-medium`}
             value={table.getState().pagination.pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
           >
             {[5, 10, 20, 50, 100].map((size) => (
-              <option key={size} value={size}>
+              <option key={size} value={size} className={isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"}>
                 {size}
               </option>
             ))}
@@ -131,7 +131,9 @@ const TableService = ({
                 <th
                   key={header.id}
                   colSpan={header.colSpan}
-                  className={`px-3 py-2 ${headerBg} ${borderColor} border-b text-left font-semibold select-none cursor-pointer text-xs uppercase tracking-wider`}
+                  className={`px-3 py-2.5 ${headerBg} ${borderColor} border-b text-left font-semibold select-none cursor-pointer text-xs uppercase tracking-wider ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}
                   onClick={
                     header.column.getCanSort()
                       ? header.column.getToggleSortingHandler()
@@ -162,8 +164,8 @@ const TableService = ({
                         header.column.setFilterValue(e.target.value)
                       }
                       placeholder={`Filter...`}
-                      className={`mt-1 px-2 py-1 rounded border ${borderColor} ${tableText} ${
-                        isDarkMode ? "bg-gray-800" : "bg-white"
+                      className={`mt-1.5 px-2 py-1 rounded border ${borderColor} ${tableText} ${
+                        isDarkMode ? "bg-gray-800 placeholder-gray-500" : "bg-white placeholder-gray-400"
                       } w-full text-[10px] font-normal focus:outline-none focus:ring-1 focus:ring-blue-400`}
                     />
                   )}

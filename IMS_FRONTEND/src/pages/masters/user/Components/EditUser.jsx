@@ -33,7 +33,7 @@ const EditUser = ({ userId, onBack, onSuccess }) => {
         roles: ((currentUser.roles && currentUser.roles.length > 0)
           ? currentUser.roles
           : (currentUser.role ? [currentUser.role] : [])
-        ).map((r) => r?._id).filter(Boolean),
+        ).map((r) => (typeof r === 'object' && r !== null ? r._id : r)).filter(Boolean),
         isActive: currentUser.isActive !== undefined ? currentUser.isActive : true
       });
     }
@@ -52,6 +52,18 @@ const EditUser = ({ userId, onBack, onSuccess }) => {
         ...prev,
         [name]: ''
       }));
+    }
+  };
+
+  const toggleRole = (roleId) => {
+    setFormData((prev) => {
+      const exists = prev.roles.includes(roleId);
+      const roles = exists ? prev.roles.filter((id) => id !== roleId) : [...prev.roles, roleId];
+      return { ...prev, roles };
+    });
+
+    if (validationErrors.roles) {
+      setValidationErrors((prev) => ({ ...prev, roles: '' }));
     }
   };
 
@@ -334,14 +346,4 @@ const EditUser = ({ userId, onBack, onSuccess }) => {
 };
 
 export default EditUser;
-  const toggleRole = (roleId) => {
-    setFormData((prev) => {
-      const exists = prev.roles.includes(roleId);
-      const roles = exists ? prev.roles.filter((id) => id !== roleId) : [...prev.roles, roleId];
-      return { ...prev, roles };
-    });
 
-    if (validationErrors.roles) {
-      setValidationErrors((prev) => ({ ...prev, roles: '' }));
-    }
-  };

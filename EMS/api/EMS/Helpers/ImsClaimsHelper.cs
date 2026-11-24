@@ -17,30 +17,45 @@ namespace EMS.Helpers
         /// </summary>
         public static string GetImsUserId(ClaimsPrincipal user)
         {
+            if (user == null) return string.Empty;
             return user.FindFirstValue("id")
                 ?? user.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? user.FindFirstValue("sub")
                 ?? string.Empty;
         }
 
         /// <summary>
         /// Checks whether the IMS user's JWT includes the given permission string
-        /// (e.g., "employee.create", "payroll.process").
+        /// (e.g., "employee.create", "payroll.process") or the wildcard "*".
         /// </summary>
         public static bool HasPermission(ClaimsPrincipal user, string permission)
         {
-            var permClaim = user.FindFirstValue("permissions");
-            if (string.IsNullOrEmpty(permClaim))
-                return false;
+            if (user == null) return false;
 
-            try
+            // 1. Check all individual claims of type "permissions"
+            var permClaims = user.FindAll("permissions").Select(c => c.Value).ToList();
+            if (permClaims.Contains("*") || permClaims.Contains(permission))
+                return true;
+
+            // 2. Also handle if the claim value was packed into a JSON array string or comma separated
+            foreach (var val in permClaims)
             {
-                var permissions = JsonSerializer.Deserialize<string[]>(permClaim);
-                return permissions?.Contains(permission) ?? false;
+                if (string.IsNullOrWhiteSpace(val)) continue;
+                if (val == "*" || val == permission) return true;
+
+                if (val.StartsWith("[") && val.EndsWith("]"))
+                {
+                    try
+                    {
+                        var list = JsonSerializer.Deserialize<string[]>(val);
+                        if (list != null && (list.Contains("*") || list.Contains(permission)))
+                            return true;
+                    }
+                    catch { }
+                }
             }
-            catch
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <summary>

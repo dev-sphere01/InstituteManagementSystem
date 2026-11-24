@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const campaignSchema = new mongoose.Schema({
   name:        { type: String, required: true, trim: true },
   channel:     { type: String, enum: ['Meta', 'Google', 'Offline', 'Email', 'SMS', 'Other'], required: true },
-  branch:      { type: String, default: null },
+  branch:      { type: mongoose.Schema.Types.Mixed, default: null },
   budget:      { type: Number, default: 0 },       // total spend
   startDate:   { type: Date, default: null },
   endDate:     { type: Date, default: null },

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -50,15 +50,32 @@ namespace EMS.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEmpAcadDetail(int id, EmpAcadDetail empAcadDetail)
         {
-            if (id != empAcadDetail.EadID)
+            if (empAcadDetail == null)
             {
-                return BadRequest();
+                return BadRequest("Academic detail data is required.");
+            }
+            empAcadDetail.EadID = id;
+
+            var existing = await _context.EmpAcadDetails.FirstOrDefaultAsync(a => a.EadID == id);
+            if (existing == null)
+            {
+                existing = await _context.EmpAcadDetails.FirstOrDefaultAsync(a => a.EmpID == empAcadDetail.EmpID && a.Degree == empAcadDetail.Degree);
             }
 
-            var oldDetail = await _context.EmpAcadDetails.AsNoTracking().FirstOrDefaultAsync(a => a.EadID == id);
-            if (oldDetail == null) return NotFound();
+            if (existing == null)
+            {
+                return NotFound($"Academic detail with ID {id} not found.");
+            }
 
-            _context.Entry(empAcadDetail).State = EntityState.Modified;
+            var oldState = System.Text.Json.JsonSerializer.Serialize(existing);
+
+            existing.Degree = empAcadDetail.Degree;
+            existing.Qualification = empAcadDetail.Qualification ?? empAcadDetail.Degree;
+            existing.Institution = empAcadDetail.Institution;
+            existing.YearOfPassing = empAcadDetail.YearOfPassing;
+            existing.Grade = empAcadDetail.Grade;
+
+            _context.EmpAcadDetails.Update(existing);
 
             try
             {
@@ -67,10 +84,10 @@ namespace EMS.Controllers
                 await _logger.LogActivityAsync(
                     "Employee Profile",
                     "Update Academic Detail",
-                    $"Updated academic detail {id} for employee {empAcadDetail.EmpID}",
+                    $"Updated academic detail {existing.EadID} for employee {empAcadDetail.EmpID}",
                     empAcadDetail.EmpID.ToString(),
-                    System.Text.Json.JsonSerializer.Serialize(oldDetail),
-                    System.Text.Json.JsonSerializer.Serialize(empAcadDetail)
+                    oldState,
+                    System.Text.Json.JsonSerializer.Serialize(existing)
                 );
             }
             catch (DbUpdateConcurrencyException)
@@ -85,7 +102,7 @@ namespace EMS.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(existing);
         }
 
         // POST: api/EmpAcadDetails
@@ -93,6 +110,46 @@ namespace EMS.Controllers
         [HttpPost]
         public async Task<ActionResult<EmpAcadDetail>> PostEmpAcadDetail(EmpAcadDetail empAcadDetail)
         {
+            if (empAcadDetail == null)
+            {
+                return BadRequest("Academic detail data is required.");
+            }
+
+            // Check if record with same EadID or same (EmpID, Degree) already exists (upsert)
+            var existing = await _context.EmpAcadDetails
+                .FirstOrDefaultAsync(a => (empAcadDetail.EadID > 0 && a.EadID == empAcadDetail.EadID) || 
+                                          (a.EmpID == empAcadDetail.EmpID && a.Degree == empAcadDetail.Degree));
+
+            if (existing != null)
+            {
+                var oldState = System.Text.Json.JsonSerializer.Serialize(existing);
+
+                existing.Degree = empAcadDetail.Degree;
+                existing.Qualification = empAcadDetail.Qualification ?? empAcadDetail.Degree;
+                existing.Institution = empAcadDetail.Institution;
+                existing.YearOfPassing = empAcadDetail.YearOfPassing;
+                existing.Grade = empAcadDetail.Grade;
+
+                _context.EmpAcadDetails.Update(existing);
+                await _context.SaveChangesAsync();
+
+                await _logger.LogActivityAsync(
+                    "Employee Profile",
+                    "Update Academic Detail",
+                    $"Updated academic detail {existing.EadID} for employee {empAcadDetail.EmpID}",
+                    empAcadDetail.EmpID.ToString(),
+                    oldState,
+                    System.Text.Json.JsonSerializer.Serialize(existing)
+                );
+
+                return Ok(existing);
+            }
+
+            if (string.IsNullOrEmpty(empAcadDetail.Qualification))
+            {
+                empAcadDetail.Qualification = empAcadDetail.Degree;
+            }
+
             _context.EmpAcadDetails.Add(empAcadDetail);
             await _context.SaveChangesAsync();
 

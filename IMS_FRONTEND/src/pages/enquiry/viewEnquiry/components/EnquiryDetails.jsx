@@ -59,14 +59,6 @@ const EnquiryDetails = () => {
             ))}
         </div>
       </div>
-      <div className="flex gap-4 mt-8 justify-end">
-        {enquiry.status !== 'completed' && (
-          <button className="px-4 py-2 bg-green-600 text-white rounded" onClick={() => {/* TODO: Mark as completed API call */}}>Mark as Completed</button>
-        )}
-        {enquiry.status !== 'closed' && (
-          <button className="px-4 py-2 bg-red-600 text-white rounded" onClick={() => {/* TODO: Mark as closed API call */}}>Close Enquiry</button>
-        )}
-      </div>
     </div>
   )
 }

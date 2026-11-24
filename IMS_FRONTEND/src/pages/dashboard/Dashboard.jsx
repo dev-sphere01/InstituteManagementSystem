@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import API from "../../services/API";
 import { motion } from "framer-motion";
 import {
   FaUsers,
@@ -63,11 +65,11 @@ const statCards = [
 ];
 
 const quickLinks = [
-  { label: "Add New Student", icon: <FaPlusCircle /> },
-  { label: "Create New Batch", icon: <FaLayerGroup /> },
-  { label: "Define Fee Structure", icon: <FaFileAlt /> },
-  { label: "Follow-Up Enquiries", icon: <FaPhoneAlt /> },
-  { label: "Generate Fee Receipt", icon: <FaPrint /> },
+  { label: "Add New Student", icon: <FaPlusCircle />, path: "/dashboard/admission" },
+  { label: "Create New Batch", icon: <FaLayerGroup />, path: "/dashboard/batches" },
+  { label: "Define Fee Structure", icon: <FaFileAlt />, path: "/dashboard/courses" },
+  { label: "Follow-Up Enquiries", icon: <FaPhoneAlt />, path: "/dashboard/enquiry/view" },
+  { label: "Generate Fee Receipt", icon: <FaPrint />, path: "/dashboard/fee" },
 ];
 
 const todaysEnquiries = [
@@ -120,19 +122,93 @@ const paymentStatus = [
 const pieColors = ["#22c55e", "#3b82f6", "#ef4444"];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("month");
   const { isDarkMode } = useThemeStore();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoading(true);
+      try {
+        const response = await API.get('/dashboard/stats', { params: { filter } });
+        if (response && response.success) {
+          setStats(response.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, [filter]);
+
+  if (loading && !stats) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-500 dark:text-slate-400 font-medium space-y-4">
+        <svg className="animate-spin h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        <span>Loading Dashboard Stats...</span>
+      </div>
+    );
+  }
+
+  const currentStatCards = [
+    {
+      label: "Total Students",
+      value: stats?.metrics?.totalStudents ?? 0,
+      icon: <FaUsers />,
+      color: "bg-blue-500",
+      path: "/dashboard/student-details",
+    },
+    {
+      label: "Total Admissions",
+      value: stats?.metrics?.totalAdmissions ?? 0,
+      icon: <FaCheckCircle />,
+      color: "bg-green-500",
+      path: "/dashboard/student-details",
+    },
+    {
+      label: "Active Batches",
+      value: stats?.metrics?.activeBatches ?? 0,
+      icon: <FaCalendarAlt />,
+      color: "bg-purple-500",
+      path: "/dashboard/batches",
+    },
+    {
+      label: "Pending Enquiries",
+      value: stats?.metrics?.pendingEnquiries ?? 0,
+      icon: <FaQuestionCircle />,
+      color: "bg-orange-400",
+      path: "/dashboard/enquiry/view",
+    },
+    {
+      label: "Fee Collected",
+      value: `₹${Number(stats?.metrics?.feeCollected || 0).toLocaleString('en-IN')}`,
+      icon: <FaRupeeSign />,
+      color: "bg-green-600",
+      path: "/dashboard/fee",
+    },
+  ];
+
+  const currentTodaysEnquiries = stats?.todaysEnquiries || [];
+  const currentLatestAdmissions = stats?.latestAdmissions || [];
+  const currentAdmissionData = stats?.admissionsOverTime || [];
+  const currentPaymentStatus = stats?.paymentStatus || [];
+  const currentCourseCount = stats?.courseCount || [];
 
   return (
     <div className="p-4 space-y-6">
       {/* <h1 className="text-3xl font-bold">Institute Management Dashboard</h1> */}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {statCards.map((card, idx) => (
+        {currentStatCards.map((card, idx) => (
           <motion.div
             key={idx}
             whileHover={{ scale: 1.05 }}
-            className={`p-4 text-white rounded-xl shadow-md ${card.color}`}
+            onClick={() => card.path && navigate(card.path)}
+            className={`p-4 text-white rounded-xl shadow-md cursor-pointer select-none transition-transform ${card.color}`}
           >
             <div className="flex items-center space-x-4">
               <div className="text-3xl">{card.icon}</div>
@@ -150,7 +226,8 @@ export default function Dashboard() {
           <motion.button
             key={idx}
             whileHover={{ translateX: -2, translateY: -2 }}
-            className="w-52 px-4 py-2 text-sm font-medium 
+            onClick={() => link.path && navigate(link.path)}
+            className="w-52 px-4 py-2 text-sm font-medium cursor-pointer 
                  text-[#2563eb] dark:text-white 
                  bg-white dark:bg-gray-800 
                  border border-[#2563eb] dark:border-white 
@@ -183,12 +260,12 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {todaysEnquiries.map((e, idx) => (
+              {currentTodaysEnquiries.map((e, idx) => (
                 <tr
                   key={idx}
                   className="border-b border-gray-200 dark:border-gray-700"
                 >
-                  <td className="py-2 px-3 text-gray-800 dark:text-gray-100">
+                  <td className="py-2 px-3 text-gray-800 dark:text-gray-100 font-semibold">
                     {e.name}
                   </td>
                   <td className="py-2 px-3 text-gray-800 dark:text-gray-100">
@@ -197,11 +274,16 @@ export default function Dashboard() {
                   <td className="py-2 px-3 text-gray-800 dark:text-gray-100">
                     {e.phone}
                   </td>
-                  <td className="py-2 px-3 text-gray-800 dark:text-gray-100">
+                  <td className="py-2 px-3 text-gray-800 dark:text-gray-100 font-medium">
                     {e.time}
                   </td>
                 </tr>
               ))}
+              {currentTodaysEnquiries.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="text-center py-4 text-gray-400 italic">No enquiries registered today</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -212,24 +294,27 @@ export default function Dashboard() {
             Latest Admissions
           </h2>
           <ul className="space-y-2">
-            {latestAdmissions.map((a, idx) => (
+            {currentLatestAdmissions.map((a, idx) => (
               <li
                 key={idx}
                 className="flex justify-between border-b pb-2 border-gray-200 dark:border-gray-700"
               >
                 <div>
-                  <div className="font-medium text-gray-800 dark:text-white">
+                  <div className="font-semibold text-gray-800 dark:text-white">
                     {a.name}
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     {a.course}
                   </div>
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-300">
+                <div className="text-sm font-medium text-gray-600 dark:text-gray-300">
                   {a.date}
                 </div>
               </li>
             ))}
+            {currentLatestAdmissions.length === 0 && (
+              <li className="text-center py-4 text-gray-400 italic">No admissions registered yet</li>
+            )}
           </ul>
         </div>
       </div>
@@ -243,7 +328,7 @@ export default function Dashboard() {
               Admissions Over Time
             </h2>
             <select
-              className="select select-bordered select-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-white border-gray-300 dark:border-gray-600"
+              className="select select-bordered select-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-white border-gray-300 dark:border-gray-600 cursor-pointer"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             >
@@ -253,7 +338,7 @@ export default function Dashboard() {
             </select>
           </div>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={admissionData}>
+            <LineChart data={currentAdmissionData}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={isDarkMode ? "#444" : "#ccc"}
@@ -285,14 +370,14 @@ export default function Dashboard() {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={paymentStatus}
+                data={currentPaymentStatus}
                 cx="50%"
                 cy="50%"
                 outerRadius={100}
                 dataKey="value"
                 label
               >
-                {paymentStatus.map((entry, index) => (
+                {currentPaymentStatus.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={pieColors[index % pieColors.length]}
@@ -308,7 +393,7 @@ export default function Dashboard() {
                 contentStyle={{
                   backgroundColor: isDarkMode ? "#1f2937" : "#ffffff",
                   borderColor: isDarkMode ? "#374151" : "#e5e7eb",
-                  color: isDarkMode ? "#f3f4f6" : "##ffff",
+                  color: isDarkMode ? "#f3f4f6" : "#111827",
                 }}
               />
             </PieChart>
@@ -316,17 +401,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-      </div> */}
-
       {/* Bar Chart - Course Count */}
       <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-md dark:shadow-lg">
         <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-white">
           Available Course Count
         </h2>
         <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={courseCount}>
+          <BarChart data={currentCourseCount}>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke={isDarkMode ? "#444" : "#ccc"}

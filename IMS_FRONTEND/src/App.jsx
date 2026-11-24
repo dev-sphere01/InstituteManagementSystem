@@ -76,6 +76,9 @@ import LeadPipeline from "./pages/crm/leads/LeadPipeline.jsx";
 import CrmAnalytics from "./pages/crm/analytics/CrmAnalytics.jsx";
 import Campaigns from "./pages/crm/campaigns/Campaigns.jsx";
 
+// Tickets & Tasks Module
+import TicketManagement from "./pages/tickets/TicketManagement.jsx";
+
 // Public Pages
 import ContactUs from "./pages/public/ContactUs.jsx";
 
@@ -148,7 +151,10 @@ function App() {
                 {/* Workflow Routes */}
                 <Route path="workflow" element={<WorkflowDashboard />} />
 
-                {/* Fee Routes removed as it's now in Workflow Tasks */}
+                {/* Fee Routes */}
+                <Route path="fee" element={<Fee />} />
+                <Route path="fees" element={<Fee />} />
+
                 {/* Workflow Routes */}
                 <Route path="workflow/tasks/:tabSlug?" element={<WorkflowTasks />} />
                 <Route path="workflow/document-verification/:id" element={<DocumentVerificationDetail />} />
@@ -179,6 +185,9 @@ function App() {
                 <Route path="crm/leads" element={<LeadPipeline />} />
                 <Route path="crm/analytics" element={<CrmAnalytics />} />
                 <Route path="crm/campaigns" element={<Campaigns />} />
+
+                {/* Ticket & Task Management Module */}
+                <Route path="tickets" element={<TicketManagement />} />
               </Route>
 
               {/* Calling detail routes (protected) */}

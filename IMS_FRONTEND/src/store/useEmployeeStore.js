@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import CUPLEMS_API from '../services/CUPLEMS_API';
+import API from '../services/API';
 
 const useEmployeeStore = create((set, get) => ({
   // ── State ─────────────────────────────────────────────────────────────────
@@ -107,10 +108,74 @@ const useEmployeeStore = create((set, get) => ({
   fetchDepartments: async () => {
     try {
       const { data } = await CUPLEMS_API.get('/api/Departments');
-      set({ departments: data });
+      if (Array.isArray(data) && data.length > 0) {
+        set({ departments: data });
+        return data;
+      }
+      throw new Error('Empty or unavailable from CUPLEMS');
     } catch (err) {
-      set({ error: err.message });
+      try {
+        const fallback = await API.get('/departments');
+        const list = fallback?.departments || fallback?.data?.departments || fallback?.data || [];
+        const normalized = Array.isArray(list)
+          ? list.map((d) => ({
+              DeptID: d.DeptID || d._id,
+              _id: d._id,
+              DeptName: d.DeptName || d.name,
+              Description: d.Description || d.description || '',
+              IsActive: d.IsActive !== undefined ? d.IsActive : true,
+            }))
+          : [];
+        set({ departments: normalized });
+        return normalized;
+      } catch (fErr) {
+        set({ error: err.message });
+      }
     }
+  },
+
+  createDepartment: async (dept) => {
+    let result;
+    try {
+      const { data } = await CUPLEMS_API.post('/api/Departments', dept);
+      result = data;
+    } catch (err) {
+      const fallback = await API.post('/departments', dept);
+      const d = fallback?.department || fallback?.data?.department || fallback?.data || fallback;
+      result = {
+        DeptID: d.DeptID || d._id,
+        _id: d._id,
+        DeptName: d.DeptName || d.name || dept.DeptName,
+        Description: d.Description || d.description || dept.Description || '',
+        IsActive: true,
+      };
+    }
+    set((state) => ({ departments: [...state.departments, result] }));
+    return result;
+  },
+
+  updateDepartment: async (id, dept) => {
+    try {
+      await CUPLEMS_API.put(`/api/Departments/${id}`, { DeptID: id, ...dept });
+    } catch (err) {
+      await API.put(`/departments/${id}`, dept);
+    }
+    set((state) => ({
+      departments: state.departments.map((d) =>
+        (d.DeptID === id || d._id === id) ? { ...d, ...dept } : d
+      ),
+    }));
+  },
+
+  deleteDepartment: async (id) => {
+    try {
+      await CUPLEMS_API.delete(`/api/Departments/${id}`);
+    } catch (err) {
+      await API.delete(`/departments/${id}`);
+    }
+    set((state) => ({
+      departments: state.departments.filter((d) => d.DeptID !== id && d._id !== id),
+    }));
   },
 
   fetchPositions: async (deptId) => {
@@ -126,9 +191,14 @@ const useEmployeeStore = create((set, get) => ({
   fetchEmployeeTypes: async () => {
     try {
       const { data } = await CUPLEMS_API.get('/api/EmpTypes');
-      set({ employeeTypes: data });
+      set({ employeeTypes: Array.isArray(data) ? data : [] });
     } catch (err) {
-      set({ error: err.message });
+      try {
+        const fallback = await API.get('/employee-types');
+        set({ employeeTypes: Array.isArray(fallback?.data) ? fallback.data : fallback || [] });
+      } catch (fErr) {
+        set({ error: err.message });
+      }
     }
   },
 
@@ -141,12 +211,6 @@ const useEmployeeStore = create((set, get) => ({
     }
   },
 
-  createDepartment: async (dept) => {
-    const { data } = await CUPLEMS_API.post('/api/Departments', dept);
-    set((state) => ({ departments: [...state.departments, data] }));
-    return data;
-  },
-
   createPosition: async (pos) => {
     const { data } = await CUPLEMS_API.post('/api/Positions', pos);
     set((state) => ({ positions: [...state.positions, data] }));
@@ -154,9 +218,16 @@ const useEmployeeStore = create((set, get) => ({
   },
 
   createEmployeeType: async (type) => {
-    const { data } = await CUPLEMS_API.post('/api/EmpTypes', type);
-    set((state) => ({ employeeTypes: [...state.employeeTypes, data] }));
-    return data;
+    let result;
+    try {
+      const { data } = await CUPLEMS_API.post('/api/EmpTypes', type);
+      result = data;
+    } catch (err) {
+      const fallback = await API.post('/employee-types', type);
+      result = fallback.data || fallback;
+    }
+    set((state) => ({ employeeTypes: [...state.employeeTypes, result] }));
+    return result;
   },
 
   createLocation: async (location) => {
@@ -182,7 +253,11 @@ const useEmployeeStore = create((set, get) => ({
   },
 
   updateEmployeeType: async (id, type) => {
-    await CUPLEMS_API.put(`/api/EmpTypes/${id}`, { EmpTypeID: id, ...type });
+    try {
+      await CUPLEMS_API.put(`/api/EmpTypes/${id}`, { EmpTypeID: id, ...type });
+    } catch (err) {
+      await API.put(`/employee-types/${id}`, type);
+    }
     set((state) => ({
       employeeTypes: state.employeeTypes.map((t) =>
         t.EmpTypeID === id ? { ...t, ...type } : t

@@ -28,6 +28,11 @@ const Course = ({student,InfoCard,InfoRow}) => {
                     value={student.referralSource}
                     icon="📢"
                 />
+                <InfoRow
+                    label="Referral Code"
+                    value={student.referralCode}
+                    icon="🏷️"
+                />
             </InfoCard>
         </>
     )

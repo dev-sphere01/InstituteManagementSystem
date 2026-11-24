@@ -4,6 +4,106 @@ const Task = require('../models/task');
 const { advanceTaskSequence } = require('./taskController');
 const { getFinanceByTarget, applyPaymentToInstallment, applyDirectPayment, recalculateTotals, buildFeeSummary } = require('../services/feeService');
 
+/** Helper: build EMI schedule from startDate */
+const buildEMISchedule = (numInstallments, netPayable, startDate) => {
+  const list = [];
+  const emiAmount = Math.round(netPayable / numInstallments);
+  const remainder = netPayable - emiAmount * (numInstallments - 1);
+  for (let i = 1; i <= numInstallments; i++) {
+    const due = new Date(startDate);
+    due.setMonth(due.getMonth() + (i - 1));
+    list.push({
+      installmentNo: i,
+      amount: i === numInstallments ? remainder : emiAmount,
+      dueDate: due, expectedMonth: due,
+      status: 'Pending', paidAmount: 0,
+    });
+  }
+  return list;
+};
+
+/**
+ * POST /fees/setup  — Section C
+ * Sets up or updates a fee plan with discount, installments and expected months.
+ */
+exports.setupFee = async (req, res) => {
+  try {
+    const {
+      targetType = 'admission', targetId,
+      totalFee, discountAmount = 0, discountPercent = 0,
+      numInstallments = 1, installmentDurationMonths = 1,
+      startDate, rebuildInstallments = false
+    } = req.body;
+
+    if (!targetId || totalFee === undefined) {
+      return res.status(400).json({ success: false, message: 'targetId and totalFee are required' });
+    }
+
+    const discAmt = discountPercent > 0 ? (totalFee * discountPercent) / 100 : (Number(discountAmount) || 0);
+    const netPayable = Math.max(0, totalFee - discAmt);
+
+    let finance = await ApplicationFinance.findOne({ targetType, targetId });
+    const isNew = !finance;
+
+    if (isNew) {
+      finance = new ApplicationFinance({
+        targetType, targetId, totalFee, discountAmount: discAmt,
+        discountPercent, netPayable, numInstallments,
+        installmentDurationMonths, createdBy: req.user?._id
+      });
+    } else {
+      const histEntry = { changedBy: req.user?._id, changedByName: req.user?.name || 'System', changedAt: new Date() };
+      ['totalFee','discountAmount','discountPercent','netPayable','numInstallments'].forEach(f => {
+        const newVal = f === 'discountAmount' ? discAmt : f === 'netPayable' ? netPayable : req.body[f];
+        if (newVal !== undefined && finance[f] !== newVal) {
+          if (!finance.feeHistory) finance.feeHistory = [];
+          finance.feeHistory.push({ ...histEntry, field: f, oldValue: finance[f], newValue: newVal });
+        }
+      });
+      finance.totalFee = totalFee;
+      finance.discountAmount = discAmt;
+      finance.discountPercent = discountPercent;
+      finance.netPayable = netPayable;
+      finance.numInstallments = numInstallments;
+      finance.installmentDurationMonths = installmentDurationMonths;
+      finance.updatedBy = req.user?._id;
+    }
+
+    await finance.save();
+
+    if (isNew || rebuildInstallments) {
+      await Installment.deleteMany({ financeId: finance._id });
+      const start = startDate ? new Date(startDate) : new Date();
+      const docs = buildEMISchedule(numInstallments, netPayable, start).map(i => ({ ...i, financeId: finance._id }));
+      await Installment.insertMany(docs);
+    }
+
+    const installments = await Installment.find({ financeId: finance._id }).sort({ installmentNo: 1 });
+    return res.status(201).json({ success: true, finance, installments });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * GET /fees/plan/:targetId  — Section C
+ * Returns finance + installments + fee% for a student.
+ */
+exports.getFeePlan = async (req, res) => {
+  try {
+    const { targetId } = req.params;
+    const targetType = req.query.targetType || 'admission';
+    const finance = await ApplicationFinance.findOne({ targetType, targetId }).lean();
+    if (!finance) return res.status(200).json({ success: true, finance: null, installments: [], feePercent: 0 });
+    const installments = await Installment.find({ financeId: finance._id }).sort({ installmentNo: 1 }).lean();
+    const feePercent = finance.netPayable > 0 ? Math.round((finance.totalPaid / finance.netPayable) * 100) : 0;
+    return res.status(200).json({ success: true, finance, installments, feePercent });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
 const autoAdvanceFeeTask = async (targetId, totalPaid) => {
   if (Number(totalPaid) > 0) {
      const feeTask = await Task.findOne({ studentId: targetId, taskName: 'Fee Collection', status: { $ne: 'completed' } });

@@ -684,6 +684,7 @@ This API uses cookies for authentication. Follow these steps:
             referralSource: { type: 'string' },
             referralSourceOther: { type: 'string' },
             referalName: { type: 'string' },
+            referralCode: { type: 'string' },
             computerAccess: { type: 'string' },
             computerAccessOther: { type: 'string' },
             status: { type: 'string' },

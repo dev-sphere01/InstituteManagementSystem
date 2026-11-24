@@ -5,6 +5,7 @@ import { EmailLink, PhoneLink } from '@/components/common/ContactLinks';
 import { FaEye, FaPhone, FaUser, FaClock } from 'react-icons/fa';
 import useTableSessionStorage from '@/hooks/useTableSessionStorage';
 import { createMultiFieldFilter } from '@/utils/multiFieldFilter.jsx';
+import { useThemeStore } from '@/store';
 
 const LeadsList = ({
   leads,
@@ -23,6 +24,7 @@ const LeadsList = ({
   availableServices = [],
   tableName = 'leads-list' // Allow parent to specify unique table name
 }) => {
+  const { isDarkMode } = useThemeStore();
   const [selectAll, setSelectAll] = useState(false);
   
   // Session storage for table state
@@ -149,13 +151,13 @@ const LeadsList = ({
         return (
           <div className="flex items-center">
             <div className="flex-shrink-0 h-10 w-10">
-              <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                <FaUser className="h-5 w-5 text-gray-600" />
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
+                <FaUser className="h-5 w-5" />
               </div>
             </div>
             <div className="ml-4">
               <div
-                className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 hover:underline"
+                className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} cursor-pointer hover:text-blue-500 hover:underline`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onLeadClick(lead);
@@ -164,11 +166,11 @@ const LeadsList = ({
                 {lead.name}
               </div>
               <div className="text-sm">
-                <PhoneLink phone={lead.contactNo} className="text-gray-500" showIcon={true} />
+                <PhoneLink phone={lead.contactNo} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} showIcon={true} />
               </div>
               {lead.email && (
                 <div className="text-sm">
-                  <EmailLink email={lead.email} className="text-gray-500" showIcon={true} />
+                  <EmailLink email={lead.email} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} showIcon={true} />
                 </div>
               )}
             </div>
@@ -185,9 +187,9 @@ const LeadsList = ({
         const lead = row.original;
         return (
           <div>
-            <div className="text-sm text-gray-900">{lead.selectedService}</div>
+            <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{lead.selectedService}</div>
             {lead.serviceSubcategory && (
-              <div className="text-sm text-gray-500">{lead.serviceSubcategory}</div>
+              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{lead.serviceSubcategory}</div>
             )}
           </div>
         );
@@ -197,7 +199,7 @@ const LeadsList = ({
           value={value || ''}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange(e.target.value)}
-          className="px-2 py-1 rounded border border-slate-300 bg-white w-full text-xs"
+          className={`px-2 py-1 rounded border text-xs w-full ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-slate-300 bg-white text-gray-900'}`}
         >
           <option value="">All Services</option>
           {availableServices.map((service) => (
@@ -217,7 +219,7 @@ const LeadsList = ({
           value={value || ''}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange(e.target.value)}
-          className="px-2 py-1 rounded border border-slate-300 bg-white w-full text-xs"
+          className={`px-2 py-1 rounded border text-xs w-full ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-slate-300 bg-white text-gray-900'}`}
         >
           <option value="">All Statuses</option>
           {availableStatuses.map((status) => (
@@ -235,11 +237,11 @@ const LeadsList = ({
         const lead = row.original;
         return (
           <div>
-            <div className="text-sm text-gray-900">
+            <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               {lead.assignedToName || '-'}
             </div>
             {lead.assignedAt && (
-              <div className="text-sm text-gray-500 flex items-center">
+              <div className={`text-sm flex items-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 <FaClock className="h-3 w-3 mr-1" />
                 {formatDate(lead.assignedAt)}
               </div>
@@ -252,7 +254,7 @@ const LeadsList = ({
       accessorKey: 'createdAt',
       header: 'Created',
       cell: ({ getValue }) => (
-        <div className="text-sm text-gray-500">
+        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           {formatDate(getValue())}
         </div>
       ),
@@ -291,21 +293,16 @@ const LeadsList = ({
       enableSorting: false,
       enableColumnFilter: false,
     },
-  ], [selectedLeads, selectAll, onLeadClick, reassignMode, availableStatuses, availableServices]);
+  ], [selectedLeads, selectAll, onLeadClick, reassignMode, availableStatuses, availableServices, isDarkMode]);
 
   const handleStartCall = (lead) => {
-    // Navigate to lead details with startCall flag
     window.location.href = `/calling/lead/${lead.id}?startCall=false`;
   };
 
   const handleViewProfile = (lead) => {
-    // Navigate to profile view page
     window.location.href = `/calling/profile/${lead.id}`;
   };
 
-
-
-  // Prepare initial filters from filterValue
   const initialFilters = useMemo(() => {
     const filters = [];
     if (filterValue?.status) {
@@ -314,11 +311,8 @@ const LeadsList = ({
     return filters;
   }, [filterValue]);
 
-  // Always show table, even when no data - let TableService handle empty state
-
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-
+    <div className={`rounded-xl shadow border overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <TableService
         columns={columns}
         data={leads}

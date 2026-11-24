@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -345,15 +345,41 @@ namespace EMS.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEmployee(int id, Employee employee)
         {
-            if (id != employee.EmpID)
+            if (id != employee.EmpID && employee.EmpID != 0)
             {
-                return BadRequest();
+                return BadRequest("ID mismatch.");
             }
 
-            var oldEmployee = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.EmpID == id);
-            if (oldEmployee == null) return NotFound();
+            var existing = await _context.Employees.FirstOrDefaultAsync(e => e.EmpID == id);
+            if (existing == null) return NotFound($"Employee with ID {id} not found.");
 
-            _context.Entry(employee).State = EntityState.Modified;
+            var oldState = JsonSerializer.Serialize(existing);
+
+            // Update individual fields without wiping unmodified columns
+            if (!string.IsNullOrWhiteSpace(employee.FirstName)) existing.FirstName = employee.FirstName;
+            if (employee.LastName != null) existing.LastName = employee.LastName;
+            if (employee.PersonalEmail != null) existing.PersonalEmail = employee.PersonalEmail;
+            if (employee.WorkEmail != null) existing.WorkEmail = employee.WorkEmail;
+            if (employee.PhoneNumber != null) existing.PhoneNumber = employee.PhoneNumber;
+            if (employee.Address != null) existing.Address = employee.Address;
+            if (employee.EmergencyContact != null) existing.EmergencyContact = employee.EmergencyContact;
+            if (employee.EmergencyContactNumber != null) existing.EmergencyContactNumber = employee.EmergencyContactNumber;
+            if (employee.DateOfBirth != null) existing.DateOfBirth = employee.DateOfBirth;
+            if (employee.Gender != null) existing.Gender = employee.Gender;
+            if (employee.DateOfJoining != null) existing.DateOfJoining = employee.DateOfJoining;
+            if (employee.ProfilePicture != null) existing.ProfilePicture = employee.ProfilePicture;
+            if (employee.Signature != null) existing.Signature = employee.Signature;
+            if (employee.LocationID.HasValue && employee.LocationID > 0) existing.LocationID = employee.LocationID;
+            if (employee.RoleID > 0) existing.RoleID = employee.RoleID;
+            if (employee.AtdEmpCode.HasValue) existing.AtdEmpCode = employee.AtdEmpCode;
+            if (employee.ReportsTo != null && employee.ReportsTo.Count > 0) existing.ReportsTo = employee.ReportsTo;
+            if (employee.Grade != null) existing.Grade = employee.Grade;
+            if (employee.IsProbationComplete.HasValue) existing.IsProbationComplete = employee.IsProbationComplete;
+            if (employee.DateofLeaving.HasValue) existing.DateofLeaving = employee.DateofLeaving;
+            if (employee.TerminateReasonOrLeavingReason != null) existing.TerminateReasonOrLeavingReason = employee.TerminateReasonOrLeavingReason;
+            if (employee.DateofRehire.HasValue) existing.DateofRehire = employee.DateofRehire;
+
+            _context.Employees.Update(existing);
 
             try
             {
@@ -362,10 +388,10 @@ namespace EMS.Controllers
                 await _logger.LogActivityAsync(
                     "Employee Profile",
                     "Update Employee",
-                    $"Updated data for employee {employee.FirstName} {employee.LastName}",
+                    $"Updated data for employee {existing.FirstName} {existing.LastName}",
                     id.ToString(),
-                    JsonSerializer.Serialize(oldEmployee),
-                    JsonSerializer.Serialize(employee)
+                    oldState,
+                    JsonSerializer.Serialize(existing)
                 );
             }
             catch (DbUpdateConcurrencyException)
@@ -380,7 +406,7 @@ namespace EMS.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(existing);
         }
 
         [HttpPost("ToggleStatus/{EmpID}")]

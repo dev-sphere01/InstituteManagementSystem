@@ -13,6 +13,14 @@ const Step3BankDetails = ({ data, onChange, onNext, onBack, onSkip }) => {
     AccountType: data.AccountType || '',
   });
 
+  const set = (field, value) => {
+    setForm((f) => {
+      const updated = { ...f, [field]: value };
+      if (onChange) onChange(updated);
+      return updated;
+    });
+  };
+
   const handleNext = () => {
     onChange(form);
     onNext();
@@ -28,19 +36,19 @@ const Step3BankDetails = ({ data, onChange, onNext, onBack, onSkip }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <label className={styles.label}>Bank Name</label>
-          <input className={styles.input()} value={form.BankName} onChange={(e) => setForm({ ...form, BankName: e.target.value })} placeholder="e.g. State Bank of India" />
+          <input className={styles.input()} value={form.BankName} onChange={(e) => set('BankName', e.target.value)} placeholder="e.g. State Bank of India" />
         </div>
         <div>
           <label className={styles.label}>Account Number</label>
-          <input className={styles.input()} value={form.AccountNumber} onChange={(e) => setForm({ ...form, AccountNumber: e.target.value })} placeholder="Enter account number" />
+          <input className={styles.input()} value={form.AccountNumber} onChange={(e) => set('AccountNumber', e.target.value)} placeholder="Enter account number" />
         </div>
         <div>
           <label className={styles.label}>IFSC Code</label>
-          <input className={styles.input()} value={form.IFSCCode} onChange={(e) => setForm({ ...form, IFSCCode: e.target.value })} placeholder="e.g. SBIN0001234" />
+          <input className={styles.input()} value={form.IFSCCode} onChange={(e) => set('IFSCCode', e.target.value)} placeholder="e.g. SBIN0001234" />
         </div>
         <div>
           <label className={styles.label}>Account Type</label>
-          <select className={styles.select()} value={form.AccountType} onChange={(e) => setForm({ ...form, AccountType: e.target.value })}>
+          <select className={styles.select()} value={form.AccountType} onChange={(e) => set('AccountType', e.target.value)}>
             <option value="">Select account type</option>
             <option>Savings</option>
             <option>Current</option>

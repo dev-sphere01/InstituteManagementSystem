@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -50,15 +50,27 @@ namespace EMS.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEmpDeptPos(int id, EmpDeptPos empDeptPos)
         {
-            if (id != empDeptPos.EdpID)
+            if (empDeptPos == null)
             {
-                return BadRequest();
+                return BadRequest("Department/Position data is required.");
+            }
+            empDeptPos.EdpID = id;
+
+            var existing = await _context.EmpDeptPositions.FirstOrDefaultAsync(m => m.EdpID == id);
+            if (existing == null)
+            {
+                existing = await _context.EmpDeptPositions.FirstOrDefaultAsync(m => m.EmpID == empDeptPos.EmpID);
             }
 
-            var oldMapping = await _context.EmpDeptPositions.AsNoTracking().FirstOrDefaultAsync(m => m.EdpID == id);
-            if (oldMapping == null) return NotFound();
+            if (existing == null) return NotFound($"Department/Position mapping with ID {id} not found.");
 
-            _context.Entry(empDeptPos).State = EntityState.Modified;
+            var oldMapping = System.Text.Json.JsonSerializer.Serialize(existing);
+
+            existing.DeptID = empDeptPos.DeptID;
+            existing.PositionID = empDeptPos.PositionID;
+            existing.EmpTypeID = empDeptPos.EmpTypeID;
+
+            _context.EmpDeptPositions.Update(existing);
 
             try
             {
@@ -67,10 +79,10 @@ namespace EMS.Controllers
                 await _logger.LogActivityAsync(
                     "Employee Profile",
                     "Update Dept/Pos mapping",
-                    $"Updated department/position mapping {id} for employee {empDeptPos.EmpID}",
+                    $"Updated department/position mapping {existing.EdpID} for employee {empDeptPos.EmpID}",
                     empDeptPos.EmpID.ToString(),
-                    System.Text.Json.JsonSerializer.Serialize(oldMapping),
-                    System.Text.Json.JsonSerializer.Serialize(empDeptPos)
+                    oldMapping,
+                    System.Text.Json.JsonSerializer.Serialize(existing)
                 );
             }
             catch (DbUpdateConcurrencyException)
@@ -85,7 +97,7 @@ namespace EMS.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(existing);
         }
 
         // POST: api/EmpDeptPos
@@ -93,6 +105,38 @@ namespace EMS.Controllers
         [HttpPost]
         public async Task<ActionResult<EmpDeptPos>> PostEmpDeptPos(EmpDeptPos empDeptPos)
         {
+            if (empDeptPos == null)
+            {
+                return BadRequest("Department/Position data is required.");
+            }
+
+            // Check if mapping for this employee already exists (upsert)
+            var existing = await _context.EmpDeptPositions
+                .FirstOrDefaultAsync(edp => (empDeptPos.EdpID > 0 && edp.EdpID == empDeptPos.EdpID) || edp.EmpID == empDeptPos.EmpID);
+
+            if (existing != null)
+            {
+                var oldMapping = System.Text.Json.JsonSerializer.Serialize(existing);
+
+                existing.DeptID = empDeptPos.DeptID;
+                existing.PositionID = empDeptPos.PositionID;
+                existing.EmpTypeID = empDeptPos.EmpTypeID;
+
+                _context.EmpDeptPositions.Update(existing);
+                await _context.SaveChangesAsync();
+
+                await _logger.LogActivityAsync(
+                    "Employee Profile",
+                    "Update Dept/Pos mapping",
+                    $"Updated department/position mapping {existing.EdpID} for employee {empDeptPos.EmpID}",
+                    empDeptPos.EmpID.ToString(),
+                    oldMapping,
+                    System.Text.Json.JsonSerializer.Serialize(existing)
+                );
+
+                return Ok(existing);
+            }
+
             _context.EmpDeptPositions.Add(empDeptPos);
             await _context.SaveChangesAsync();
 

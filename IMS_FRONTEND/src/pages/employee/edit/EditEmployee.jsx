@@ -7,30 +7,72 @@ import CUPLEMS_API from '../../../services/CUPLEMS_API';
 const TABS = ['Basic', 'Dept & Position', 'Bank', 'Academic', 'Experience'];
 
 // ── Basic Tab ────────────────────────────────────────────────────────────────
+// ── Basic Tab ────────────────────────────────────────────────────────────────
 const BasicTab = ({ emp, onSaved, styles, isDarkMode }) => {
   const [form, setForm] = useState({
-    FirstName: emp.FirstName || '',
-    LastName: emp.LastName || '',
-    PersonalEmail: emp.PersonalEmail || '',
-    PhoneNumber: emp.PhoneNumber || '',
-    Address: emp.Address || '',
-    DateOfBirth: emp.DateOfBirth ? emp.DateOfBirth.split('T')[0] : '',
-    Gender: emp.Gender || '',
-    EmergencyContactNumber: emp.EmergencyContactNumber || '',
+    FirstName: '',
+    LastName: '',
+    PersonalEmail: '',
+    PhoneNumber: '',
+    Address: '',
+    DateOfBirth: '',
+    Gender: '',
+    EmergencyContactNumber: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    if (emp) {
+      setForm({
+        FirstName: emp.FirstName || '',
+        LastName: emp.LastName || '',
+        PersonalEmail: emp.PersonalEmail || '',
+        PhoneNumber: emp.PhoneNumber || '',
+        Address: emp.Address || '',
+        DateOfBirth: emp.DateOfBirth ? emp.DateOfBirth.split('T')[0] : '',
+        Gender: emp.Gender || '',
+        EmergencyContactNumber: emp.EmergencyContactNumber || emp.EmergencyContact || '',
+      });
+    }
+  }, [emp]);
 
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
   const handleSave = async () => {
     setSaving(true);
     setError('');
+    setSuccess('');
+
+    if (!form.FirstName?.trim()) {
+      setError('First name is required.');
+      setSaving(false);
+      return;
+    }
+    if (!form.PhoneNumber?.trim()) {
+      setError('Phone number is required.');
+      setSaving(false);
+      return;
+    }
+
     try {
-      await CUPLEMS_API.put(`/api/Employees/${emp.EmpID}`, { ...emp, ...form });
+      await CUPLEMS_API.put(`/api/Employees/${emp.EmpID}`, {
+        EmpID: emp.EmpID,
+        FirstName: form.FirstName,
+        LastName: form.LastName,
+        PhoneNumber: form.PhoneNumber,
+        PersonalEmail: form.PersonalEmail,
+        DateOfBirth: form.DateOfBirth || null,
+        Gender: form.Gender,
+        EmergencyContactNumber: form.EmergencyContactNumber,
+        Address: form.Address,
+      });
+      setSuccess('Basic details saved successfully.');
       onSaved();
+      setTimeout(() => setSuccess(''), 4000);
     } catch (e) {
-      setError(e.message || 'Save failed.');
+      setError(e.response?.data?.message || e.message || 'Save failed.');
     } finally {
       setSaving(false);
     }
@@ -39,6 +81,7 @@ const BasicTab = ({ emp, onSaved, styles, isDarkMode }) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {error && <div className={styles.alertError}>{error}</div>}
+      {success && <div className={styles.alertSuccess}>{success}</div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className={styles.label}>First Name *</label>
@@ -95,61 +138,87 @@ const DeptTab = ({ emp, onSaved, styles, isDarkMode }) => {
     DeptID: '',
     PositionID: '',
     EmpTypeID: '',
-    LocationID: emp.LocationID || '',
-    DateOfJoining: emp.DateOfJoining ? emp.DateOfJoining.split('T')[0] : '',
-    WorkEmail: emp.WorkEmail || '',
+    LocationID: '',
+    DateOfJoining: '',
+    WorkEmail: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    CUPLEMS_API.get(`/api/EmpDeptPositions/ByEmployee/${emp.EmpID}`)
+    if (emp) {
+      setForm((f) => ({
+        ...f,
+        LocationID: emp.LocationID || '',
+        DateOfJoining: emp.DateOfJoining ? emp.DateOfJoining.split('T')[0] : '',
+        WorkEmail: emp.WorkEmail || '',
+      }));
+    }
+  }, [emp]);
+
+  useEffect(() => {
+    if (!emp?.EmpID) return;
+    CUPLEMS_API.get(`/api/EmpDeptPos/${emp.EmpID}`)
       .then(({ data }) => {
         const latest = Array.isArray(data) ? data[data.length - 1] : data;
         if (latest) {
-          setEdpID(latest.EdpID);
+          setEdpID(latest.EdpID ?? latest.edpID);
           setForm((f) => ({
             ...f,
-            DeptID: latest.DeptID || '',
-            PositionID: latest.PositionID || '',
-            EmpTypeID: latest.EmpTypeID || '',
+            DeptID: latest.DeptID ?? latest.deptID ?? '',
+            PositionID: latest.PositionID ?? latest.positionID ?? '',
+            EmpTypeID: latest.EmpTypeID ?? latest.empTypeID ?? '',
           }));
         }
       })
       .catch(() => {});
-  }, [emp.EmpID]);
+  }, [emp?.EmpID]);
 
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
   const handleSave = async () => {
     setSaving(true);
     setError('');
+    setSuccess('');
+
+    if (!form.DeptID || !form.PositionID) {
+      setError('Please select both a Department and a Position before saving.');
+      setSaving(false);
+      return;
+    }
+
     try {
       await CUPLEMS_API.put(`/api/Employees/${emp.EmpID}`, {
-        ...emp,
-        LocationID: form.LocationID,
-        DateOfJoining: form.DateOfJoining,
+        EmpID: emp.EmpID,
+        LocationID: form.LocationID ? Number(form.LocationID) : null,
+        DateOfJoining: form.DateOfJoining || null,
         WorkEmail: form.WorkEmail,
       });
+
+      const edpPayload = {
+        EmpID: emp.EmpID,
+        DeptID: Number(form.DeptID),
+        PositionID: Number(form.PositionID),
+        EmpTypeID: form.EmpTypeID ? Number(form.EmpTypeID) : null,
+      };
+
       if (edpID) {
-        await CUPLEMS_API.put(`/api/EmpDeptPositions/${edpID}`, {
+        await CUPLEMS_API.put(`/api/EmpDeptPos/${edpID}`, {
           EdpID: edpID,
-          EmpID: emp.EmpID,
-          DeptID: form.DeptID,
-          PositionID: form.PositionID,
-          EmpTypeID: form.EmpTypeID || null,
+          ...edpPayload,
         });
       } else {
-        await CUPLEMS_API.post('/api/EmpDeptPositions', {
-          EmpID: emp.EmpID,
-          DeptID: form.DeptID,
-          PositionID: form.PositionID,
-          EmpTypeID: form.EmpTypeID || null,
-        });
+        const res = await CUPLEMS_API.post('/api/EmpDeptPos', edpPayload);
+        if (res?.data?.EdpID || res?.data?.edpID) {
+          setEdpID(res.data.EdpID || res.data.edpID);
+        }
       }
+      setSuccess('Work & Position details saved successfully.');
       onSaved();
+      setTimeout(() => setSuccess(''), 4000);
     } catch (e) {
-      setError(e.message || 'Save failed.');
+      setError(e.response?.data?.message || e.message || 'Save failed.');
     } finally {
       setSaving(false);
     }
@@ -158,6 +227,7 @@ const DeptTab = ({ emp, onSaved, styles, isDarkMode }) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {error && <div className={styles.alertError}>{error}</div>}
+      {success && <div className={styles.alertSuccess}>{success}</div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className={styles.label}>Branch</label>
@@ -167,14 +237,14 @@ const DeptTab = ({ emp, onSaved, styles, isDarkMode }) => {
           </select>
         </div>
         <div>
-          <label className={styles.label}>Department</label>
+          <label className={styles.label}>Department *</label>
           <select className={styles.select()} value={form.DeptID} onChange={(e) => set('DeptID', Number(e.target.value))}>
             <option value="">Select Department</option>
             {departments.map((d) => <option key={d.DeptID} value={d.DeptID}>{d.DeptName}</option>)}
           </select>
         </div>
         <div>
-          <label className={styles.label}>Position</label>
+          <label className={styles.label}>Position *</label>
           <select className={styles.select()} value={form.PositionID} onChange={(e) => set('PositionID', Number(e.target.value))}>
             <option value="">Select Position</option>
             {positions.map((p) => <option key={p.PositionID} value={p.PositionID}>{p.PositionName}</option>)}
@@ -208,18 +278,25 @@ const DeptTab = ({ emp, onSaved, styles, isDarkMode }) => {
 // ── Bank Tab ─────────────────────────────────────────────────────────────────
 const BankTab = ({ emp, styles, isDarkMode }) => {
   const [bankID, setBankID] = useState(null);
-  const [form, setForm] = useState({ BankName: '', AccountNumber: '', IFSCCode: '', AccountType: '' });
+  const [form, setForm] = useState({ BankName: '', AccountNumber: '', IFSCCode: '', BranchName: '', AccountType: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    CUPLEMS_API.get(`/api/EmpBankDetails/ByEmployee/${emp.EmpID}`)
+    CUPLEMS_API.get(`/api/EmpBankDetails/${emp.EmpID}`)
       .then(({ data }) => {
         const rec = Array.isArray(data) ? data[0] : data;
         if (rec) {
-          setBankID(rec.BankDetailID ?? rec.Id ?? rec.EmpBankDetailID);
-          setForm({ BankName: rec.BankName || '', AccountNumber: rec.AccountNumber || '', IFSCCode: rec.IFSCCode || '', AccountType: rec.AccountType || '' });
+          setBankID(rec.EbdID ?? rec.ebdID ?? rec.BankDetailID ?? rec.Id ?? rec.EmpBankDetailID);
+          setForm({
+            BankName: rec.BankName || '',
+            AccountNumber: rec.AccountNumber || '',
+            IFSCCode: rec.IFSCCode || '',
+            BranchName: rec.BranchName || '',
+            AccountType: rec.AccountType || '',
+          });
         }
         setLoaded(true);
       })
@@ -231,14 +308,34 @@ const BankTab = ({ emp, styles, isDarkMode }) => {
   const handleSave = async () => {
     setSaving(true);
     setError('');
+    setSuccess('');
+
+    if (!form.BankName?.trim()) {
+      setError('Bank Name is required.');
+      setSaving(false);
+      return;
+    }
+    if (!form.AccountNumber?.trim()) {
+      setError('Account Number is required.');
+      setSaving(false);
+      return;
+    }
+
     try {
-      if (bankID) {
-        await CUPLEMS_API.put(`/api/EmpBankDetails/${bankID}`, { EmpID: emp.EmpID, ...form });
-      } else {
-        await CUPLEMS_API.post('/api/EmpBankDetails', { EmpID: emp.EmpID, ...form });
-      }
+      const formData = new FormData();
+      formData.append('EmpID', emp.EmpID);
+      formData.append('BankName', form.BankName || '');
+      formData.append('AccountNumber', form.AccountNumber || '');
+      formData.append('IFSCCode', form.IFSCCode || '');
+      formData.append('BranchName', form.BranchName || form.AccountType || '');
+
+      await CUPLEMS_API.post('/api/EmpBankDetails', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setSuccess('Bank details saved successfully.');
+      setTimeout(() => setSuccess(''), 4000);
     } catch (e) {
-      setError(e.message || 'Save failed.');
+      setError(e.response?.data?.message || e.response?.data || e.message || 'Save failed.');
     } finally {
       setSaving(false);
     }
@@ -249,18 +346,19 @@ const BankTab = ({ emp, styles, isDarkMode }) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {error && <div className={styles.alertError}>{error}</div>}
+      {success && <div className={styles.alertSuccess}>{success}</div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className={styles.label}>Bank Name</label>
-          <input className={styles.input()} value={form.BankName} onChange={(e) => set('BankName', e.target.value)} placeholder="e.g. HDFC Bank" />
+          <label className={styles.label}>Bank Name *</label>
+          <input className={styles.input()} value={form.BankName} onChange={(e) => set('BankName', e.target.value)} placeholder="e.g. State Bank of India" />
         </div>
         <div>
-          <label className={styles.label}>Account Number</label>
+          <label className={styles.label}>Account Number *</label>
           <input className={styles.input()} value={form.AccountNumber} onChange={(e) => set('AccountNumber', e.target.value)} placeholder="Enter 12-16 digit number" />
         </div>
         <div>
           <label className={styles.label}>IFSC Code</label>
-          <input className={styles.input()} value={form.IFSCCode} onChange={(e) => set('IFSCCode', e.target.value)} placeholder="e.g. HDFC0001234" />
+          <input className={styles.input()} value={form.IFSCCode} onChange={(e) => set('IFSCCode', e.target.value)} placeholder="e.g. SBIN0001234" />
         </div>
         <div>
           <label className={styles.label}>Account Type</label>
@@ -268,6 +366,7 @@ const BankTab = ({ emp, styles, isDarkMode }) => {
             <option value="">Select Account Type</option>
             <option>Savings</option>
             <option>Current</option>
+            <option>Salary</option>
           </select>
         </div>
       </div>
@@ -285,32 +384,75 @@ const AcademicTab = ({ emp, styles, isDarkMode }) => {
   const [rows, setRows] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    CUPLEMS_API.get(`/api/EmpAcadDetails/ByEmployee/${emp.EmpID}`)
-      .then(({ data }) => setRows(Array.isArray(data) ? data : []))
+    CUPLEMS_API.get(`/api/EmpAcadDetails/${emp.EmpID}`)
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : (data ? [data] : []);
+        setRows(list.map((r) => ({
+          EadID: r.EadID ?? r.eadID ?? r.AcadDetailID ?? r.Id,
+          Degree: r.Degree || r.Qualification || '',
+          Institution: r.Institution || '',
+          YearOfPassing: r.YearOfPassing || '',
+          Percentage: r.Percentage || r.Grade || '',
+        })));
+      })
       .catch(() => {});
   }, [emp.EmpID]);
 
   const update = (idx, field, value) => setRows((r) => r.map((row, i) => i === idx ? { ...row, [field]: value } : row));
   const addRow = () => setRows((r) => [...r, { Degree: '', Institution: '', YearOfPassing: '', Percentage: '' }]);
-  const removeRow = (idx) => setRows((r) => r.filter((_, i) => i !== idx));
+  const removeRow = async (idx) => {
+    const row = rows[idx];
+    if (row?.EadID) {
+      try {
+        await CUPLEMS_API.delete(`/api/EmpAcadDetails/${row.EadID}`);
+      } catch (e) {
+        console.error('Failed to delete academic row:', e);
+      }
+    }
+    setRows((r) => r.filter((_, i) => i !== idx));
+  };
+
+  const currentYear = new Date().getFullYear();
 
   const handleSave = async () => {
-    setSaving(true);
     setError('');
+    setSuccess('');
+    for (const r of rows) {
+      const yr = Number(r.YearOfPassing);
+      if (yr && yr > currentYear) {
+        setError(`Year of passing cannot be greater than ${currentYear}.`);
+        return;
+      }
+    }
+
+    setSaving(true);
     try {
       for (const row of rows) {
         if (!row.Degree?.trim()) continue;
-        if (row.AcadDetailID || row.Id) {
-          const id = row.AcadDetailID ?? row.Id;
-          await CUPLEMS_API.put(`/api/EmpAcadDetails/${id}`, { EmpID: emp.EmpID, ...row });
+        const payload = {
+          EmpID: emp.EmpID,
+          Degree: row.Degree,
+          Qualification: row.Degree,
+          Institution: row.Institution,
+          YearOfPassing: row.YearOfPassing ? String(row.YearOfPassing) : '',
+          Grade: row.Percentage ? String(row.Percentage) : '',
+        };
+        if (row.EadID) {
+          await CUPLEMS_API.put(`/api/EmpAcadDetails/${row.EadID}`, { EadID: row.EadID, ...payload });
         } else {
-          await CUPLEMS_API.post('/api/EmpAcadDetails', { EmpID: emp.EmpID, ...row });
+          const res = await CUPLEMS_API.post('/api/EmpAcadDetails', payload);
+          if (res?.data?.EadID || res?.data?.eadID) {
+            row.EadID = res.data.EadID || res.data.eadID;
+          }
         }
       }
+      setSuccess('Academic details saved successfully.');
+      setTimeout(() => setSuccess(''), 4000);
     } catch (e) {
-      setError(e.message || 'Save failed.');
+      setError(e.response?.data?.message || e.response?.data || e.message || 'Save failed.');
     } finally {
       setSaving(false);
     }
@@ -319,6 +461,7 @@ const AcademicTab = ({ emp, styles, isDarkMode }) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {error && <div className={styles.alertError}>{error}</div>}
+      {success && <div className={styles.alertSuccess}>{success}</div>}
       {rows.map((row, idx) => (
         <div key={idx} className={`p-5 rounded-2xl border ${isDarkMode ? 'bg-gray-800/40 border-gray-700' : 'bg-gray-50 border-gray-100'} relative`}>
           <button onClick={() => removeRow(idx)} className="absolute top-4 right-4 text-red-400 hover:text-red-600 transition-colors">
@@ -327,7 +470,7 @@ const AcademicTab = ({ emp, styles, isDarkMode }) => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pr-8">
             <div>
               <label className={styles.label}>Degree/Course</label>
-              <input className={styles.input()} value={row.Degree || ''} onChange={(e) => update(idx, 'Degree', e.target.value)} placeholder="e.g. B.Tech" />
+              <input className={styles.input() + " uppercase"} value={row.Degree || ''} onChange={(e) => update(idx, 'Degree', e.target.value.toUpperCase())} placeholder="e.g. B.TECH" />
             </div>
             <div>
               <label className={styles.label}>Institution</label>
@@ -335,7 +478,7 @@ const AcademicTab = ({ emp, styles, isDarkMode }) => {
             </div>
             <div>
               <label className={styles.label}>Year</label>
-              <input type="number" className={styles.input()} value={row.YearOfPassing || ''} onChange={(e) => update(idx, 'YearOfPassing', e.target.value)} placeholder="2020" />
+              <input type="number" max={currentYear} className={styles.input()} value={row.YearOfPassing || ''} onChange={(e) => update(idx, 'YearOfPassing', e.target.value)} placeholder={String(currentYear)} />
             </div>
             <div>
               <label className={styles.label}>Percentage (%)</label>
@@ -361,32 +504,64 @@ const ExperienceTab = ({ emp, styles, isDarkMode }) => {
   const [rows, setRows] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    CUPLEMS_API.get(`/api/EmpProfDetails/ByEmployee/${emp.EmpID}`)
-      .then(({ data }) => setRows(Array.isArray(data) ? data : []))
+    CUPLEMS_API.get(`/api/EmpProfDetails/${emp.EmpID}`)
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : (data ? [data] : []);
+        setRows(list.map((r) => ({
+          EpdID: r.EpdID ?? r.epdID ?? r.ProfDetailID ?? r.Id,
+          Company: r.PreviousCompany || r.Company || '',
+          JobTitle: r.PreviousPosition || r.JobTitle || '',
+          Description: r.PreviousExperience || r.Description || '',
+          StartDate: r.StartDate || '',
+          EndDate: r.EndDate || '',
+        })));
+      })
       .catch(() => {});
   }, [emp.EmpID]);
 
   const update = (idx, field, value) => setRows((r) => r.map((row, i) => i === idx ? { ...row, [field]: value } : row));
   const addRow = () => setRows((r) => [...r, { Company: '', JobTitle: '', StartDate: '', EndDate: '', Description: '' }]);
-  const removeRow = (idx) => setRows((r) => r.filter((_, i) => i !== idx));
+  const removeRow = async (idx) => {
+    const row = rows[idx];
+    if (row?.EpdID) {
+      try {
+        await CUPLEMS_API.delete(`/api/EmpProfDetails/${row.EpdID}`);
+      } catch (e) {
+        console.error('Failed to delete experience row:', e);
+      }
+    }
+    setRows((r) => r.filter((_, i) => i !== idx));
+  };
 
   const handleSave = async () => {
     setSaving(true);
     setError('');
+    setSuccess('');
     try {
       for (const row of rows) {
         if (!row.Company?.trim()) continue;
-        if (row.ProfDetailID || row.Id) {
-          const id = row.ProfDetailID ?? row.Id;
-          await CUPLEMS_API.put(`/api/EmpProfDetails/${id}`, { EmpID: emp.EmpID, ...row });
+        const payload = {
+          EmpID: emp.EmpID,
+          PreviousCompany: row.Company,
+          PreviousPosition: row.JobTitle,
+          PreviousExperience: row.Description || (row.StartDate ? `${row.StartDate} to ${row.EndDate || 'Present'}` : ''),
+        };
+        if (row.EpdID) {
+          await CUPLEMS_API.put(`/api/EmpProfDetails/${row.EpdID}`, { EpdID: row.EpdID, ...payload });
         } else {
-          await CUPLEMS_API.post('/api/EmpProfDetails', { EmpID: emp.EmpID, ...row });
+          const res = await CUPLEMS_API.post('/api/EmpProfDetails', payload);
+          if (res?.data?.EpdID || res?.data?.epdID) {
+            row.EpdID = res.data.EpdID || res.data.epdID;
+          }
         }
       }
+      setSuccess('Experience details saved successfully.');
+      setTimeout(() => setSuccess(''), 4000);
     } catch (e) {
-      setError(e.message || 'Save failed.');
+      setError(e.response?.data?.message || e.response?.data || e.message || 'Save failed.');
     } finally {
       setSaving(false);
     }

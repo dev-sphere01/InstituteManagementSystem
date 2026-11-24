@@ -20,15 +20,56 @@ const Step1BasicDetails = ({ data, onChange, onNext }) => {
   const [errors, setErrors] = useState({});
 
   const set = (field, value) => {
-    setForm((f) => ({ ...f, [field]: value }));
+    setForm((f) => {
+      const updated = { ...f, [field]: value };
+      if (onChange) onChange(updated);
+      return updated;
+    });
     if (errors[field]) setErrors((e) => ({ ...e, [field]: '' }));
+  };
+
+  const setNumber = (field, value, maxLen = 10) => {
+    const digitsOnly = value.replace(/\D/g, '').slice(0, maxLen);
+    set(field, digitsOnly);
   };
 
   const handleNext = () => {
     const errs = {};
-    if (!form.FirstName.trim()) errs.FirstName = 'First name is required.';
-    if (!form.PhoneNumber.trim()) errs.PhoneNumber = 'Phone number is required.';
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    const cleanPhone = (form.PhoneNumber || '').trim();
+    const cleanEmergency = (form.EmergencyContactNumber || '').trim();
+    const cleanEmail = (form.PersonalEmail || '').trim();
+    const cleanAadhaar = (form.AadhaarNumber || '').trim();
+
+    if (!form.FirstName.trim()) {
+      errs.FirstName = 'First name is required.';
+    }
+
+    if (!cleanPhone) {
+      errs.PhoneNumber = 'Primary phone number is required.';
+    } else if (!/^\d{10}$/.test(cleanPhone)) {
+      errs.PhoneNumber = 'Primary phone number must be exactly 10 digits.';
+    }
+
+    if (cleanEmergency) {
+      if (!/^\d{10}$/.test(cleanEmergency)) {
+        errs.EmergencyContactNumber = 'Emergency contact number must be exactly 10 digits.';
+      } else if (cleanPhone && cleanEmergency === cleanPhone) {
+        errs.EmergencyContactNumber = 'Emergency contact cannot be the same as primary phone number.';
+      }
+    }
+
+    if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      errs.PersonalEmail = 'Please enter a valid email address.';
+    }
+
+    if (cleanAadhaar && !/^\d{12}$/.test(cleanAadhaar)) {
+      errs.AadhaarNumber = 'Aadhaar number must be exactly 12 digits.';
+    }
+
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
     onChange(form);
     onNext();
   };
@@ -52,12 +93,13 @@ const Step1BasicDetails = ({ data, onChange, onNext }) => {
         </div>
         <div>
           <label className={styles.label}>Primary Phone Number <span className="text-red-500 font-bold">*</span></label>
-          <input className={styles.input(!!errors.PhoneNumber)} value={form.PhoneNumber} onChange={(e) => set('PhoneNumber', e.target.value)} placeholder="10-digit mobile" />
+          <input className={styles.input(!!errors.PhoneNumber)} value={form.PhoneNumber} maxLength={10} onChange={(e) => setNumber('PhoneNumber', e.target.value, 10)} placeholder="10-digit mobile" />
           {errors.PhoneNumber && <p className={styles.error}>{errors.PhoneNumber}</p>}
         </div>
         <div>
           <label className={styles.label}>Personal Email Address</label>
-          <input type="email" className={styles.input()} value={form.PersonalEmail} onChange={(e) => set('PersonalEmail', e.target.value)} placeholder="rahul.sharma@email.com" />
+          <input type="email" className={styles.input(!!errors.PersonalEmail)} value={form.PersonalEmail} onChange={(e) => set('PersonalEmail', e.target.value)} placeholder="rahul.sharma@email.com" />
+          {errors.PersonalEmail && <p className={styles.error}>{errors.PersonalEmail}</p>}
         </div>
         <div>
           <label className={styles.label}>Date of Birth</label>
@@ -74,11 +116,13 @@ const Step1BasicDetails = ({ data, onChange, onNext }) => {
         </div>
         <div>
           <label className={styles.label}>Aadhaar Number (UIDAI)</label>
-          <input className={styles.input()} value={form.AadhaarNumber} maxLength={12} onChange={(e) => set('AadhaarNumber', e.target.value)} placeholder="12-digit number" />
+          <input className={styles.input(!!errors.AadhaarNumber)} value={form.AadhaarNumber} maxLength={12} onChange={(e) => setNumber('AadhaarNumber', e.target.value, 12)} placeholder="12-digit number" />
+          {errors.AadhaarNumber && <p className={styles.error}>{errors.AadhaarNumber}</p>}
         </div>
         <div>
           <label className={styles.label}>Emergency Contact Number</label>
-          <input className={styles.input()} value={form.EmergencyContactNumber} onChange={(e) => set('EmergencyContactNumber', e.target.value)} placeholder="Family member contact" />
+          <input className={styles.input(!!errors.EmergencyContactNumber)} value={form.EmergencyContactNumber} maxLength={10} onChange={(e) => setNumber('EmergencyContactNumber', e.target.value, 10)} placeholder="10-digit family member contact" />
+          {errors.EmergencyContactNumber && <p className={styles.error}>{errors.EmergencyContactNumber}</p>}
         </div>
         <div className="md:col-span-2">
           <label className={styles.label}>Current Residential Address</label>

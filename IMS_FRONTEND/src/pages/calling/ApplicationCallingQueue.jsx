@@ -9,8 +9,10 @@ import { useNotification } from '@/services/NotificationService';
 import { useAuth } from '@/context/AuthContext';
 import useTableSessionStorage from '@/hooks/useTableSessionStorage';
 import { createMultiFieldFilter } from '@/utils/multiFieldFilter.jsx';
+import { useThemeStore } from '@/store';
 
 const ApplicationCallingQueue = () => {
+  const { isDarkMode } = useThemeStore();
   const navigate = useNavigate();
   const notify = useNotification();
   const { user } = useAuth();
@@ -48,160 +50,18 @@ const ApplicationCallingQueue = () => {
   const debounceTimeoutRef = useRef(null);
 
   useEffect(() => {
-    // Initial load will be triggered by TableService's onStateChange
   }, []);
 
-  const loadInitialDataWithState = async (savedState) => {
-    if (isLoadingRef.current) return;
-
-    try {
-      isLoadingRef.current = true;
-      setLoading(true);
-
-      // Build query parameters from saved state
-      const params = {
-        page: (savedState.pagination?.pageIndex || 0) + 1,
-        limit: savedState.pagination?.pageSize || 10,
-        sortBy: savedState.sorting?.[0]?.id || 'submittedAt',
-        sortOrder: savedState.sorting?.[0]?.desc ? 'desc' : 'asc',
-        ...(savedState.globalFilter && { search: savedState.globalFilter }),
-      };
-
-      // Add column filters
-      if (savedState.columnFilters) {
-        savedState.columnFilters.forEach(filter => {
-          params[filter.id] = filter.value;
-        });
-      }
-
-      const response = await applicationService.getMyAssignedApplications(params);
-
-      if (response.success) {
-        const applicationsData = response.data || [];
-        setApplications(applicationsData);
-        setPagination({
-          pageIndex: (response.pagination?.currentPage || 1) - 1,
-          pageSize: response.pagination?.itemsPerPage || 10,
-          totalItems: response.pagination?.totalItems || 0,
-          totalPages: response.pagination?.totalPages || 0
-        });
-
-        if (response.filters) {
-          setAvailableFilters({
-            statuses: response.filters.availableStatuses || [],
-            serviceTypes: response.filters.availableServiceTypes || [],
-            subTypes: response.filters.availableSubTypes || []
-          });
-        }
-
-        const calculatedStats = {
-          total: applicationsData.length,
-          pending: applicationsData.filter(app => app.status === 'pending').length,
-          'under-review': applicationsData.filter(app => app.status === 'under-review').length,
-          approved: applicationsData.filter(app => app.status === 'approved').length,
-          rejected: applicationsData.filter(app => app.status === 'rejected').length
-        };
-        setStats(calculatedStats);
-      }
-
-      setIsInitialized(true);
-    } catch (error) {
-      console.error('Error loading assigned applications:', error);
-      setApplications([]);
-      notify(`Failed to load applications: ${error.response?.data?.message || error.message}`, 'error');
-    } finally {
-      setLoading(false);
-      isLoadingRef.current = false;
-    }
-  };
-
-  const loadInitialData = async () => {
-    if (isLoadingRef.current) return;
-
-    try {
-      isLoadingRef.current = true;
-      setLoading(true);
-
-      // Debug user information
-      console.log('Current user:', user);
-      console.log('User ID:', user?._id || user?.id);
-      console.log('Is Admin:', isAdmin);
-
-      // Load applications data
-      const params = {
-        page: 1,
-        limit: 10
-      };
-
-      // Use getMyAssignedApplications endpoint for both admin and employees
-      const response = await applicationService.getMyAssignedApplications(params);
-
-      if (response.success) {
-        const applicationsData = response.data || [];
-        console.log('Loaded applications:', applicationsData.length);
-        console.log('Applications data:', applicationsData);
-
-        setApplications(applicationsData);
-        setPagination({
-          pageIndex: 0,
-          pageSize: 10,
-          totalItems: response.pagination?.totalItems || 0,
-          totalPages: response.pagination?.totalPages || 0
-        });
-
-        // Store available filters from API response
-        if (response.filters) {
-          setAvailableFilters({
-            statuses: response.filters.availableStatuses || [],
-            serviceTypes: response.filters.availableServiceTypes || [],
-            subTypes: response.filters.availableSubTypes || []
-          });
-        }
-
-        // Calculate stats from applications
-        const calculatedStats = {
-          total: applicationsData.length,
-          pending: applicationsData.filter(app => app.status === 'pending').length,
-          'under-review': applicationsData.filter(app => app.status === 'under-review').length,
-          approved: applicationsData.filter(app => app.status === 'approved').length,
-          rejected: applicationsData.filter(app => app.status === 'rejected').length
-        };
-        setStats(calculatedStats);
-        console.log('Calculated stats:', calculatedStats);
-      } else {
-        console.error('API response not successful:', response);
-      }
-
-      setIsInitialized(true);
-    } catch (error) {
-      console.error('Error loading assigned applications:', error);
-      console.error('Error details:', error.response?.data || error.message);
-      setApplications([]);
-      notify(`Failed to load applications: ${error.response?.data?.message || error.message}`, 'error');
-    } finally {
-      setLoading(false);
-      isLoadingRef.current = false;
-    }
-  };
-
   const handleTableStateChange = async (params = {}) => {
-    // Prevent concurrent calls
-    if (isLoadingRef.current) {
-      return;
-    }
+    if (isLoadingRef.current) return;
 
-    // Clear any existing debounce timeout
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
 
-    // Prevent duplicate calls with same parameters
     const paramsString = JSON.stringify(params);
-    if (lastParamsRef.current === paramsString) {
-      return;
-    }
+    if (lastParamsRef.current === paramsString) return;
 
-    // Debounce the API call
     debounceTimeoutRef.current = setTimeout(async () => {
       lastParamsRef.current = paramsString;
       setIsInitialized(true);
@@ -210,7 +70,6 @@ const ApplicationCallingQueue = () => {
         isLoadingRef.current = true;
         setLoading(true);
 
-        // Build query parameters with safe defaults
         const queryParams = {
           page: (params.pagination?.pageIndex ?? 0) + 1,
           limit: params.pagination?.pageSize ?? 10,
@@ -219,7 +78,6 @@ const ApplicationCallingQueue = () => {
           sortOrder: params.sorting?.[0]?.desc ? 'desc' : 'asc'
         };
 
-        // Add column filters
         if (params.columnFilters && Array.isArray(params.columnFilters)) {
           params.columnFilters.forEach(filter => {
             if (filter.id && filter.value !== undefined && filter.value !== null && filter.value !== '') {
@@ -228,10 +86,8 @@ const ApplicationCallingQueue = () => {
           });
         }
 
-        // Save table state to session storage
         saveTableState(params);
 
-        // Use getMyAssignedApplications endpoint for both admin and employees
         const response = await applicationService.getMyAssignedApplications(queryParams);
 
         if (response.success) {
@@ -243,7 +99,6 @@ const ApplicationCallingQueue = () => {
             totalItems: response.pagination?.totalItems || 0,
             totalPages: response.pagination?.totalPages || 0
           });
-          // Store available filters from API response
           if (response.filters) {
             setAvailableFilters({
               statuses: response.filters.availableStatuses || [],
@@ -264,16 +119,16 @@ const ApplicationCallingQueue = () => {
         setLoading(false);
         isLoadingRef.current = false;
       }
-    }, 300); // 300ms debounce
+    }, 300);
   };
 
   const getStatusBadge = (status) => {
     const statusStyles = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      'under-review': 'bg-blue-100 text-blue-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-      cancelled: 'bg-gray-100 text-gray-800'
+      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-200',
+      'under-review': 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200',
+      approved: 'bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-200',
+      rejected: 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-200',
+      cancelled: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
     };
 
     return (
@@ -314,16 +169,16 @@ const ApplicationCallingQueue = () => {
         return (
           <div className="flex items-center">
             <div className="flex-shrink-0 h-10 w-10">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <ServiceIcon className="h-5 w-5 text-blue-600" />
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-blue-900/60 text-blue-300' : 'bg-blue-100 text-blue-600'}`}>
+                <ServiceIcon className="h-5 w-5" />
               </div>
             </div>
             <div className="ml-4">
-              <div className="text-sm font-medium text-gray-900">
+              <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 {application.fullName}
               </div>
               <div className="text-sm">
-                <PhoneLink phone={application.mobileNumber} className="text-gray-500" showIcon={true} />
+                <PhoneLink phone={application.mobileNumber} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} showIcon={true} />
               </div>
             </div>
           </div>
@@ -339,11 +194,11 @@ const ApplicationCallingQueue = () => {
         const application = row.original;
         return (
           <div>
-            <div className="text-sm text-gray-900">
+            <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               {application.serviceType.replace('-', ' ').toUpperCase()}
             </div>
             {application.subType && (
-              <div className="text-sm text-gray-500">{application.subType.toUpperCase()}</div>
+              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{application.subType.toUpperCase()}</div>
             )}
           </div>
         );
@@ -353,7 +208,7 @@ const ApplicationCallingQueue = () => {
           value={value || ''}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange(e.target.value)}
-          className="px-2 py-1 rounded border border-slate-300 bg-white w-full text-xs"
+          className={`px-2 py-1 rounded border text-xs w-full ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-slate-300 bg-white text-gray-900'}`}
         >
           <option value="">All Service Types</option>
           {availableFilters.serviceTypes.map((type) => (
@@ -368,7 +223,7 @@ const ApplicationCallingQueue = () => {
       accessorKey: 'applicationId',
       header: 'Application ID',
       cell: ({ row }) => (
-        <div className="text-sm font-mono text-gray-900">
+        <div className={`text-sm font-mono ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
           {row.original.applicationId}
         </div>
       ),
@@ -382,7 +237,7 @@ const ApplicationCallingQueue = () => {
           value={value || ''}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange(e.target.value)}
-          className="px-2 py-1 rounded border border-slate-300 bg-white w-full text-xs"
+          className={`px-2 py-1 rounded border text-xs w-full ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-slate-300 bg-white text-gray-900'}`}
         >
           <option value="">All Statuses</option>
           {availableFilters.statuses.map((status) => (
@@ -397,7 +252,7 @@ const ApplicationCallingQueue = () => {
       accessorKey: 'assignedAt',
       header: 'Assigned',
       cell: ({ getValue }) => (
-        <div className="text-sm text-gray-500 flex items-center">
+        <div className={`text-sm flex items-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           <FaClock className="h-3 w-3 mr-1" />
           {formatDate(getValue())}
         </div>
@@ -407,7 +262,7 @@ const ApplicationCallingQueue = () => {
       accessorKey: 'submittedAt',
       header: 'Submitted',
       cell: ({ getValue }) => (
-        <div className="text-sm text-gray-500">
+        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           {formatDate(getValue())}
         </div>
       ),
@@ -446,22 +301,17 @@ const ApplicationCallingQueue = () => {
       enableSorting: false,
       enableColumnFilter: false,
     },
-  ], [isAdmin, availableFilters]);
-
-
+  ], [isAdmin, availableFilters, isDarkMode]);
 
   const handleStartCall = (application) => {
-    // Navigate to lead details page with application ID to start call
     navigate(`/calling/lead/${application._id}?type=application&startCall=false`);
   };
 
   const handleViewDetails = (application) => {
-    // Navigate to profile page with application ID
     navigate(`/calling/profile/${application._id}?type=application`);
   };
 
   const handleRowClick = (row) => {
-    // Navigate to lead details page with application ID
     handleViewDetails(row.original);
   };
 
@@ -471,10 +321,10 @@ const ApplicationCallingQueue = () => {
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               {isAdmin ? 'Application Management Queue' : 'My Application Calling Queue'}
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               {isAdmin
                 ? 'Manage applications assigned to you for oversight'
                 : 'Manage your assigned applications and calling activities'
@@ -483,19 +333,19 @@ const ApplicationCallingQueue = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <div className="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-medium rounded-full">
+            <div className={`px-3 py-1 text-sm font-medium rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>
               {stats.total} Total
             </div>
-            <div className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">
+            <div className={`px-3 py-1 text-sm font-medium rounded-full ${isDarkMode ? 'bg-yellow-900/60 text-yellow-200' : 'bg-yellow-100 text-yellow-800'}`}>
               {stats.pending} Pending
             </div>
-            <div className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+            <div className={`px-3 py-1 text-sm font-medium rounded-full ${isDarkMode ? 'bg-blue-900/60 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>
               {stats['under-review']} Under Review
             </div>
-            <div className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+            <div className={`px-3 py-1 text-sm font-medium rounded-full ${isDarkMode ? 'bg-green-900/60 text-green-200' : 'bg-green-100 text-green-800'}`}>
               {stats.approved} Approved
             </div>
-            <div className="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
+            <div className={`px-3 py-1 text-sm font-medium rounded-full ${isDarkMode ? 'bg-red-900/60 text-red-200' : 'bg-red-100 text-red-800'}`}>
               {stats.rejected} Rejected
             </div>
           </div>
@@ -503,7 +353,7 @@ const ApplicationCallingQueue = () => {
       </div>
 
       {/* Applications Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className={`rounded-xl shadow border overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <TableService
           columns={columns}
           data={applications}
@@ -526,3 +376,4 @@ const ApplicationCallingQueue = () => {
 };
 
 export default ApplicationCallingQueue;
+

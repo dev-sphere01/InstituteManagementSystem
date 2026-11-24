@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 
 const enquirySchema = new mongoose.Schema({
   registrationInfo: {
-    // centerCode: { type: String, required: true },
-    // employeeId: { type: String, required: true },
+    centerCode: { type: String },
+    employeeId: { type: String },
     otherInfo: { type: String }
   },
   personalInfo: {

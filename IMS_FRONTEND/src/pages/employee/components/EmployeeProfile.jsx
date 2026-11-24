@@ -19,9 +19,9 @@ const EmployeeProfile = ({ empId, onBack, onEdit }) => {
       await fetchEmployeeById(empId);
       try {
         const [bankRes, acadRes, expRes] = await Promise.allSettled([
-          CUPLEMS_API.get(`/api/EmpBankDetails/ByEmployee/${empId}`),
-          CUPLEMS_API.get(`/api/EmpAcadDetails/ByEmployee/${empId}`),
-          CUPLEMS_API.get(`/api/EmpProfDetails/ByEmployee/${empId}`),
+          CUPLEMS_API.get(`/api/EmpBankDetails/${empId}`),
+          CUPLEMS_API.get(`/api/EmpAcadDetails/${empId}`),
+          CUPLEMS_API.get(`/api/EmpProfDetails/${empId}`),
         ]);
         if (bankRes.status === 'fulfilled') setBank(bankRes.value.data);
         if (acadRes.status === 'fulfilled') setAcademic(acadRes.value.data || []);

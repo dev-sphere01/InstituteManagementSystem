@@ -17,11 +17,25 @@ const applicationFinanceSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  discountAmount: { type: Number, default: 0, min: 0 },
+  discountPercent: { type: Number, default: 0, min: 0, max: 100 },
+  netPayable: { type: Number, default: 0, min: 0 },
+  numInstallments: { type: Number, default: 1, min: 1 },
+  installmentDurationMonths: { type: Number, default: 1, min: 1 },
   totalPaid: {
     type: Number,
     default: 0,
     min: 0
   },
+  // Change history (C)
+  feeHistory: [{
+    changedAt: { type: Date, default: Date.now },
+    changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    changedByName: { type: String },
+    field: { type: String },
+    oldValue: { type: mongoose.Schema.Types.Mixed },
+    newValue: { type: mongoose.Schema.Types.Mixed }
+  }],
   currency: {
     type: String,
     default: 'INR'

@@ -17,6 +17,7 @@ const Extras = ({ formId ,formData = {}, setFormData, onNext, onBack, validation
       referralSource: '',
       referralSourceOther: '',
       referalName: '',
+      referralCode: '',
     },
     computerAccess: {
       location: '',
@@ -81,6 +82,7 @@ const Extras = ({ formId ,formData = {}, setFormData, onNext, onBack, validation
             referralSource: data.referralSource || '',
             referralSourceOther: data.referralSourceOther || '',
             referalName: data.referalName || '',
+            referralCode: data.referralCode || '',
           },
           computerAccess: {
             location: data.computerAccessOther
@@ -128,6 +130,7 @@ const Extras = ({ formId ,formData = {}, setFormData, onNext, onBack, validation
       referralSource: referral.referralSource,
       referralSourceOther: referral.referralSourceOther,
       referalName: referral.referalName,
+      referralCode: referral.referralCode,
 
       // Computer Access
       computerAccess: !!computerAccess.location,

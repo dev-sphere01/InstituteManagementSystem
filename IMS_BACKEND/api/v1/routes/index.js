@@ -18,6 +18,7 @@ const coursesRoutes  = require('./coursesRoutes')
 const additionalFeaturesRoutes = require('./additionalFeaturesRoute');
 const emailVerificationRoutes = require('./emailVerificationRoutes');
 const studentRoutes = require('./studentRoutes');
+const dashboardRoutes = require('./dashboardRoutes');
 const callingFormRoutes = require('./callingFormRoutes');
 const formDataRoutes = require('./formDataRoutes');
 const workflowTemplateRoutes = require('./workflowTemplateRoutes');
@@ -31,6 +32,9 @@ const leadRoutes = require('./leadRoutes');
 const campaignRoutes = require('./campaignRoutes');
 const workflowChecklistRoutes = require('./workflowChecklistRoutes');
 const reportsRoutes = require('./reportsRoutes');
+const employeeTypeRoutes = require('./employeeTypeRoutes');
+const ticketRoutes = require('./ticketRoutes');
+const departmentRoutes = require('./departmentRoutes');
 //const otpRoutes = require('./otpRoutes');
 // Mount routes
 router.use('/users', userRoutes);
@@ -47,7 +51,7 @@ router.use('/goals', goalsRoutes);
 router.use('/country-state-city', stateAndCityRoutes);
 router.use('/sessions', sessionRoutes);
 router.use('/courses', coursesRoutes);
-router.use('/additional-Features', additionalFeaturesRoutes);
+router.use('/additional-features', additionalFeaturesRoutes);
 router.use('/students', studentRoutes);
 router.use('/calling-forms', callingFormRoutes);
 router.use('/form-data', formDataRoutes);
@@ -57,12 +61,15 @@ router.use('/tasks', taskRoutes);
 router.use('/fees', feeRoutes);
 router.use('/jobs', jobRoutes);
 router.use('/document-master', documentMasterRoutes);
-router.use('/dashboard', studentRoutes);
+router.use('/dashboard', dashboardRoutes);
 router.use('/branches', branchRoutes);
 router.use('/leads', leadRoutes);
 router.use('/campaigns', campaignRoutes);
 router.use('/workflows', workflowChecklistRoutes);
 router.use('/reports', reportsRoutes);
+router.use('/employee-types', employeeTypeRoutes);
+router.use('/tickets', ticketRoutes);
+router.use('/departments', departmentRoutes);
 
 
 module.exports = router;

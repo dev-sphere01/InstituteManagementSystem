@@ -29,10 +29,16 @@ const installmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Partial', 'Paid'],
+    enum: ['Pending', 'Partial', 'Paid', 'Overdue'],
     default: 'Pending',
     index: true
-  }
+  },
+  // Expected payment month (C) — auto-suggested, editable
+  expectedMonth: { type: Date },
+  // Overdue tracking (D)
+  overdueNotifiedAt: { type: Date },
+  overdueCount: { type: Number, default: 0 },
+  escalatedAt: { type: Date }
 }, {
   timestamps: true,
   collection: 'installments'

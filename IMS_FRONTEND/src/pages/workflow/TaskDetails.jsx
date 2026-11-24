@@ -235,8 +235,8 @@ const TaskDetails = () => {
             </div>
             {finance && (
               <div className="text-right text-sm">
-                <div className="text-gray-500">Remaining</div>
-                <div className="font-semibold text-red-600">?{remaining}</div>
+                <div className="text-gray-500">How Much Left</div>
+                <div className="font-semibold text-rose-600">₹{remaining}</div>
               </div>
             )}
           </div>
@@ -247,15 +247,15 @@ const TaskDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="rounded-xl border border-slate-200 p-4">
                 <div className="text-xs text-gray-500">Total Fee</div>
-                <div className="text-lg font-semibold text-gray-800">?{finance.totalFee || 0}</div>
+                <div className="text-lg font-semibold text-gray-800">₹{finance.totalFee || 0}</div>
               </div>
               <div className="rounded-xl border border-slate-200 p-4">
-                <div className="text-xs text-gray-500">Total Paid</div>
-                <div className="text-lg font-semibold text-emerald-600">?{finance.totalPaid || 0}</div>
+                <div className="text-xs text-gray-500">How Much Paid</div>
+                <div className="text-lg font-semibold text-emerald-600">₹{finance.totalPaid || 0}</div>
               </div>
               <div className="rounded-xl border border-slate-200 p-4">
-                <div className="text-xs text-gray-500">Installments</div>
-                <div className="text-lg font-semibold text-gray-800">{installments.length}</div>
+                <div className="text-xs text-gray-500">How Much Left</div>
+                <div className="text-lg font-semibold text-rose-600">₹{remaining}</div>
               </div>
             </div>
           )}

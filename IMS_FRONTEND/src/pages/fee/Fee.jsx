@@ -2,9 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import workflowService from '../../services/workflowService';
 import { useNotification } from '../../services/NotificationService';
 import Pagination from '../../components/common/Pagination';
+import { useThemeStore } from '../../store';
 
 const Fee = () => {
   const notify = useNotification();
+  const { isDarkMode } = useThemeStore();
   const [view, setView] = useState('search'); // 'search' or 'pay'
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
   const [searchParams, setSearchParams] = useState({ name: '', fatherName: '', course: '' });
@@ -42,7 +44,11 @@ const Fee = () => {
   const [directPayAmount, setDirectPayAmount] = useState('');
   const [directPayMethod, setDirectPayMethod] = useState('Cash');
   const [directPayReference, setDirectPayReference] = useState('');
-  const [directPayDate, setDirectPayDate] = useState('');
+  const [directPayDate, setDirectPayDate] = useState(() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return (new Date(now - tzOffset)).toISOString().slice(0, 16);
+  });
 
   const [showInstallments, setShowInstallments] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -306,6 +312,12 @@ const Fee = () => {
   const handleSelectStudent = (id) => {
     setSelectedId(id);
     setView('pay');
+    
+    // Auto-select current date and time
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, 16);
+    setDirectPayDate(localISOTime);
   };
 
   return (
@@ -553,11 +565,11 @@ const Fee = () => {
                     <div className="text-lg font-bold text-slate-800">₹{finance?.totalFee || 0}</div>
                   </div>
                   <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 flex flex-col justify-center">
-                    <div className="text-[11px] font-semibold text-emerald-600 mb-0.5">Total Paid</div>
+                    <div className="text-[11px] font-semibold text-emerald-600 mb-0.5">How Much Paid</div>
                     <div className="text-lg font-bold text-emerald-700">₹{finance?.totalPaid || 0}</div>
                   </div>
                   <div className="rounded-lg border border-rose-100 bg-rose-50 p-3 flex flex-col justify-center">
-                    <div className="text-[11px] font-semibold text-rose-600 mb-0.5">Remaining</div>
+                    <div className="text-[11px] font-semibold text-rose-600 mb-0.5">How Much Left</div>
                     <div className="text-lg font-bold text-rose-700">₹{remaining}</div>
                   </div>
                 </div>
@@ -565,18 +577,20 @@ const Fee = () => {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+          <div className={`rounded-xl border p-4 shadow-sm space-y-3 ${isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-slate-200'}`}>
             <div>
-               <h2 className="text-base font-semibold text-gray-900">Submit Fee Payment</h2>
-              <p className="text-sm text-gray-500">Record an arbitrary payment amount. The system dynamically updates any defined installments automatically.</p>
+               <h2 className={`text-base font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Submit Fee Payment</h2>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Record an arbitrary payment amount. The system dynamically updates any defined installments automatically.</p>
             </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+            <div className={`border rounded-xl p-5 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-slate-50 border-slate-200'}`}>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Amount to Pay</label>
                   <input
                     type="number"
-                    className="border border-indigo-200 outline-none focus:ring-2 focus:ring-indigo-500 rounded-md px-3 py-2 text-sm w-full font-medium"
+                    className={`border outline-none focus:ring-2 focus:ring-indigo-500 rounded-md px-3 py-2 text-sm w-full font-medium ${
+                      isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-slate-800 border-slate-300'
+                    }`}
                     placeholder="0"
                     value={directPayAmount}
                     onChange={(e) => setDirectPayAmount(e.target.value)}
@@ -585,7 +599,9 @@ const Fee = () => {
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Method</label>
                   <select
-                    className="border rounded-md px-3 py-2 text-sm w-full bg-slate-50 focus:bg-white"
+                    className={`border rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-slate-800 border-slate-300'
+                    }`}
                     value={directPayMethod}
                     onChange={(e) => setDirectPayMethod(e.target.value)}
                   >
@@ -598,7 +614,9 @@ const Fee = () => {
                     <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">UTR Number</label>
                     <input
                       type="text"
-                      className="border rounded-md px-3 py-2 text-sm w-full bg-slate-50 focus:bg-white"
+                      className={`border rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                        isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-slate-800 border-slate-300'
+                      }`}
                       placeholder="Ex: 5313..."
                       value={directPayReference}
                       onChange={(e) => setDirectPayReference(e.target.value)}
@@ -609,7 +627,9 @@ const Fee = () => {
                   <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Date & Time</label>
                   <input
                     type="datetime-local"
-                    className="border rounded-md px-3 py-2 text-sm w-full bg-slate-50 focus:bg-white"
+                    className={`border rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-slate-800 border-slate-300'
+                    }`}
                     value={directPayDate}
                     onChange={(e) => setDirectPayDate(e.target.value)}
                   />

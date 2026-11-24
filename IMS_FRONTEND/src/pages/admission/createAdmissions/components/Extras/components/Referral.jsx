@@ -10,6 +10,8 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
     'Friend/Relative',
     'Advertisement',
     'School/College',
+    'Old Student',
+    'Stranger',
     'Other',
   ];
 
@@ -74,6 +76,23 @@ const Referral = ({ formData = {}, setFormData = () => {}, validationsEnabled = 
               onChange={handleChange}
               className={inputClass}
               placeholder="Specify other source"
+            />
+          </div>
+        )}
+
+        {/* Referral Code (for Old Student, Stranger, or if code exists) */}
+        {(referral.referralSource === 'Old Student' ||
+          referral.referralSource === 'Stranger' ||
+          Boolean(referral.referralCode)) && (
+          <div>
+            <label className={labelClass}>Referral Code</label>
+            <input
+              type="text"
+              name="referralCode"
+              value={referral.referralCode || ''}
+              onChange={handleChange}
+              placeholder="Enter referral code"
+              className={inputClass}
             />
           </div>
         )}

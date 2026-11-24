@@ -12,6 +12,9 @@ exports.createCourse = async (req, res, next) => {
         .filter(Boolean);
       req.body.fee = Number(req.body.fee);
     }
+    if (req.body.maxEmiInstallments) req.body.maxEmiInstallments = Number(req.body.maxEmiInstallments);
+    if (req.body.emiAmount) req.body.emiAmount = Number(req.body.emiAmount);
+    if (req.body.enableEmi !== undefined) req.body.enableEmi = Boolean(req.body.enableEmi);
     console.log(req.body);
     // Verify centreCode exists
     const centre = await require('../models/centreCode').findById(req.body.centreCode);
@@ -97,6 +100,9 @@ exports.updateCourse = async (req, res, next) => {
         .filter(Boolean);
     }
     req.body.fee = Number(req.body.fee);
+    if (req.body.maxEmiInstallments) req.body.maxEmiInstallments = Number(req.body.maxEmiInstallments);
+    if (req.body.emiAmount) req.body.emiAmount = Number(req.body.emiAmount);
+    if (req.body.enableEmi !== undefined) req.body.enableEmi = Boolean(req.body.enableEmi);
 
     // Verify centreCode exists
     if (req.body.centreCode) {

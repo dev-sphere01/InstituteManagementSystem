@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -48,18 +48,30 @@ namespace EMS.Controllers
 
         // PUT: api/EmpProfDetails/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // PUT: api/EmpProfDetails/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutEmpProfDetail(int id, EmpProfDetail empProfDetail)
         {
-            if (id != empProfDetail.EpdID)
+            if (empProfDetail == null)
             {
-                return BadRequest();
+                return BadRequest("Professional detail data is required.");
+            }
+            empProfDetail.EpdID = id;
+
+            var existing = await _context.EmpProfDetails.FirstOrDefaultAsync(p => p.EpdID == id);
+            if (existing == null)
+            {
+                return NotFound($"Professional detail with ID {id} not found.");
             }
 
-            var oldDetail = await _context.EmpProfDetails.AsNoTracking().FirstOrDefaultAsync(p => p.EpdID == id);
-            if (oldDetail == null) return NotFound();
+            var oldState = System.Text.Json.JsonSerializer.Serialize(existing);
 
-            _context.Entry(empProfDetail).State = EntityState.Modified;
+            existing.PreviousCompany = empProfDetail.PreviousCompany;
+            existing.PreviousPosition = empProfDetail.PreviousPosition;
+            existing.PreviousExperience = empProfDetail.PreviousExperience;
+
+            _context.EmpProfDetails.Update(existing);
 
             try
             {
@@ -70,8 +82,8 @@ namespace EMS.Controllers
                     "Update Professional Detail",
                     $"Updated professional detail {id} for employee {empProfDetail.EmpID}",
                     empProfDetail.EmpID.ToString(),
-                    System.Text.Json.JsonSerializer.Serialize(oldDetail),
-                    System.Text.Json.JsonSerializer.Serialize(empProfDetail)
+                    oldState,
+                    System.Text.Json.JsonSerializer.Serialize(existing)
                 );
             }
             catch (DbUpdateConcurrencyException)
@@ -86,7 +98,7 @@ namespace EMS.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(existing);
         }
 
         // POST: api/EmpProfDetails
@@ -108,12 +120,18 @@ namespace EMS.Controllers
             var prevExpCount = await _context.EmpProfDetails
                 .CountAsync(epd => epd.EmpID == empProfDetail.EmpID);
 
-            var fileName = $"{emp.UserName}_Previous_Exp_{prevExpCount+1}.{empProfDetail.PrevExpCert.FileName.Split('.')[1]}";
-            var filePath = Path.Combine(uploadsFolderPath, fileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            string? certPath = null;
+            if (empProfDetail.PrevExpCert != null && empProfDetail.PrevExpCert.Length > 0)
             {
-                await empProfDetail.PrevExpCert.CopyToAsync(stream);
+                var extension = Path.GetExtension(empProfDetail.PrevExpCert.FileName);
+                var fileName = $"{emp?.UserName ?? "Emp"}_Previous_Exp_{prevExpCount+1}{extension}";
+                var filePath = Path.Combine(uploadsFolderPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await empProfDetail.PrevExpCert.CopyToAsync(stream);
+                }
+                certPath = $"/PreviousExperience/{fileName}";
             }
 
             var empProfDetail1 = new EmpProfDetail
@@ -122,7 +140,7 @@ namespace EMS.Controllers
                 PreviousCompany = empProfDetail.PreviousCompany,
                 PreviousPosition = empProfDetail.PreviousPosition,
                 PreviousExperience = empProfDetail.PreviousExperience,
-                PreviousExperienceCeritificate = $"/PreviousExperience/{fileName}"
+                PreviousExperienceCeritificate = certPath
             };
 
             _context.EmpProfDetails.Add(empProfDetail1);

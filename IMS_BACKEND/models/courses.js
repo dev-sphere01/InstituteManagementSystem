@@ -35,6 +35,19 @@ const courseSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  enableEmi: {
+    type: Boolean,
+    default: false
+  },
+  maxEmiInstallments: {
+    type: Number,
+    default: 1,
+    min: 1
+  },
+  emiAmount: {
+    type: Number,
+    default: 0
+  },
   level: {
     type: String,
     enum: ['beginner', 'intermediate', 'advanced'],

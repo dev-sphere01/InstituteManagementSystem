@@ -11,16 +11,43 @@ const CUPLEMS_API = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Response interceptor: surface CUPLEMS error messages
+CUPLEMS_API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 CUPLEMS_API.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message =
-      error.response?.data?.title ||
-      error.response?.data?.message ||
-      error.response?.data ||
-      error.message ||
-      'An error occurred with the employee service.';
+    let message = null;
+
+    if (error.response?.data?.errors && typeof error.response.data.errors === 'object') {
+      const errs = error.response.data.errors;
+      const formattedList = [];
+      for (const [field, messages] of Object.entries(errs)) {
+        const msgStr = Array.isArray(messages) ? messages.join(', ') : String(messages);
+        formattedList.push(`${field}: ${msgStr}`);
+      }
+      if (formattedList.length > 0) {
+        message = formattedList.join(' | ');
+      }
+    }
+
+    if (!message) {
+      message =
+        error.response?.data?.message ||
+        (typeof error.response?.data === 'string' ? error.response.data : null) ||
+        error.response?.data?.title ||
+        error.message ||
+        'An error occurred with the employee service.';
+    }
+
     return Promise.reject(new Error(typeof message === 'string' ? message : JSON.stringify(message)));
   }
 );

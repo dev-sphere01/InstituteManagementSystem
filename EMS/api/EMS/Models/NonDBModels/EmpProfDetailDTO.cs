@@ -1,4 +1,4 @@
-﻿namespace EMS.Models.NonDBModels
+namespace EMS.Models.NonDBModels
 {
     public class EmpProfDetailDTO
     {
@@ -10,6 +10,6 @@
 
         public string? PreviousExperience { get; set; }
 
-        public IFormFile PrevExpCert { get; set; }
+        public IFormFile? PrevExpCert { get; set; }
     }
 }

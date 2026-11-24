@@ -42,6 +42,18 @@ const AddUser = ({ onBack, onSuccess }) => {
     }
   };
 
+  const toggleRole = (roleId) => {
+    setFormData((prev) => {
+      const exists = prev.roles.includes(roleId);
+      const roles = exists ? prev.roles.filter((id) => id !== roleId) : [...prev.roles, roleId];
+      return { ...prev, roles };
+    });
+
+    if (validationErrors.roles) {
+      setValidationErrors((prev) => ({ ...prev, roles: '' }));
+    }
+  };
+
   const validateForm = () => {
     const errors = {};
 
@@ -312,14 +324,4 @@ const AddUser = ({ onBack, onSuccess }) => {
 };
 
 export default AddUser;
-  const toggleRole = (roleId) => {
-    setFormData((prev) => {
-      const exists = prev.roles.includes(roleId);
-      const roles = exists ? prev.roles.filter((id) => id !== roleId) : [...prev.roles, roleId];
-      return { ...prev, roles };
-    });
 
-    if (validationErrors.roles) {
-      setValidationErrors((prev) => ({ ...prev, roles: '' }));
-    }
-  };

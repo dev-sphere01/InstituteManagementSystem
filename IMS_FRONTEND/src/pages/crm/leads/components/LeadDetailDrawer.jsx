@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Phone, Mail, MapPin, User, Tag, AlertTriangle, MessageSquare, PhoneCall, FileText, GitBranch } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Phone, Mail, MapPin, User, Tag, AlertTriangle, MessageSquare, PhoneCall, FileText, GitBranch, GraduationCap } from 'lucide-react';
 import { useThemeStore } from '../../../../store';
 import useCrmStore from '../../../../store/useCrmStore';
 
@@ -18,6 +19,7 @@ const INTERACTION_ICONS = {
 };
 
 export default function LeadDetailDrawer({ leadId, onClose }) {
+  const navigate = useNavigate();
   const { isDarkMode } = useThemeStore();
   const { fetchLeadById, currentLead, updateLead, addInteraction, reassignLead } = useCrmStore();
 
@@ -53,6 +55,12 @@ export default function LeadDetailDrawer({ leadId, onClose }) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleTransferToAdmission = () => {
+    if (!lead) return;
+    if (onClose) onClose();
+    navigate('/dashboard/admission', { state: { leadData: lead } });
   };
 
   const inputCls = `block w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
@@ -148,6 +156,18 @@ export default function LeadDetailDrawer({ leadId, onClose }) {
                   </button>
                 ))}
               </div>
+
+              {lead.stage === 'Converted' && (
+                <div className="mt-3 pt-3 border-t border-dashed border-gray-300 dark:border-gray-600">
+                  <button
+                    onClick={handleTransferToAdmission}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-bold text-xs shadow-md transition-all"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                    <span>Transfer Lead to Admission Form</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Add interaction */}
