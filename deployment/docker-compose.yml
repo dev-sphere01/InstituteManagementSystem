@@ -1,0 +1,180 @@
+services:
+  # ==========================================
+  # 1. IMS Backend (Node.js / Express API)
+  # ==========================================
+  ims-backend:
+    image: ghcr.io/dev-sphere01/institutemanagementsystem/ims-backend:latest
+    container_name: ims-backend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${IMS_BACKEND_PORT:-4000}:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - DB_URI=${IMS_DB_URI}
+      - FRONTEND_URL=${FRONTEND_URL:?FRONTEND_URL must be set in .env}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRE=${JWT_EXPIRE:-5d}
+      - COOKIE_EXPIRE=${COOKIE_EXPIRE:-5}
+      - ESCALATION_INTERVAL_MINUTES=${ESCALATION_INTERVAL_MINUTES:-5}
+      - OVERDUE_INTERVAL_HOURS=${OVERDUE_INTERVAL_HOURS:-24}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SERVICE=${SMTP_SERVICE:-gmail}
+      - SMTP_MAIL=${SMTP_MAIL}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    volumes:
+      - ims_backend_uploads:/app/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - ims-network
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+        reservations:
+          memory: 80M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ==========================================
+  # 2. EMS Backend API (ASP.NET Core 8 Web API)
+  # ==========================================
+  ems-api:
+    image: ghcr.io/dev-sphere01/institutemanagementsystem/ems-api:latest
+    container_name: ems-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${EMS_API_PORT:-5001}:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__DefaultAppDBConnection=${EMS_DB_CONNECTION}
+      - Jwt__Key=${EMS_JWT_KEY}
+      - Jwt__ExpireTime=${EMS_JWT_EXPIRE_TIME:-360}
+      - CorsOrigins__0=${FRONTEND_URL:?FRONTEND_URL must be set in .env}
+      - CorsOrigins__1=${EMS_UI_URL:?EMS_UI_URL must be set in .env}
+    volumes:
+      - ems_api_wwwroot:/app/wwwroot
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - ims-network
+    deploy:
+      resources:
+        limits:
+          memory: 250M
+        reservations:
+          memory: 100M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:5001/api/Locations || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ==========================================
+  # 3. EMS Node API (Socket.io Notification Service)
+  # ==========================================
+  ems-nodeapi:
+    image: ghcr.io/dev-sphere01/institutemanagementsystem/ems-nodeapi:latest
+    container_name: ems-nodeapi
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${EMS_NODEAPI_PORT:-5002}:5000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - ims-network
+    deploy:
+      resources:
+        limits:
+          memory: 80M
+        reservations:
+          memory: 30M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ==========================================
+  # 4. IMS Frontend (React SPA + Nginx)
+  # ==========================================
+  ims-frontend:
+    image: ghcr.io/dev-sphere01/institutemanagementsystem/ims-frontend:latest
+    container_name: ims-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${IMS_FRONTEND_PORT:-3000}:80"
+    depends_on:
+      ims-backend:
+        condition: service_healthy
+    networks:
+      - ims-network
+    deploy:
+      resources:
+        limits:
+          memory: 40M
+        reservations:
+          memory: 15M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ==========================================
+  # 5. EMS UI (React SPA + Nginx)
+  # ==========================================
+  ems-ui:
+    image: ghcr.io/dev-sphere01/institutemanagementsystem/ems-ui:latest
+    container_name: ems-ui
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${EMS_UI_PORT:-3001}:80"
+    depends_on:
+      ems-api:
+        condition: service_healthy
+    networks:
+      - ims-network
+    deploy:
+      resources:
+        limits:
+          memory: 40M
+        reservations:
+          memory: 15M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# ==========================================
+# Named Volumes (Persistent Storage)
+# ==========================================
+volumes:
+  ims_backend_uploads:
+    name: ims_backend_uploads
+  ems_api_wwwroot:
+    name: ems_api_wwwroot
+
+# ==========================================
+# Networks (Fixed Subnet Bridge)
+# ==========================================
+networks:
+  ims-network:
+    name: ims-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+          gateway: 172.30.0.1
