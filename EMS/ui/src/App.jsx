@@ -37,7 +37,7 @@ import UserRoles from '@/pages/Administration/UserRoles';
 import Settings from '@/pages/Administration/Settings';
 import AuditLogs from '@/pages/Administration/AuditLogs';
 
-import Dashboard from '@/pages/Dashboard/Dashboard';
+import Dashboard from '@/pages/dashboard/Dashboard';
 
 // User pages
 import ProfilePage from '@/pages/Profile/ProfilePage';

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Download, FileText } from 'lucide-react';
-import Logo from '@/assets/images/CUPL_Watermark.png';
+import Logo from '@/assets/images/CUPL_WaterMark.png';
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-IN', {
