@@ -13,13 +13,11 @@ const getBaseURL = () => {
   let baseURL;
 
   if (stage === 'development') {
-    baseURL = localURL;
+    baseURL = localURL || 'http://localhost:5001';
   } else if (stage === 'production') {
-    baseURL = liveURL;
+    baseURL = liveURL || (typeof window !== 'undefined' ? window.location.origin : 'https://ems.prodevsphere.in');
   } else {
-    // Fallback to local if stage is not recognized
-    console.warn(`Unknown VITE_APP_STAGE: ${stage}. Falling back to local URL.`);
-    baseURL = localURL;
+    baseURL = liveURL || localURL || (typeof window !== 'undefined' ? window.location.origin : 'https://ems.prodevsphere.in');
   }
 
   // Validate that we have a URL

@@ -10,12 +10,11 @@ const getBaseFileURL = () => {
   let rawURL;
 
   if (stage === 'development') {
-    rawURL = localURL;
+    rawURL = localURL || 'http://localhost:5001';
   } else if (stage === 'production') {
-    rawURL = liveURL;
+    rawURL = liveURL || (typeof window !== 'undefined' ? window.location.origin : 'https://ems.prodevsphere.in');
   } else {
-    console.warn(`Unknown VITE_APP_STAGE: ${stage}. Falling back to local URL.`);
-    rawURL = localURL;
+    rawURL = liveURL || localURL || (typeof window !== 'undefined' ? window.location.origin : 'https://ems.prodevsphere.in');
   }
 
   // Remove trailing '/api' if present in either environment
