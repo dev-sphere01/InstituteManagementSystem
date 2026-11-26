@@ -6,7 +6,7 @@ import axios from 'axios';
  * which CUPLEMS validates using the same JWT_SECRET as IMS.
  */
 const CUPLEMS_API = axios.create({
-  baseURL: import.meta.env.VITE_CUPLEMS_URL ?? 'http://localhost:5001',
+  baseURL: import.meta.env.VITE_CUPLEMS_URL || 'https://ems.prodevsphere.in',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
