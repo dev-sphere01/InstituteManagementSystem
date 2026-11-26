@@ -13,11 +13,16 @@ const getBaseURL = () => {
   let baseURL;
 
   if (stage === 'development') {
-    baseURL = localURL || 'http://localhost:5001';
+    baseURL = localURL || 'http://localhost:5001/api';
   } else if (stage === 'production') {
-    baseURL = liveURL || (typeof window !== 'undefined' ? window.location.origin : 'https://ems.prodevsphere.in');
+    baseURL = liveURL || '/api';
   } else {
-    baseURL = liveURL || localURL || (typeof window !== 'undefined' ? window.location.origin : 'https://ems.prodevsphere.in');
+    baseURL = liveURL || localURL || '/api';
+  }
+
+  // Ensure /api is present because backend routes are prefixed with /api (e.g. /api/Login)
+  if (!baseURL.endsWith('/api') && !baseURL.endsWith('/api/')) {
+    baseURL = `${baseURL.replace(/\/$/, '')}/api`;
   }
 
   // Validate that we have a URL

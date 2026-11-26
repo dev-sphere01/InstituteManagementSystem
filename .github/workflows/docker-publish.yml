@@ -187,7 +187,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/ems-ui:${{ github.sha }}
           build-args: |
             VITE_APP_STAGE=production
-            VITE_API_BASE_URL_LIVE=${{ vars.VITE_EMS_API_BASE_URL || 'https://ems.prodevsphere.in' }}
+            VITE_API_BASE_URL_LIVE=${{ vars.VITE_EMS_API_BASE_URL || 'https://ems.prodevsphere.in/api' }}
             VITE_APP_VERSION=1.0.0
           cache-from: type=gha,scope=ems-ui
           cache-to: type=gha,mode=max,scope=ems-ui
