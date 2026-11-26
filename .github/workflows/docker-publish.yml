@@ -51,10 +51,10 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/ims-frontend:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/ims-frontend:${{ github.sha }}
           build-args: |
-            VITE_API_BASE_URL=${{ vars.VITE_IMS_API_BASE_URL }}
-            VITE_CUPLEMS_URL=${{ vars.VITE_EMS_API_BASE_URL }}
-            VITE_API_BASE_URL_LIVE=${{ vars.VITE_IMS_API_BASE_URL_LIVE }}
-            VITE_BACKEND_BASE_URL=${{ vars.VITE_IMS_BACKEND_BASE_URL }}
+            VITE_API_BASE_URL=${{ vars.VITE_IMS_API_BASE_URL || '/api/v1' }}
+            VITE_CUPLEMS_URL=${{ vars.VITE_EMS_API_BASE_URL || 'https://ems.prodevsphere.in' }}
+            VITE_API_BASE_URL_LIVE=${{ vars.VITE_IMS_API_BASE_URL_LIVE || '/api/v1' }}
+            VITE_BACKEND_BASE_URL=${{ vars.VITE_IMS_BACKEND_BASE_URL || '' }}
             VITE_API_TIMEOUT=30000
             VITE_APP_STAGE=production
           cache-from: type=gha,scope=ims-frontend
